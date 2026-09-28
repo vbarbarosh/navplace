@@ -269,50 +269,55 @@
             color: var(--accent);
             background: var(--accent-soft);
         }
-        .demo-body {
-            display: grid;
-            grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-            height: 340px;
-        }
-        .demo-code, .demo-preview {
+        .demo-view {
             display: flex;
-            flex-direction: column;
-            min-width: 0;
-            min-height: 0;
+            flex: none;
+            margin-left: auto;
+            padding: 2px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
         }
-        .demo-code {
-            border-right: 1px solid var(--border);
+        .demo-view button {
+            transition: color 120ms ease, background-color 120ms ease;
+            height: 22px;
+            padding: 0 9px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-mute);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .demo-view button:hover {
+            color: var(--text);
+        }
+        .demo-view button[aria-pressed="true"] {
+            color: var(--text);
             background: var(--code-bg);
         }
-        .panel-heading {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 14px;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-mute);
+        .demo-view code {
             font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
         }
-        .panel-heading span {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-weight: 400;
-            letter-spacing: 0;
-            text-transform: none;
+        .demo-window {
+            position: relative;
+            height: 520px;
         }
-        .demo-code pre {
-            flex: 1;
-            min-height: 0;
+        .demo-window pre {
+            height: 100%;
             margin: 0;
-            padding: 10px 14px;
+            padding: 16px 20px;
             overflow: auto;
             color: var(--text-soft);
-            line-height: 1.55;
+            background: var(--code-bg);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .demo-window > [hidden] {
+            display: none;
         }
         .demo-frames {
-            position: relative;
-            flex: 1;
+            position: absolute;
+            inset: 0;
         }
         .demo-frames > div {
             position: absolute;
@@ -400,14 +405,24 @@
             .demo-bar h2 {
                 display: none;
             }
-            .demo-body {
-                grid-template-columns: minmax(0, 1fr);
-                grid-template-rows: 180px 360px;
-                height: auto;
+            .demo-bar {
+                flex-wrap: wrap;
+                gap: 6px;
+                padding-left: 6px;
             }
-            .demo-code {
-                border-right: 0;
-                border-bottom: 1px solid var(--border);
+            .demo-tabs {
+                flex-basis: 100%;
+                order: 1;
+            }
+            .demo-view {
+                margin-left: 0;
+            }
+            .demo-window {
+                height: 480px;
+            }
+            .demo-window pre {
+                padding: 12px 14px;
+                font-size: 12px;
             }
             .demo-actions {
                 flex-wrap: wrap;
@@ -459,16 +474,14 @@
             <div class="demo-bar">
                 <h2 id="demo-title">Try a collection</h2>
                 <div class="demo-tabs" role="tablist" aria-label="Example collection"></div>
+                <div class="demo-view" role="group" aria-label="View">
+                    <button type="button" data-view="preview">Preview</button>
+                    <button type="button" data-view="source"><code>links.txt</code></button>
+                </div>
             </div>
-            <div class="demo-body">
-                <div class="demo-code">
-                    <div class="panel-heading">Plain text <span>links.txt</span></div>
-                    <pre tabindex="0" aria-label="Collection source"></pre>
-                </div>
-                <div class="demo-preview">
-                    <div class="panel-heading">Collection preview <span></span></div>
-                    <div class="demo-frames"></div>
-                </div>
+            <div class="demo-window">
+                <div class="demo-frames"></div>
+                <pre tabindex="0" aria-label="Collection source" hidden></pre>
             </div>
             <div class="demo-actions">
                 <p>Like a collection? See its full design in CodePen.</p>
@@ -597,8 +610,7 @@ main();
 function main()
 {
     const tablist = document.querySelector('.demo-tabs');
-    const source = document.querySelector('.demo-code pre');
-    const design = document.querySelector('.demo-preview .panel-heading span');
+    const source = document.querySelector('.demo-window pre');
     const frames = document.querySelector('.demo-frames');
     const details = document.querySelector('.demo details');
     const embed_code = details.querySelector('pre');
@@ -625,16 +637,28 @@ function main()
         tablist.append(tab);
     }
 
+    for (const button of document.querySelectorAll('[data-view]')) {
+        button.addEventListener('click', () => show(button.dataset.view));
+    }
+
     copy_button.addEventListener('click', copy);
     document.querySelector('[data-action="codepen"]').addEventListener('click', () => open_codepen(format_snippet(current.links)));
 
+    show('preview');
     select(current);
+
+    function show(view) {
+        frames.hidden = (view !== 'preview');
+        source.hidden = (view !== 'source');
+        for (const button of document.querySelectorAll('[data-view]')) {
+            button.setAttribute('aria-pressed', String(button.dataset.view === view));
+        }
+    }
 
     function select(demo) {
         current = demo;
         source.textContent = demo.links.trim();
         source.scrollTop = 0;
-        design.textContent = demo.value;
         embed_code.textContent = format_snippet(demo.links);
         clearTimeout(copy_timer);
         copy_button.textContent = 'Copy embed';
