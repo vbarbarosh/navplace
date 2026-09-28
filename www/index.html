@@ -88,7 +88,7 @@
             cursor: pointer;
             user-select: none;
         }
-        button:focus-visible, a:focus-visible, summary:focus-visible, pre:focus-visible {
+        button:focus-visible, a:focus-visible {
             outline: none;
             box-shadow: var(--focus);
         }
@@ -302,15 +302,25 @@
             position: relative;
             height: 520px;
         }
-        .demo-window pre {
+        .demo-window textarea {
+            display: block;
+            width: 100%;
             height: 100%;
             margin: 0;
             padding: 16px 20px;
+            border: 0;
+            border-radius: 0;
             overflow: auto;
-            color: var(--text-soft);
+            resize: none;
+            white-space: pre;
+            color: var(--text);
             background: var(--code-bg);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
             font-size: 13px;
             line-height: 1.6;
+        }
+        .demo-window textarea:focus {
+            outline: none;
         }
         .demo-window > [hidden] {
             display: none;
@@ -337,28 +347,6 @@
             margin: 0 auto 0 0;
             color: var(--text-mute);
             font-size: 12px;
-        }
-        details {
-            border-top: 1px solid var(--border);
-            color: var(--text-mute);
-            font-size: 12px;
-        }
-        summary {
-            transition: color 120ms ease;
-            width: fit-content;
-            padding: 6px 14px;
-            cursor: pointer;
-            user-select: none;
-        }
-        summary:hover {
-            color: var(--text);
-        }
-        details pre {
-            max-height: 220px;
-            margin: 0;
-            padding: 0 14px 10px;
-            overflow: auto;
-            color: var(--text-soft);
         }
         noscript p {
             margin: 0;
@@ -420,7 +408,7 @@
             .demo-window {
                 height: 480px;
             }
-            .demo-window pre {
+            .demo-window textarea {
                 padding: 12px 14px;
                 font-size: 12px;
             }
@@ -475,23 +463,19 @@
                 <h2 id="demo-title">Try a collection</h2>
                 <div class="demo-tabs" role="tablist" aria-label="Example collection"></div>
                 <div class="demo-view" role="group" aria-label="View">
-                    <button type="button" data-view="preview">Preview</button>
                     <button type="button" data-view="source"><code>links.txt</code></button>
+                    <button type="button" data-view="preview">Preview</button>
                 </div>
             </div>
             <div class="demo-window">
-                <div class="demo-frames"></div>
-                <pre tabindex="0" aria-label="Collection source" hidden></pre>
+                <textarea aria-label="Collection source" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+                <div class="demo-frames" hidden></div>
             </div>
             <div class="demo-actions">
-                <p>Like a collection? See its full design in CodePen.</p>
+                <p>Edit the links, then open Preview to see your version.</p>
                 <button class="btn" type="button" data-action="copy">Copy embed</button>
                 <button class="btn btn-primary" type="button" data-action="codepen">Open in CodePen <span aria-hidden="true">↗</span></button>
             </div>
-            <details>
-                <summary>View embed code</summary>
-                <pre tabindex="0" aria-label="HTML embed code"></pre>
-            </details>
             <span class="sr-only" role="status"></span>
             <noscript><p>Enable JavaScript to try the collections, or <a href="https://github.com/vbarbarosh/navplace">explore NavPlace on GitHub</a>.</p></noscript>
         </section>
@@ -610,13 +594,12 @@ main();
 function main()
 {
     const tablist = document.querySelector('.demo-tabs');
-    const source = document.querySelector('.demo-window pre');
+    const source = document.querySelector('.demo-window textarea');
     const frames = document.querySelector('.demo-frames');
-    const details = document.querySelector('.demo details');
-    const embed_code = details.querySelector('pre');
     const copy_button = document.querySelector('[data-action="copy"]');
     const copy_status = document.querySelector('.demo [role="status"]');
     let current = demos[0];
+    let view = 'source';
     let copy_timer;
 
     // Chrome on Wayland can hold a drag session and freeze the tab
@@ -633,6 +616,7 @@ function main()
         tab.role = 'tab';
         tab.textContent = demo.label;
         tab.addEventListener('click', () => select(demo));
+        demo.text = demo.links.trim();
         demo.tab = tab;
         tablist.append(tab);
     }
@@ -641,49 +625,67 @@ function main()
         button.addEventListener('click', () => show(button.dataset.view));
     }
 
+    source.addEventListener('input', () => current.text = source.value);
     copy_button.addEventListener('click', copy);
-    document.querySelector('[data-action="codepen"]').addEventListener('click', () => open_codepen(format_snippet(current.links)));
+    document.querySelector('[data-action="codepen"]').addEventListener('click', () => open_codepen(format_snippet(current.text)));
 
-    show('preview');
+    show(view);
     select(current);
 
-    function show(view) {
-        frames.hidden = (view !== 'preview');
+    function show(next) {
+        view = next;
         source.hidden = (view !== 'source');
+        frames.hidden = (view !== 'preview');
         for (const button of document.querySelectorAll('[data-view]')) {
             button.setAttribute('aria-pressed', String(button.dataset.view === view));
+        }
+        if (view === 'preview') {
+            render_preview();
         }
     }
 
     function select(demo) {
         current = demo;
-        source.textContent = demo.links.trim();
+        source.value = demo.text;
         source.scrollTop = 0;
-        embed_code.textContent = format_snippet(demo.links);
         clearTimeout(copy_timer);
         copy_button.textContent = 'Copy embed';
         copy_status.textContent = '';
         for (const v of demos) {
             v.tab.setAttribute('aria-selected', String(v === demo));
+        }
+        if (view === 'preview') {
+            render_preview();
+        }
+    }
+
+    function render_preview() {
+        const demo = current;
+        for (const v of demos) {
             if (v.frame) {
                 v.frame.hidden = (v !== demo);
             }
         }
         // Each design is embedded once, the way a visitor would embed it
         if (!demo.frame) {
-            const script = document.createElement('script');
+            demo.script = document.createElement('script');
             demo.frame = document.createElement('div');
-            script.src = 'lib/embed.js';
-            script.dataset.links = demo.links;
-            demo.frame.append(script);
+            demo.script.src = 'lib/embed.js';
+            demo.script.dataset.links = demo.text;
+            demo.frame.append(demo.script);
             frames.append(demo.frame);
+        }
+        // embed.js sends data-links again once the reloaded design is ready
+        else if (demo.script.dataset.links !== demo.text) {
+            demo.script.dataset.links = demo.text;
+            demo.frame.querySelector('iframe').src = `designs/${parse_design(demo.text)}/index.html`;
         }
     }
 
     async function copy() {
         const demo = current;
         try {
-            await navigator.clipboard.writeText(format_snippet(demo.links));
+            await navigator.clipboard.writeText(format_snippet(demo.text));
             if (demo !== current) {
                 return;
             }
@@ -693,13 +695,7 @@ function main()
             copy_timer = setTimeout(() => copy_button.textContent = 'Copy embed', 2000);
         }
         catch {
-            const range = document.createRange();
-            details.open = true;
-            embed_code.focus();
-            range.selectNodeContents(embed_code);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-            copy_status.textContent = 'Copy unavailable. Embed code selected; copy it manually.';
+            copy_status.textContent = 'Copy unavailable. Open in CodePen to get the embed code.';
         }
     }
 }
@@ -722,9 +718,16 @@ function save_theme(theme)
     }
 }
 
+function parse_design(links)
+{
+    const line = links.split('\n').findLast(v => /^%\s*design\s*:/.test(v));
+    return (line && line.slice(line.indexOf(':') + 1).trim()) || 'basic';
+}
+
 function format_snippet(links)
 {
-    return `<div style="position:fixed;inset:0;">\n<script src="https://navplace.com/lib/embed.js" data-links="${links}"><\/script>\n</div>\n`;
+    const attr = links.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+    return `<div style="position:fixed;inset:0;">\n<script src="https://navplace.com/lib/embed.js" data-links="\n${attr}\n"><\/script>\n</div>\n`;
 }
 
 function open_codepen(html)
