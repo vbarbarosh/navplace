@@ -418,6 +418,9 @@
             .demo-actions p {
                 flex-basis: 100%;
             }
+            .topbar nav a[href^="https:"] {
+                display: none;
+            }
             .notes {
                 grid-template-columns: minmax(0, 1fr);
                 gap: 12px;
@@ -438,6 +441,8 @@
             NavPlace
         </a>
         <nav aria-label="Main navigation">
+            <a href="playground.html">Playground</a>
+            <a href="docs.html">Docs</a>
             <a href="https://github.com/vbarbarosh/navplace">GitHub <span aria-hidden="true">↗</span></a>
             <a href="https://github.com/vbarbarosh/navplace/releases/latest">Desktop app <span aria-hidden="true">↗</span></a>
         </nav>

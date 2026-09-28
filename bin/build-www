@@ -28,5 +28,14 @@ cp -r designs/ build/www/
 rm build/www/lib/*.cli.js
 rm build/www/lib/*.test.js
 rm -rf build/www/designs/_plain*
+mkdir build/www/docs
+cp docs/format.md build/www/docs/
+
+# The playground lists the designs from here
+node -e '
+const fs = require("fs");
+const names = fs.readdirSync("build/www/designs").filter(v => fs.existsSync(`build/www/designs/${v}/index.html`)).sort();
+fs.writeFileSync("build/www/designs/index.json", JSON.stringify(names.map(v => ({value: v, label: v})), null, 4) + "\n");
+'
 
 EXIT_MESSAGE="${GREEN}bin/build-www succeeded${RESET}"

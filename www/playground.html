@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Write a NavPlace collection in plain text, pick a design, and see it live.">
+    <title>Playground — NavPlace</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 29 29'%3E%3Crect width='29' height='29' rx='8' fill='%23286445'/%3E%3Cg transform='translate(5 5) scale(0.79)' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 19 4-14 10 10-14 4Z'/%3E%3Cpath d='m9 5 3 7 7 3M12 12l-7 7'/%3E%3C/g%3E%3C/svg%3E">
+    <script>
+        // Apply theme before paint to avoid flash
+        (function () {
+            try {
+                const saved = localStorage.getItem('navplace.theme');
+                const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.dataset.theme = theme;
+            }
+            catch {
+                document.documentElement.dataset.theme = 'light';
+            }
+        })();
+    </script>
+    <style>
+        :root,
+        [data-theme="light"] {
+            --bg: #fafaf9;
+            --panel: #ffffff;
+            --border: #e7e5e4;
+            --border-strong: #d6d3d1;
+            --text: #1c1917;
+            --text-soft: #57534e;
+            --text-mute: #a8a29e;
+            --accent: #0f766e;
+            --accent-soft: #f0fdfa;
+            --code-bg: #f5f5f4;
+            --danger: #b91c1c;
+            --focus: 0 0 0 3px rgba(15, 118, 110, 0.18);
+        }
+
+        [data-theme="dark"] {
+            --bg: #0c0c0e;
+            --panel: #161618;
+            --border: #27272a;
+            --border-strong: #3f3f46;
+            --text: #f4f4f5;
+            --text-soft: #a1a1aa;
+            --text-mute: #71717a;
+            --accent: #2dd4bf;
+            --accent-soft: #0f2926;
+            --code-bg: #111113;
+            --danger: #f87171;
+            --focus: 0 0 0 3px rgba(45, 212, 191, 0.22);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text);
+            background: var(--bg);
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 160ms ease, color 160ms ease;
+        }
+
+        a {
+            transition: color 120ms ease;
+            color: var(--text-soft);
+            text-decoration: none;
+        }
+        a:hover {
+            color: var(--text);
+        }
+
+        code, pre, textarea {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        button, select {
+            font: inherit;
+            color: inherit;
+        }
+        button {
+            cursor: pointer;
+            user-select: none;
+        }
+        button:focus-visible, a:focus-visible, select:focus-visible {
+            outline: none;
+            box-shadow: var(--focus);
+        }
+
+        .app {
+            display: grid;
+            grid-template-rows: auto auto minmax(0, 1fr);
+            height: 100vh;
+            height: 100dvh;
+            padding: 0 16px 16px;
+        }
+
+        /* ---------- Top bar ---------- */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            height: 52px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--text);
+            font-weight: 720;
+            font-size: 18px;
+            letter-spacing: -0.6px;
+        }
+        .mark {
+            display: grid;
+            place-items: center;
+            width: 29px;
+            height: 29px;
+            border-radius: 8px;
+            color: #ffffff;
+            background: #286445;
+        }
+        .topbar h1 {
+            margin: 0 auto 0 0;
+            color: var(--text-mute);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .topbar nav {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .topbar nav [aria-current] {
+            color: var(--text);
+        }
+
+        .theme {
+            display: flex;
+            padding: 2px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--panel);
+        }
+        .theme button {
+            transition: color 120ms ease, background-color 120ms ease;
+            display: grid;
+            place-items: center;
+            width: 26px;
+            height: 22px;
+            padding: 0;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-mute);
+        }
+        .theme button:hover {
+            color: var(--text);
+        }
+        .theme button[aria-pressed="true"] {
+            color: var(--text);
+            background: var(--code-bg);
+        }
+
+        /* ---------- Toolbar ---------- */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0 10px;
+        }
+        .toolbar label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-soft);
+            font-size: 12px;
+        }
+        .toolbar select {
+            transition: border-color 120ms ease;
+            height: 26px;
+            padding: 0 6px;
+            border: 1px solid var(--border-strong);
+            border-radius: 7px;
+            background: var(--panel);
+            font-size: 12px;
+        }
+        .toolbar select:hover {
+            border-color: var(--text-mute);
+        }
+        .status {
+            flex: 1;
+            min-width: 0;
+            margin: 0 0 0 8px;
+            overflow: hidden;
+            color: var(--text-mute);
+            font-size: 12px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .status[data-error] {
+            color: var(--danger);
+        }
+
+        .btn {
+            transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 26px;
+            padding: 0 10px;
+            border: 1px solid var(--border-strong);
+            border-radius: 7px;
+            background: var(--panel);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .btn:hover {
+            color: var(--text);
+            border-color: var(--text-mute);
+        }
+        .btn[aria-pressed="true"] {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+        .btn-primary {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: var(--bg);
+        }
+        .btn-primary:hover {
+            color: var(--bg);
+            border-color: var(--text);
+            background: var(--text);
+        }
+
+        /* ---------- Work area ---------- */
+        .work {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, var(--split, 40%)) 1px minmax(0, 1fr);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--panel);
+            overflow: hidden;
+        }
+        .pane {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+        }
+        .pane-heading {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 6px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-mute);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .pane-heading code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-weight: 400;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+        .pane textarea {
+            flex: 1;
+            width: 100%;
+            margin: 0;
+            padding: 14px 16px;
+            border: 0;
+            overflow: auto;
+            resize: none;
+            white-space: pre;
+            color: var(--text);
+            background: var(--code-bg);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .pane textarea:focus {
+            outline: none;
+        }
+        .pane iframe {
+            flex: 1;
+            width: 100%;
+            border: 0;
+            background: #ffffff;
+        }
+
+        /* ---------- Divider ---------- */
+        .divider {
+            transition: background-color 120ms ease;
+            position: relative;
+            z-index: 1;
+            background: var(--border);
+            cursor: col-resize;
+            touch-action: none;
+        }
+        .divider::before {
+            content: "";
+            position: absolute;
+            inset: 0 -5px;
+        }
+        .divider:hover, .work[data-dragging] .divider {
+            background: var(--accent);
+        }
+        .divider:focus-visible {
+            outline: none;
+            background: var(--accent);
+            box-shadow: var(--focus);
+        }
+        .work[data-dragging] {
+            cursor: col-resize;
+            user-select: none;
+        }
+        .work[data-dragging] iframe {
+            pointer-events: none;
+        }
+
+        @media (max-width: 720px) {
+            .app {
+                display: block;
+                height: auto;
+            }
+            .topbar h1 {
+                display: none;
+            }
+            .brand {
+                margin-right: auto;
+            }
+            .topbar nav a[href^="https:"] {
+                display: none;
+            }
+            .toolbar {
+                flex-wrap: wrap;
+            }
+            .status {
+                flex-basis: 100%;
+                order: 1;
+                margin: 0;
+            }
+            .work {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: 45vh 70vh;
+            }
+            .divider {
+                display: none;
+            }
+            .pane-preview {
+                border-top: 1px solid var(--border);
+            }
+            .pane textarea {
+                padding: 12px 14px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <header class="topbar">
+        <a class="brand" href="./" aria-label="NavPlace home">
+            <span class="mark" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 19 4-14 10 10-14 4Z"/><path d="m9 5 3 7 7 3M12 12l-7 7"/></svg></span>
+            NavPlace
+        </a>
+        <h1>Playground</h1>
+        <nav aria-label="Main navigation">
+            <a href="playground.html" aria-current="page">Playground</a>
+            <a href="docs.html">Docs</a>
+            <a href="https://github.com/vbarbarosh/navplace">GitHub <span aria-hidden="true">↗</span></a>
+            <a href="https://github.com/vbarbarosh/navplace/releases/latest">Desktop app <span aria-hidden="true">↗</span></a>
+        </nav>
+        <div class="theme" role="group" aria-label="Theme">
+            <button type="button" data-theme-value="light" title="Light" aria-label="Light">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+            </button>
+            <button type="button" data-theme-value="dark" title="Dark" aria-label="Dark">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="toolbar">
+        <label>Design <select aria-label="Design"></select></label>
+        <button class="btn" type="button" data-action="reset" title="Replace the text with the starter collection">Reset</button>
+        <p class="status" role="status"></p>
+        <button class="btn" type="button" data-action="copy">Copy embed</button>
+        <button class="btn btn-primary" type="button" data-action="codepen">Open in CodePen <span aria-hidden="true">↗</span></button>
+    </div>
+
+    <main class="work">
+        <section class="pane pane-editor" id="editor-pane" aria-label="Source">
+            <div class="pane-heading"><code>links.txt</code></div>
+            <textarea aria-label="Collection source" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+        </section>
+        <div class="divider" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize panels" aria-controls="editor-pane" aria-valuemin="0" aria-valuemax="100" title="Drag to resize, double-click to reset"></div>
+        <section class="pane pane-preview" aria-label="Preview">
+            <div class="pane-heading">Preview</div>
+            <iframe title="Collection preview"></iframe>
+        </section>
+    </main>
+
+</div>
+
+<script src="lib/parse.js"></script>
+<script>
+const default_split = 0.4;
+const starter = `
+% design: showcase
+% title: My links
+% email: hello@example.com
+
+# Work
+GitHub       #code  https://github.com/
+Gmail        #mail  https://mail.google.com/
+Calendar            https://calendar.google.com/
+
+# Reading
+Hacker News  #news  https://news.ycombinator.com/
+MDN          #docs  https://developer.mozilla.org/
+                    https://en.wikipedia.org/
+`.trim();
+
+main();
+
+function main()
+{
+    const work = document.querySelector('.work');
+    const editor = document.querySelector('.pane-editor textarea');
+    const frame = document.querySelector('.pane-preview iframe');
+    const design_select = document.querySelector('.toolbar select');
+    const status = document.querySelector('.status');
+    const divider = document.querySelector('.divider');
+    const copy_button = document.querySelector('[data-action="copy"]');
+    let designs = null;
+    let frame_design = null;
+    let frame_ready = false;
+    let refocus = false;
+    let render_timer;
+    let split = load_split() ?? default_split;
+    let copy_timer;
+
+    // Chrome on Wayland can hold a drag session and freeze the tab
+    document.addEventListener('dragstart', v => v.preventDefault());
+
+    for (const button of document.querySelectorAll('[data-theme-value]')) {
+        button.addEventListener('click', () => save_theme(button.dataset.themeValue));
+    }
+    set_theme(document.documentElement.dataset.theme);
+
+    editor.value = load_draft() ?? starter;
+    editor.addEventListener('input', function () {
+        save_draft(editor.value);
+        clearTimeout(render_timer);
+        render_timer = setTimeout(render, 300);
+    });
+    design_select.addEventListener('change', function () {
+        editor.value = format_design(editor.value, design_select.value);
+        save_draft(editor.value);
+        render();
+    });
+    document.querySelector('[data-action="reset"]').addEventListener('click', function () {
+        editor.value = starter;
+        save_draft(null);
+        render();
+    });
+    copy_button.addEventListener('click', copy);
+    document.querySelector('[data-action="codepen"]').addEventListener('click', () => open_codepen(format_snippet(editor.value.trim())));
+
+    // A design says it is ready on every load; it gets the text in reply
+    window.addEventListener('message', function (event) {
+        if (event.source !== frame.contentWindow || event.data?.type !== 'navplace:ready') {
+            return;
+        }
+        frame_ready = true;
+        post_text();
+    });
+    // A design focuses its own search box on load; typing keeps going in the editor
+    frame.addEventListener('load', function () {
+        if (refocus) {
+            editor.focus();
+        }
+    });
+
+    divider.addEventListener('pointerdown', function (event) {
+        if (event.button !== 0) {
+            return;
+        }
+        event.preventDefault();
+        divider.setPointerCapture(event.pointerId);
+        work.toggleAttribute('data-dragging', true);
+    });
+    divider.addEventListener('pointermove', function (event) {
+        if (divider.hasPointerCapture(event.pointerId)) {
+            const rect = work.getBoundingClientRect();
+            split = clamp_split((event.clientX - rect.left) / rect.width);
+            render_split();
+        }
+    });
+    divider.addEventListener('lostpointercapture', function () {
+        work.toggleAttribute('data-dragging', false);
+        save_split(split);
+    });
+    divider.addEventListener('keydown', function (event) {
+        const step = event.shiftKey ? 0.1 : 0.02;
+        if (event.key === 'ArrowLeft') {
+            split = clamp_split(split - step);
+        }
+        else if (event.key === 'ArrowRight') {
+            split = clamp_split(split + step);
+        }
+        else {
+            return;
+        }
+        event.preventDefault();
+        render_split();
+        save_split(split);
+    });
+    divider.addEventListener('dblclick', function () {
+        split = default_split;
+        render_split();
+        save_split(null);
+    });
+    window.addEventListener('resize', render_split);
+
+    render_split();
+    render();
+    load_designs();
+
+    function render() {
+        let parsed;
+        try {
+            parsed = parse(editor.value);
+        }
+        catch (error) {
+            status.textContent = `${error.message}. The preview shows the last text that parsed.`;
+            status.dataset.error = '';
+            return;
+        }
+        const design = parsed.meta.design || 'basic';
+        design_select.value = design;
+        // A half-typed name would load a missing page
+        if (designs && !designs.includes(design)) {
+            status.textContent = `No design named "${design}". The preview shows the last design that exists.`;
+            status.dataset.error = '';
+            return;
+        }
+        status.textContent = `${parsed.items.length} ${parsed.items.length === 1 ? 'link' : 'links'}`;
+        delete status.dataset.error;
+        if (design !== frame_design) {
+            frame_design = design;
+            frame_ready = false;
+            refocus = (document.activeElement === editor);
+            frame.src = `designs/${encodeURIComponent(design)}/index.html`;
+        }
+        else if (frame_ready) {
+            post_text();
+        }
+    }
+
+    function post_text() {
+        frame.contentWindow.postMessage({type: 'navplace:items-text', text: editor.value}, '*');
+    }
+
+    // A narrow window squeezes the split without forgetting it
+    function render_split() {
+        const value = clamp_split(split);
+        work.style.setProperty('--split', `${(value * 100).toFixed(2)}%`);
+        divider.setAttribute('aria-valuenow', String(Math.round(value * 100)));
+    }
+
+    // Each pane keeps a usable width
+    function clamp_split(value) {
+        const min = 240 / work.clientWidth;
+        const max = 1 - 320 / work.clientWidth;
+        return (min < max) ? Math.min(max, Math.max(min, value)) : 0.5;
+    }
+
+    async function load_designs() {
+        try {
+            const response = await fetch('designs/index.json');
+            const options = await response.json();
+            for (const option of options) {
+                design_select.append(new Option(option.label, option.value));
+            }
+            designs = options.map(v => v.value);
+            render();
+        }
+        catch {
+            design_select.disabled = true;
+        }
+    }
+
+    async function copy() {
+        try {
+            await navigator.clipboard.writeText(format_snippet(editor.value.trim()));
+            copy_button.textContent = 'Copied!';
+            clearTimeout(copy_timer);
+            copy_timer = setTimeout(() => copy_button.textContent = 'Copy embed', 2000);
+        }
+        catch {
+            status.textContent = 'Copy unavailable. Open in CodePen to get the embed code.';
+        }
+    }
+}
+
+function set_theme(theme)
+{
+    document.documentElement.dataset.theme = theme;
+    for (const button of document.querySelectorAll('[data-theme-value]')) {
+        button.setAttribute('aria-pressed', String(button.dataset.themeValue === theme));
+    }
+}
+
+function save_theme(theme)
+{
+    set_theme(theme);
+    try {
+        localStorage.setItem('navplace.theme', theme);
+    }
+    catch {
+    }
+}
+
+function load_draft()
+{
+    try {
+        return localStorage.getItem('navplace.playground');
+    }
+    catch {
+        return null;
+    }
+}
+
+function load_split()
+{
+    try {
+        const value = parseFloat(localStorage.getItem('navplace.playground.split'));
+        return Number.isFinite(value) ? value : null;
+    }
+    catch {
+        return null;
+    }
+}
+
+function save_split(value)
+{
+    try {
+        if (value === null) {
+            localStorage.removeItem('navplace.playground.split');
+        }
+        else {
+            localStorage.setItem('navplace.playground.split', String(value));
+        }
+    }
+    catch {
+    }
+}
+
+function save_draft(text)
+{
+    try {
+        if (text === null) {
+            localStorage.removeItem('navplace.playground');
+        }
+        else {
+            localStorage.setItem('navplace.playground', text);
+        }
+    }
+    catch {
+    }
+}
+
+// Rewrites the last `% design:` line, the one the parser keeps
+function format_design(links, design)
+{
+    const lines = links.split('\n');
+    const i = lines.findLastIndex(v => /^\s*%\s*design\s*:/.test(v));
+    if (i === -1) {
+        return `% design: ${design}\n${links}`;
+    }
+    lines[i] = `% design: ${design}`;
+    return lines.join('\n');
+}
+
+function format_snippet(links)
+{
+    const attr = links.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+    return `<div style="position:fixed;inset:0;">\n<script src="https://navplace.com/lib/embed.js" data-links="\n${attr}\n"><\/script>\n</div>\n`;
+}
+
+function open_codepen(html)
+{
+    const form = document.createElement('form');
+    const input = document.createElement('input');
+    form.action = 'https://codepen.io/pen/define';
+    form.method = 'POST';
+    form.target = '_blank';
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify({title: 'NavPlace collection', html, css: '', js: ''});
+    form.append(input);
+    document.body.append(form);
+    form.submit();
+    form.remove();
+}
+</script>
+
+</body>
+</html>
