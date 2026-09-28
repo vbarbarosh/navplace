@@ -298,19 +298,15 @@
         .demo-view code {
             font-size: 11px;
         }
-        .demo-window {
-            position: relative;
-            height: 520px;
-        }
         .demo-window textarea {
             display: block;
             width: 100%;
-            height: 100%;
+            min-height: 320px;
             margin: 0;
             padding: 16px 20px;
             border: 0;
             border-radius: 0;
-            overflow: auto;
+            overflow: hidden auto;
             resize: none;
             white-space: pre;
             color: var(--text);
@@ -326,8 +322,8 @@
             display: none;
         }
         .demo-frames {
-            position: absolute;
-            inset: 0;
+            position: relative;
+            height: 520px;
         }
         .demo-frames > div {
             position: absolute;
@@ -405,7 +401,7 @@
             .demo-view {
                 margin-left: 0;
             }
-            .demo-window {
+            .demo-frames {
                 height: 480px;
             }
             .demo-window textarea {
@@ -630,7 +626,11 @@ function main()
         button.addEventListener('click', () => show(button.dataset.view));
     }
 
-    source.addEventListener('input', () => current.text = source.value);
+    source.addEventListener('input', function () {
+        current.text = source.value;
+        fit_source();
+    });
+    window.addEventListener('resize', fit_source);
     copy_button.addEventListener('click', copy);
     document.querySelector('[data-action="codepen"]').addEventListener('click', () => open_codepen(format_snippet(current.text)));
 
@@ -647,12 +647,27 @@ function main()
         if (view === 'preview') {
             render_preview();
         }
+        else {
+            fit_source();
+        }
+    }
+
+    // links.txt grows with its text; a long line scrolls sideways
+    function fit_source() {
+        if (source.hidden) {
+            return;
+        }
+        const scroll_y = window.scrollY;
+        source.style.height = 'auto';
+        source.style.height = `${source.scrollHeight + source.offsetHeight - source.clientHeight}px`;
+        window.scrollTo(window.scrollX, scroll_y);
     }
 
     function select(demo) {
         current = demo;
         source.value = demo.text;
-        source.scrollTop = 0;
+        source.scrollLeft = 0;
+        fit_source();
         clearTimeout(copy_timer);
         copy_button.textContent = 'Copy embed';
         copy_status.textContent = '';

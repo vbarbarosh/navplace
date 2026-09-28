@@ -1,0 +1,15 @@
+% design: basic-for-portfolio2
+
+# Work
+GitHub       https://github.com/
+CodePen      https://codepen.io/
+Dribbble     https://dribbble.com/
+Behance      https://www.behance.net/
+
+# Writing
+Blog         https://medium.com/
+DEV          https://dev.to/
+
+# Contact
+LinkedIn     https://www.linkedin.com/
+Calendly     https://calendly.com/

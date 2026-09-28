@@ -141,6 +141,7 @@
         }
         .topbar nav [aria-current] {
             color: var(--text);
+            font-weight: 600;
         }
 
         .theme {
@@ -192,13 +193,24 @@
             text-transform: uppercase;
         }
         .toc ul {
-            margin: 0;
+            margin: 0 0 0 -8px;
             padding: 0;
             list-style: none;
         }
         .toc a {
+            transition: color 120ms ease, background-color 120ms ease;
             display: block;
-            padding: 3px 0;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+        .toc a:hover {
+            color: var(--text);
+            background: var(--code-bg);
+        }
+        .toc a[aria-current] {
+            color: var(--accent);
+            background: var(--accent-soft);
+            font-weight: 600;
         }
         .toc code {
             font-size: 12px;
@@ -342,6 +354,8 @@ async function main()
     const docs = document.querySelector('.docs');
     const toc = document.querySelector('.toc ul');
     const base = 'https://github.com/vbarbarosh/navplace/blob/master/docs/';
+    const links = new Map();
+    let pinned = null;
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
@@ -375,12 +389,54 @@ async function main()
         heading.id = format_slug(heading.textContent);
         link.href = `#${heading.id}`;
         link.innerHTML = heading.innerHTML;
+        // The jump to the heading is done by the time the next frame runs
+        link.addEventListener('click', () => requestAnimationFrame(() => pin(heading)));
+        links.set(heading, link);
         item.append(link);
         toc.append(item);
     }
 
-    if (location.hash) {
-        document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();
+    window.addEventListener('scroll', mark_current, {passive: true});
+    window.addEventListener('resize', mark_current);
+    window.addEventListener('hashchange', () => pin(find_hash()));
+
+    const target = find_hash();
+    target?.scrollIntoView();
+    pin(target);
+
+    function find_hash() {
+        return location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+    }
+
+    // A section near the end cannot reach the top; the one picked stays current until the page moves
+    function pin(heading) {
+        pinned = heading && {heading, y: window.scrollY};
+        mark_current();
+    }
+
+    // The current section is the last heading that passed the top; at the end of the page, the topmost one in view
+    function mark_current() {
+        const headings = [...links.keys()];
+        let current = null;
+        if (pinned && Math.abs(window.scrollY - pinned.y) < 2) {
+            current = pinned.heading;
+        }
+        else {
+            const at_end = (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2);
+            pinned = null;
+            if (at_end) {
+                current = headings.find(v => v.getBoundingClientRect().top >= 0);
+            }
+            current ??= headings.findLast(v => v.getBoundingClientRect().top <= 96) ?? headings[0];
+        }
+        for (const [heading, link] of links) {
+            if (heading === current) {
+                link.setAttribute('aria-current', 'location');
+            }
+            else {
+                link.removeAttribute('aria-current');
+            }
+        }
     }
 }
 

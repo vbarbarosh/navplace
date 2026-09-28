@@ -1,0 +1,10 @@
+% design: basic-for-recipes
+
+Bon Appétit         #category=Magazine    https://www.bonappetit.com/recipes
+Serious Eats        #category=Technique   https://www.seriouseats.com/recipes
+BBC Good Food       #category=Everyday    https://www.bbcgoodfood.com/recipes
+NYT Cooking         #category=Magazine    https://cooking.nytimes.com/
+Budget Bytes        #category=Budget      https://www.budgetbytes.com/
+Minimalist Baker    #category=Vegan       https://minimalistbaker.com/recipes/
+King Arthur Baking  #category=Baking      https://www.kingarthurbaking.com/recipes
+Epicurious          #category=Everyday    https://www.epicurious.com/recipes-menus

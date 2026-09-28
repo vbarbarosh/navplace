@@ -1,0 +1,17 @@
+% design: basic-for-internal2
+
+# Production
+Status page          #status   https://status.example.com/
+Grafana dashboards   #metrics  https://grafana.com/
+Sentry issues        #errors   https://sentry.io/
+PagerDuty on-call    #oncall   https://www.pagerduty.com/
+
+# Delivery
+GitHub pull requests #code     https://github.com/pulls
+GitHub Actions       #ci       https://github.com/features/actions
+Docker Hub           #images   https://hub.docker.com/
+
+# Cloud
+AWS console          #aws      https://console.aws.amazon.com/
+Cloudflare           #dns      https://dash.cloudflare.com/
+Google Cloud         #gcp      https://console.cloud.google.com/

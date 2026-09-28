@@ -1,0 +1,12 @@
+% design: basic-for-internal3-with-groups
+
+EC2 instances        https://console.aws.amazon.com/ec2/
+RDS databases        https://console.aws.amazon.com/rds/
+S3 buckets           https://console.aws.amazon.com/s3/
+CloudWatch logs      https://console.aws.amazon.com/cloudwatch/
+Pull requests        https://github.com/pulls
+Issues               https://github.com/issues
+Actions              https://github.com/features/actions
+DNS                  https://dash.cloudflare.com/
+Status page          https://status.example.com/
+Sentry               https://sentry.io/

@@ -1,0 +1,10 @@
+% design: google-chrome
+
+YouTube      https://www.youtube.com/
+Gmail        https://mail.google.com/
+Maps         https://maps.google.com/
+Drive        https://drive.google.com/
+Calendar     https://calendar.google.com/
+Photos       https://photos.google.com/
+Translate    https://translate.google.com/
+News         https://news.google.com/

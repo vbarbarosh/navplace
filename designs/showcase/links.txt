@@ -1,0 +1,14 @@
+% design: showcase
+% title: My links
+% email: hello@example.com
+% subtitle: Favourites
+
+# Work
+GitHub       #code  https://github.com/
+Gmail        #mail  https://mail.google.com/
+Calendar            https://calendar.google.com/
+
+# Reading
+Hacker News  #news  https://news.ycombinator.com/
+MDN          #docs  https://developer.mozilla.org/
+                    https://en.wikipedia.org/

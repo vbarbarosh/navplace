@@ -1,0 +1,18 @@
+% design: github
+
+# Runtimes
+Node.js      https://github.com/nodejs/node
+Deno         https://github.com/denoland/deno
+Bun          https://github.com/oven-sh/bun
+
+# Frameworks
+Vue          https://github.com/vuejs/core
+React        https://github.com/facebook/react
+Svelte       https://github.com/sveltejs/svelte
+Express      https://github.com/expressjs/express
+
+# Tools
+Vite         https://github.com/vitejs/vite
+ESLint       https://github.com/eslint/eslint
+Puppeteer    https://github.com/puppeteer/puppeteer
+FFmpeg       https://github.com/FFmpeg/FFmpeg

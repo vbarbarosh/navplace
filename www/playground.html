@@ -143,6 +143,7 @@
         }
         .topbar nav [aria-current] {
             color: var(--text);
+            font-weight: 600;
         }
 
         .theme {
@@ -401,7 +402,7 @@
 
     <div class="toolbar">
         <label>Design <select aria-label="Design"></select></label>
-        <button class="btn" type="button" data-action="reset" title="Replace the text with the starter collection">Reset</button>
+        <button class="btn" type="button" data-action="reset" title="Replace the text with the sample for this design">Reset</button>
         <p class="status" role="status"></p>
         <button class="btn" type="button" data-action="copy">Copy embed</button>
         <button class="btn btn-primary" type="button" data-action="codepen">Open in CodePen <span aria-hidden="true">↗</span></button>
@@ -424,25 +425,10 @@
 <script src="lib/parse.js"></script>
 <script>
 const default_split = 0.4;
-const starter = `
-% design: showcase
-% title: My links
-% email: hello@example.com
-
-# Work
-GitHub       #code  https://github.com/
-Gmail        #mail  https://mail.google.com/
-Calendar            https://calendar.google.com/
-
-# Reading
-Hacker News  #news  https://news.ycombinator.com/
-MDN          #docs  https://developer.mozilla.org/
-                    https://en.wikipedia.org/
-`.trim();
 
 main();
 
-function main()
+async function main()
 {
     const work = document.querySelector('.work');
     const editor = document.querySelector('.pane-editor textarea');
@@ -457,6 +443,7 @@ function main()
     let refocus = false;
     let render_timer;
     let split = load_split() ?? default_split;
+    let sample_request = null;
     let copy_timer;
 
     // Chrome on Wayland can hold a drag session and freeze the tab
@@ -467,21 +454,24 @@ function main()
     }
     set_theme(document.documentElement.dataset.theme);
 
-    editor.value = load_draft() ?? starter;
     editor.addEventListener('input', function () {
         save_draft(editor.value);
         clearTimeout(render_timer);
         render_timer = setTimeout(render, 300);
     });
-    design_select.addEventListener('change', function () {
-        editor.value = format_design(editor.value, design_select.value);
-        save_draft(editor.value);
-        render();
+    // Picking a design loads its sample; without one, only the design line changes
+    design_select.addEventListener('change', async function () {
+        const design = design_select.value;
+        const sample = await load_sample(design);
+        if (sample !== undefined) {
+            replace_text(sample ?? format_design(editor.value, design));
+        }
     });
-    document.querySelector('[data-action="reset"]').addEventListener('click', function () {
-        editor.value = starter;
-        save_draft(null);
-        render();
+    document.querySelector('[data-action="reset"]').addEventListener('click', async function () {
+        const sample = await load_sample(frame_design ?? 'showcase');
+        if (typeof sample === 'string') {
+            replace_text(sample);
+        }
     });
     copy_button.addEventListener('click', copy);
     document.querySelector('[data-action="codepen"]').addEventListener('click', () => open_codepen(format_snippet(editor.value.trim())));
@@ -543,6 +533,7 @@ function main()
     window.addEventListener('resize', render_split);
 
     render_split();
+    editor.value = load_draft() ?? await load_sample('showcase') ?? '';
     render();
     load_designs();
 
@@ -575,6 +566,33 @@ function main()
         else if (frame_ready) {
             post_text();
         }
+    }
+
+    // null when the design has no sample; undefined when a later pick took over
+    async function load_sample(design) {
+        const request = sample_request = {};
+        try {
+            const response = await fetch(`designs/${encodeURIComponent(design)}/links.txt`);
+            const text = response.ok ? (await response.text()).trim() : null;
+            return (request === sample_request) ? text : undefined;
+        }
+        catch {
+            return null;
+        }
+    }
+
+    // Through the editing commands, so Ctrl+Z brings the previous text back
+    function replace_text(text) {
+        editor.focus();
+        editor.select();
+        if (!document.execCommand('insertText', false, text)) {
+            editor.value = text;
+        }
+        editor.setSelectionRange(0, 0);
+        editor.scrollTop = 0;
+        save_draft(editor.value);
+        clearTimeout(render_timer);
+        render();
     }
 
     function post_text() {
@@ -679,12 +697,7 @@ function save_split(value)
 function save_draft(text)
 {
     try {
-        if (text === null) {
-            localStorage.removeItem('navplace.playground');
-        }
-        else {
-            localStorage.setItem('navplace.playground', text);
-        }
+        localStorage.setItem('navplace.playground', text);
     }
     catch {
     }

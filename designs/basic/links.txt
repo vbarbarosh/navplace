@@ -1,0 +1,10 @@
+% design: basic
+
+GitHub             #code   https://github.com/
+Gmail              #mail   https://mail.google.com/
+Google Calendar            https://calendar.google.com/
+Google Drive               https://drive.google.com/
+YouTube                    https://www.youtube.com/
+Wikipedia                  https://en.wikipedia.org/
+Hacker News        #news   https://news.ycombinator.com/
+MDN Web Docs       #docs   https://developer.mozilla.org/
