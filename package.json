@@ -17,7 +17,7 @@
     "@vbarbarosh/express-helpers": "^2.2.1",
     "@vbarbarosh/node-helpers": "^3.75.0",
     "@vbarbarosh/type-helpers": "^0.4.0",
-    "better-sqlite3": "^12.10.0",
+    "better-sqlite3": "^13.0.3",
     "bluebird": "^3.7.2",
     "express": "^4.22.2",
     "knex": "^3.2.10",
