@@ -1,5 +1,3 @@
-const amx = require('@vbarbarosh/express-helpers/src/amx');
-
 function express_routes(app, routes, prepend = [])
 {
     for (let i = 0, ii = routes.length; i < ii; ++i) {
@@ -16,8 +14,9 @@ function express_routes(app, routes, prepend = [])
             if (fn.length >= 3) {
                 return fn;
             }
-            // normal handler
-            return amx((req, res) => fn(req, res));
+            // normal handler: express 5 forwards a rejected promise to next(error) itself,
+            // and warns about the Bluebird one amx used to return
+            return (req, res) => fn(req, res);
         }));
     }
     return app;

@@ -2,7 +2,11 @@ const als = require('../als');
 
 function express_run(app, port = 3000, host = 'localhost')
 {
-    const server = app.listen(port, host, function () {
+    const server = app.listen(port, host, function (error) {
+        // express 5 hands a listen error (EADDRINUSE) to the callback instead of throwing
+        if (error) {
+            throw error;
+        }
         const {address, port} = this.address();
         als.logger.write(`[express_run] Listening to ${address}:${port}`);
     });
