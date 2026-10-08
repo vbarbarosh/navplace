@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.3.0",
-    "@sentry/node": "^10.53.1",
+    "@sentry/node": "^11.6.0",
     "@vbarbarosh/express-helpers": "^2.2.1",
     "@vbarbarosh/node-helpers": "^3.75.0",
     "@vbarbarosh/type-helpers": "^0.4.0",

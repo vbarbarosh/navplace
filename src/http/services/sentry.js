@@ -17,7 +17,15 @@ function init_sentry(config)
     const options = {
         dsn: config.sentry.dsn,
         release: `${pkg.name}@${pkg.version}`,
-        sendDefaultPii: false,
+        // v11 dropped sendDefaultPii; these are what it used to switch off
+        dataCollection: {
+            userInfo: false,
+            cookies: false,
+            httpHeaders: false,
+            httpBodies: [],
+            urlQueryParams: false,
+            databaseQueryData: false,
+        },
         beforeSend: sentry_before_send,
     };
 
@@ -40,13 +48,6 @@ function sentry_request_context(req, res, next)
         Sentry.setUser({id: req.user_uid});
     }
     next();
-}
-
-function setup_sentry_error_handler(app)
-{
-    if (Sentry.isInitialized()) {
-        Sentry.setupExpressErrorHandler(app);
-    }
 }
 
 function sentry_before_send(event, hint)
@@ -119,6 +120,5 @@ module.exports = {
     init_sentry,
     sentry_before_send,
     sentry_request_context,
-    setup_sentry_error_handler,
     sanitize_sentry_event,
 };

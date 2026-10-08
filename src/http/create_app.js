@@ -7,7 +7,7 @@ const format_hrtime0 = require('./helpers/format/format_hrtime0');
 const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const random_uid = require('./helpers/random/random_uid');
 const user_create = require('./models/user_create');
-const {sentry_request_context, setup_sentry_error_handler} = require('./services/sentry');
+const {sentry_request_context} = require('./services/sentry');
 const {setup_websockets} = require('./services/events');
 
 const LOGGED_HEADERS = new Set([
@@ -72,7 +72,7 @@ async function create_app()
     express_routes(app, require('./routes/dashboard'));
     express_routes(app, require('./routes/api/collections'));
 
-    setup_sentry_error_handler(app);
+    // Sentry 11's Express integration captures the errors itself (5xx and ones with no status)
     app.use(error_handler);
 
     app.setup_server = setup_websockets;
