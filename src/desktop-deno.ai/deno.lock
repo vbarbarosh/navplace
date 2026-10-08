@@ -1,23 +1,23 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@std/yaml@1.1.2": "1.1.2",
-    "npm:ws@8.21.0": "8.21.0"
+    "jsr:@std/yaml@1.3.0": "1.3.0",
+    "npm:ws@8.22.0": "8.22.0"
   },
   "jsr": {
-    "@std/yaml@1.1.2": {
-      "integrity": "de612653c036749ba2044165e316f52412b0f0698afffb7ee80b5331d6d2abae"
+    "@std/yaml@1.3.0": {
+      "integrity": "b250103854378b8b36cbff0fe95aec017d3d9ce86b489c67605180c602fb4922"
     }
   },
   "npm": {
-    "ws@8.21.0": {
-      "integrity": "sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g=="
+    "ws@8.22.0": {
+      "integrity": "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg=="
     }
   },
   "workspace": {
     "dependencies": [
-      "jsr:@std/yaml@1.1.2",
-      "npm:ws@8.21.0"
+      "jsr:@std/yaml@1.3.0",
+      "npm:ws@8.22.0"
     ]
   }
 }
