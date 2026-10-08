@@ -16,7 +16,7 @@
     "@sentry/node": "^10.53.1",
     "@vbarbarosh/express-helpers": "^2.2.1",
     "@vbarbarosh/node-helpers": "^3.75.0",
-    "@vbarbarosh/type-helpers": "0.2.0",
+    "@vbarbarosh/type-helpers": "^0.4.0",
     "better-sqlite3": "^12.10.0",
     "bluebird": "^3.7.2",
     "express": "^4.22.2",
