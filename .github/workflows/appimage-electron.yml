@@ -69,10 +69,6 @@ jobs:
         working-directory: src/desktop-electron
         run: npm test
 
-      - name: Prepare bundled static directory
-        if: steps.plan.outputs.build == 'true'
-        run: mkdir -p src/desktop-electron/static/unpkg
-
       - name: Build AppImage
         if: steps.plan.outputs.build == 'true'
         run: src/desktop-electron/bin/build

@@ -40,7 +40,7 @@ designs/<your-design-name>/
 - Folder name = design name (referenced as `% design: <your-design-name>`).
 - All file references inside `index.html` must be **relative to the design folder**.
 - The shared runtime lives at `../../lib/navplace.js` (two levels up).
-- Optional shared vendor libs (Vue, Bluebird, smcss) live at `../../unpkg/<package>@<version>/...` — existing designs use these but a design can equally well be vanilla JS with no deps.
+- Optional shared vendor libs (Vue, smcss) live at `../../lib/vendor/<package>@<version>/...` — two existing designs use these, but a design can equally well be vanilla JS with no deps.
 
 ## Runtime API
 
@@ -159,7 +159,7 @@ data:            devtools://   file://   private://
 This means:
 
 - ❌ **No Google Fonts**, no `@import url(https://…)` in CSS.
-- ❌ **No CDN libraries** loaded via `<script src="https://…">` (use the bundled `../../unpkg/...` paths or vanilla JS).
+- ❌ **No CDN libraries** loaded via `<script src="https://…">` (use the bundled `../../lib/vendor/...` paths or vanilla JS).
 - ❌ **No remote images** in your design's chrome (decorative SVGs, background art). Inline them as `data:` URLs or local files.
 - ✅ **Item icons via `item.icon_url`** — these go through the allowed `app://favicon/` protocol.
 - ✅ **Item images via `item.image_url`** — these go through the allowed `private://` protocol.

@@ -4,15 +4,14 @@
     <meta charset="utf-8">
     <title>Google Chrome Theme | NavPlace</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="../../unpkg/@vbarbarosh/smcss@1.2.0/dist/sm.css" rel="stylesheet">
+    <link href="../../lib/vendor/smcss@1.2.0/sm.css" rel="stylesheet">
     <link href="theme.css" rel="stylesheet">
 </head>
 <body>
 
 <div id="app"></div>
 
-<script src="../../unpkg/bluebird@3.7.2/js/browser/bluebird.js"></script>
-<script src="../../unpkg/vue@3.5.25/dist/vue.global.js"></script>
+<script src="../../lib/vendor/vue@3.5.25/vue.global.prod.js"></script>
 <script src="../../lib/navplace.js"></script>
 <script>
 const app = Vue.createApp({
@@ -35,7 +34,7 @@ const app = Vue.createApp({
 
                 <a v-for="item in items" v-bind:href="item.href" class="tile">
                     <span class="tile-inner">
-                        <img v-if="item.icon" v-bind:src="item.icon" alt="">
+                        <img v-if="item.icon_url" v-bind:src="item.icon_url" alt="">
                     </span>
                     <span class="tile-label">{{ item.label }}</span>
                 </a>

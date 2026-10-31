@@ -8,8 +8,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
-    "test": "node --test 'helpers/**/*.test.js'",
-    "postinstall": "echo bin/configure-unpkg"
+    "test": "node --test 'helpers/**/*.test.js'"
   },
   "build": {
     "appId": "com.navplace",
@@ -20,8 +19,7 @@
       "output": "build"
     },
     "files": [
-      "**/*",
-      "!static/**"
+      "**/*"
     ],
     "extraFiles": [
       {
@@ -31,10 +29,6 @@
       {
         "from": "../../designs",
         "to": "designs"
-      },
-      {
-        "from": "static/unpkg",
-        "to": "unpkg"
       }
     ],
     "linux": {
