@@ -40,7 +40,7 @@ designs/<your-design-name>/
 - Folder name = design name (referenced as `% design: <your-design-name>`).
 - All file references inside `index.html` must be **relative to the design folder**.
 - The shared runtime lives at `../../lib/navplace.js` (two levels up).
-- Optional shared vendor libs (Vue, smcss) live at `../../lib/vendor/<package>@<version>/...` — two existing designs use these, but a design can equally well be vanilla JS with no deps.
+- Optional shared vendor libs (Vue, smcss) live at `../../lib/vendor/<package>-<version>/...` — two existing designs use these, but a design can equally well be vanilla JS with no deps.
 
 ## Runtime API
 
