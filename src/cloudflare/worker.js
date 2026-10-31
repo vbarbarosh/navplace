@@ -1,0 +1,11 @@
+// Runs only for what the site's files do not have: / and the server's own paths
+export default {
+    async fetch(request, env) {
+        const url = new URL(request.url);
+        if (url.pathname === '/') {
+            return env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
+        }
+        // /api, /auth and the rest go on to the server behind navplace.com
+        return fetch(request);
+    },
+};

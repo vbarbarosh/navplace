@@ -1,0 +1,50 @@
+name: Deploy the site
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'www/**'
+      - 'lib/**'
+      - 'designs/**'
+      - 'bin/build-www'
+      - 'bin/deploy-www'
+      - 'src/cloudflare/**'
+      - '.github/workflows/deploy-www.yml'
+  workflow_dispatch:
+
+# One deploy at a time, in the order of the pushes
+concurrency:
+  group: deploy-www
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Wait for the secrets
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: echo "::notice::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set; nothing deployed."
+
+      - name: Checkout
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Build and deploy
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: bin/deploy-www

@@ -1,0 +1,18 @@
+// navplace.com from Cloudflare's edge: bin/deploy-www builds the site and deploys it
+{
+    "name": "navplace-www",
+    "main": "worker.js",
+    "compatibility_date": "2026-10-01",
+    "workers_dev": false,
+    "routes": [
+        {"pattern": "navplace.com/*", "zone_name": "navplace.com"}
+    ],
+    // The files bin/build-www makes; a request for one is answered from the edge
+    "assets": {
+        "directory": "../../build/www",
+        "binding": "ASSETS",
+        // docs.html stays docs.html: no redirect to /docs
+        "html_handling": "none",
+        "not_found_handling": "none"
+    }
+}
