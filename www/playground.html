@@ -34,6 +34,11 @@
             --code-bg: #f5f5f4;
             --danger: #b91c1c;
             --focus: 0 0 0 3px rgba(15, 118, 110, 0.18);
+            --c-tag: #15803d;
+            --c-image: #c2410c;
+            --c-url: #0369a1;
+            --c-key: #7c3aed;
+            --c-current: rgba(15, 118, 110, 0.09);
         }
 
         [data-theme="dark"] {
@@ -49,6 +54,11 @@
             --code-bg: #111113;
             --danger: #f87171;
             --focus: 0 0 0 3px rgba(45, 212, 191, 0.22);
+            --c-tag: #4ade80;
+            --c-image: #fb923c;
+            --c-url: #38bdf8;
+            --c-key: #c4b5fd;
+            --c-current: rgba(45, 212, 191, 0.10);
         }
 
         * {
@@ -263,15 +273,200 @@
             background: var(--text);
         }
 
+        /* ---------- Tabs ---------- */
+        .tabs {
+            display: flex;
+            gap: 2px;
+            padding: 2px;
+            border: 1px solid var(--border-strong);
+            border-radius: 8px;
+            background: var(--code-bg);
+        }
+        .tabs button {
+            transition: background-color 120ms ease, color 120ms ease;
+            height: 20px;
+            padding: 0 10px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-soft);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .tabs button:hover {
+            color: var(--text);
+        }
+        .tabs button[aria-selected="true"] {
+            background: var(--panel);
+            color: var(--text);
+            box-shadow: 0 0 0 1px var(--border-strong);
+        }
+        /* The design comes from the text there, not from a picker */
+        .app:not([data-tab="basic"]) .toolbar label {
+            display: none;
+        }
+
         /* ---------- Work area ---------- */
         .work {
             position: relative;
             display: grid;
             grid-template-columns: minmax(0, var(--split, 40%)) 1px minmax(0, 1fr);
+            grid-template-areas: "links divider preview";
             border: 1px solid var(--border);
             border-radius: 12px;
             background: var(--panel);
             overflow: hidden;
+        }
+        .app[data-tab="advanced"] .work {
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1fr);
+            grid-template-areas: "links json preview";
+            gap: 1px;
+            background: var(--border);
+        }
+        .pane-editor {
+            grid-area: links;
+        }
+        .pane-json {
+            grid-area: json;
+        }
+        .pane-preview {
+            grid-area: preview;
+        }
+        .divider {
+            grid-area: divider;
+        }
+        .app:not([data-tab="advanced"]) .pane-json,
+        .app:not([data-tab="basic"]) .divider {
+            display: none;
+        }
+        .app[data-tab="advanced"] .pane {
+            background: var(--panel);
+        }
+
+        /* ---------- Coloured editor: a transparent textarea over its colours ---------- */
+        .code {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            background: var(--code-bg);
+        }
+        .code > pre,
+        .code > textarea {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 14px 16px;
+            border: 0;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            tab-size: 4;
+            white-space: pre;
+            overflow: auto;
+        }
+        /* Room past the end, so it scrolls as far as the textarea with its scrollbars */
+        .code > pre {
+            padding-right: 48px;
+            padding-bottom: 48px;
+            overflow: hidden;
+            color: var(--text);
+            pointer-events: none;
+        }
+        .code > textarea {
+            resize: none;
+            color: transparent;
+            background: transparent;
+            caret-color: var(--text);
+        }
+        .code > textarea::selection {
+            color: transparent;
+            background: var(--c-current);
+            background: color-mix(in srgb, var(--accent) 28%, transparent);
+        }
+        .code > textarea:focus {
+            outline: none;
+        }
+        /* Basic is the plain text it always was */
+        .app[data-tab="basic"] .code > pre {
+            display: none;
+        }
+        .app[data-tab="basic"] .code > textarea {
+            color: var(--text);
+        }
+        .app[data-tab="basic"] .code > textarea::selection {
+            color: inherit;
+        }
+        .c-current {
+            display: inline-block;
+            min-width: 100%;
+            margin: 0 -16px;
+            padding: 0 16px;
+            background: var(--c-current);
+        }
+        .c-label {
+            font-weight: 650;
+        }
+        .c-tag {
+            color: var(--c-tag);
+        }
+        .c-image {
+            color: var(--c-image);
+        }
+        .c-url {
+            color: var(--c-url);
+        }
+        .c-directive,
+        .c-key {
+            color: var(--c-key);
+        }
+        .c-value {
+            color: var(--c-image);
+        }
+        .c-section {
+            font-weight: 650;
+        }
+        .c-ignored,
+        .c-mark,
+        .c-comment {
+            color: var(--text-mute);
+        }
+        .c-word,
+        .c-number,
+        .c-tagname {
+            color: var(--c-url);
+        }
+        .c-error {
+            color: var(--danger);
+            text-decoration: underline wavy var(--danger);
+            text-underline-offset: 4px;
+        }
+
+        /* ---------- The JSON of the line the cursor is on ---------- */
+        .json-locked {
+            margin: 0;
+            padding: 8px 16px 12px;
+            border-top: 1px dashed var(--border-strong);
+            color: var(--text-mute);
+            background: var(--code-bg);
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .json-locked:empty {
+            display: none;
+        }
+        .json-error {
+            margin: 0;
+            padding: 6px 16px;
+            border-top: 1px solid var(--danger);
+            color: var(--danger);
+            font-size: 12px;
+        }
+        .json-error:empty {
+            display: none;
         }
         .pane {
             display: flex;
@@ -296,23 +491,6 @@
             font-weight: 400;
             letter-spacing: 0;
             text-transform: none;
-        }
-        .pane textarea {
-            flex: 1;
-            width: 100%;
-            margin: 0;
-            padding: 14px 16px;
-            border: 0;
-            overflow: auto;
-            resize: none;
-            white-space: pre;
-            color: var(--text);
-            background: var(--code-bg);
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        .pane textarea:focus {
-            outline: none;
         }
         .pane iframe {
             flex: 1;
@@ -367,9 +545,15 @@
                 order: 1;
                 margin: 0;
             }
-            .work {
+            .work,
+            .app[data-tab] .work {
                 grid-template-columns: minmax(0, 1fr);
                 grid-template-rows: 45vh 70vh;
+                grid-template-areas: "links" "preview";
+            }
+            .app[data-tab="advanced"] .work {
+                grid-template-rows: 45vh 40vh 70vh;
+                grid-template-areas: "links" "json" "preview";
             }
             .divider {
                 display: none;
@@ -377,7 +561,8 @@
             .pane-preview {
                 border-top: 1px solid var(--border);
             }
-            .pane textarea {
+            .code > pre,
+            .code > textarea {
                 padding: 12px 14px;
                 font-size: 12px;
             }
@@ -411,6 +596,10 @@
     </header>
 
     <div class="toolbar">
+        <div class="tabs" role="tablist" aria-label="Playground mode">
+            <button type="button" role="tab" data-tab="basic" aria-selected="true">Basic</button>
+            <button type="button" role="tab" data-tab="advanced" aria-selected="false">Advanced</button>
+        </div>
         <label>Design <select aria-label="Design"></select></label>
         <button class="btn" type="button" data-action="reset" title="Replace the text with the sample for this design">Reset</button>
         <p class="status" role="status"></p>
@@ -421,9 +610,21 @@
     <main class="work">
         <section class="pane pane-editor" id="editor-pane" aria-label="Source">
             <div class="pane-heading"><code>links.txt</code></div>
-            <textarea aria-label="Collection source" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+            <div class="code">
+                <pre aria-hidden="true"></pre>
+                <textarea aria-label="Collection source" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+            </div>
         </section>
         <div class="divider" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize panels" aria-controls="editor-pane" aria-valuemin="0" aria-valuemax="100" title="Drag to resize, double-click to reset"></div>
+        <section class="pane pane-json" aria-label="JSON of the line">
+            <div class="pane-heading"><span>JSON</span><code class="json-where"></code></div>
+            <div class="code">
+                <pre aria-hidden="true"></pre>
+                <textarea aria-label="JSON of the line the cursor is on" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+            </div>
+            <pre class="json-locked" title="Worked out by the parser; change them where they come from"></pre>
+            <p class="json-error" role="status"></p>
+        </section>
         <section class="pane pane-preview" aria-label="Preview">
             <div class="pane-heading">Preview</div>
             <iframe title="Collection preview"></iframe>
@@ -433,6 +634,8 @@
 </div>
 
 <script src="lib/parse.js"></script>
+<script src="lib/line_from_item.js"></script>
+<script src="playground-colours.js"></script>
 <script>
 const default_split = 0.4;
 
@@ -441,7 +644,14 @@ main();
 async function main()
 {
     const work = document.querySelector('.work');
+    const app = document.querySelector('.app');
     const editor = document.querySelector('.pane-editor textarea');
+    const editor_colours = document.querySelector('.pane-editor pre');
+    const json_editor = document.querySelector('.pane-json textarea');
+    const json_colours = document.querySelector('.pane-json .code > pre');
+    const json_locked = document.querySelector('.json-locked');
+    const json_error = document.querySelector('.json-error');
+    const json_where = document.querySelector('.json-where');
     const frame = document.querySelector('.pane-preview iframe');
     const design_select = document.querySelector('.toolbar select');
     const status = document.querySelector('.status');
@@ -455,6 +665,10 @@ async function main()
     let split = load_split() ?? default_split;
     let sample_request = null;
     let copy_timer;
+    let tab = load_tab();
+    let current_line = 1;
+    let json_line = null;
+    let preview_observer = null;
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
@@ -467,7 +681,27 @@ async function main()
         save_draft(editor.value);
         clearTimeout(render_timer);
         render_timer = setTimeout(render, 300);
+        render_cursor_line();
     });
+    editor.addEventListener('scroll', () => code_scroll_sync(editor, editor_colours));
+    json_editor.addEventListener('scroll', () => code_scroll_sync(json_editor, json_colours));
+    json_editor.addEventListener('input', function () {
+        json_colours.innerHTML = render_json_html(json_editor.value);
+        json_apply();
+    });
+    // The JSON follows the cursor through the links, whatever line it is on
+    document.addEventListener('selectionchange', function () {
+        if (document.activeElement === editor && line_at(editor.value, editor.selectionStart) !== current_line) {
+            render_cursor_line();
+        }
+    });
+    for (const button of document.querySelectorAll('.tabs [data-tab]')) {
+        button.addEventListener('click', function () {
+            tab = button.dataset.tab;
+            save_tab(tab);
+            render_tab();
+        });
+    }
     // Picking a design loads its sample; without one, only the design line changes
     design_select.addEventListener('change', async function () {
         const design = design_select.value;
@@ -498,6 +732,7 @@ async function main()
         if (refocus) {
             editor.focus();
         }
+        preview_observe();
     });
 
     divider.addEventListener('pointerdown', function (event) {
@@ -545,8 +780,133 @@ async function main()
     // The first preview waits for the list: a saved draft may name a design that is gone
     const designs_loaded = load_designs();
     editor.value = load_draft() ?? await load_sample('showcase') ?? '';
+    render_tab();
     await designs_loaded;
     render();
+
+    function render_tab() {
+        app.dataset.tab = tab;
+        for (const button of document.querySelectorAll('.tabs [data-tab]')) {
+            button.setAttribute('aria-selected', String(button.dataset.tab === tab));
+        }
+        render_cursor_line();
+    }
+
+    // The colours, the JSON and the lit tile follow the line the cursor is on
+    function render_cursor_line() {
+        current_line = line_at(editor.value, editor.selectionStart);
+        if (tab !== 'advanced') {
+            preview_mark();
+            return;
+        }
+        editor_colours.innerHTML = render_links_html(editor.value, current_line);
+        code_scroll_sync(editor, editor_colours);
+        // What is typed in the JSON is not taken from under the person typing it
+        if (document.activeElement !== json_editor || json_line !== current_line) {
+            json_render();
+        }
+        preview_mark();
+    }
+
+    function json_render() {
+        const view = json_view_of_line(editor.value, current_line);
+        json_line = current_line;
+        json_where.textContent = `line ${current_line}`;
+        json_editor.value = view.json;
+        json_editor.readOnly = !view.editable;
+        json_colours.innerHTML = render_json_html(view.json);
+        json_locked.textContent = view.locked;
+        json_error.textContent = view.error ?? '';
+        code_scroll_sync(json_editor, json_colours);
+    }
+
+    // Valid JSON goes into its line at once; broken JSON waits, marked, the text untouched
+    function json_apply() {
+        const range = line_range(editor.value, json_line);
+        const raw = editor.value.slice(range[0], range[1]);
+        let edited;
+        try {
+            edited = JSON.parse(json_editor.value);
+        }
+        catch (error) {
+            json_error.textContent = `${error.message}. The text keeps its last good version.`;
+            return;
+        }
+        const result = line_from_json(raw, edited);
+        if (result.error) {
+            json_error.textContent = result.error;
+            return;
+        }
+        json_error.textContent = '';
+        if (result.line === raw) {
+            return;
+        }
+        editor.setRangeText(result.line, range[0], range[1], 'preserve');
+        save_draft(editor.value);
+        clearTimeout(render_timer);
+        render_timer = setTimeout(render, 300);
+        editor_colours.innerHTML = render_links_html(editor.value, current_line);
+        json_locked.textContent = json_view_of_line(editor.value, json_line).locked;
+        preview_mark();
+    }
+
+    // The link of the cursor's line lights up in the preview; a design redraws often, so it is
+    // marked again after every change of the page
+    function preview_mark() {
+        let doc;
+        try {
+            doc = frame.contentDocument;
+        }
+        catch {
+            return;
+        }
+        if (!doc?.body) {
+            return;
+        }
+        for (const element of doc.querySelectorAll('[data-navplace-current]')) {
+            element.removeAttribute('data-navplace-current');
+        }
+        const href = (tab === 'advanced') ? href_of_line(editor.value, current_line) : null;
+        if (!href) {
+            return;
+        }
+        if (!doc.getElementById('navplace-current-style')) {
+            const style = doc.createElement('style');
+            style.id = 'navplace-current-style';
+            style.textContent = '[data-navplace-current] { outline: 3px solid #14b8a6 !important; outline-offset: 2px; }';
+            doc.head.append(style);
+        }
+        for (const element of doc.querySelectorAll(`a[href="${CSS.escape(href)}"]`)) {
+            element.setAttribute('data-navplace-current', '');
+        }
+    }
+
+    function preview_observe() {
+        preview_observer?.disconnect();
+        preview_observer = null;
+        let doc;
+        try {
+            doc = frame.contentDocument;
+        }
+        catch {
+            return;
+        }
+        if (!doc?.body) {
+            return;
+        }
+        let pending = false;
+        preview_observer = new MutationObserver(function () {
+            if (!pending) {
+                pending = true;
+                requestAnimationFrame(function () {
+                    pending = false;
+                    preview_mark();
+                });
+            }
+        });
+        preview_observer.observe(doc.body, {childList: true, subtree: true});
+        preview_mark();
+    }
 
     function render() {
         let parsed;
@@ -654,6 +1014,168 @@ async function main()
         catch {
             status.textContent = 'Copy unavailable. Open in CodePen to get the embed code.';
         }
+    }
+}
+
+// The JSON pane's view of one line: {json, editable, locked, error}
+function json_view_of_line(text, n)
+{
+    const range = line_range(text, n);
+    const raw = text.slice(range[0], range[1]);
+    const line = raw.trim();
+    if (!line) {
+        return {json: `// line ${n} is empty`, editable: false, locked: ''};
+    }
+    if (line[0] === '%') {
+        const m = line.match(/^%\s*([^:]+?)\s*:\s*(.+)$/);
+        if (!m) {
+            return {json: `// line ${n}: a directive is % key: value`, editable: false, locked: '', error: `Invalid meta line: ${line}`};
+        }
+        return {json: json_format({[m[1]]: m[2]}), editable: true, locked: ''};
+    }
+    if (line[0] === '#') {
+        const names = line.replace(/^#+/, '').split('|').map(v => v.trim()).filter(Boolean);
+        let count = null;
+        try {
+            const items = parse(text, {spans: true}).items;
+            count = items.filter(v => v.line > n && names.every(name => v.namespaces.includes(name))).length;
+        }
+        catch {
+        }
+        return {json: json_format({namespaces: names}), editable: true, locked: (count === null) ? '' : `"links under it": ${count}`};
+    }
+    const item = item_of_line(text, n);
+    if (!item) {
+        return {json: `// line ${n}: no link here; a link line ends with its URL`, editable: false, locked: ''};
+    }
+    const editable = {label: item.label, href: item.href, tags: item.tags, image_url: item.image_url, meta: item.meta};
+    const locked = {namespaces: item.namespaces, icon_url: item.icon_url, search1: item.search1, search2: item.search2};
+    return {
+        json: json_format(editable),
+        editable: true,
+        locked: Object.entries(locked).map(([key, value]) => `"${key}": ${JSON.stringify(value)}`).join('\n'),
+    };
+}
+
+// The item of line n, with its spans; from the whole text when it parses, so its groups are right
+function item_of_line(text, n)
+{
+    try {
+        const item = parse(text, {spans: true}).items.find(v => v.line === n);
+        if (item) {
+            return item;
+        }
+    }
+    catch {
+    }
+    const range = line_range(text, n);
+    try {
+        return parse(text.slice(range[0], range[1]), {spans: true}).items[0] ?? null;
+    }
+    catch {
+        return null;
+    }
+}
+
+function href_of_line(text, n)
+{
+    const range = line_range(text, n);
+    const m = text.slice(range[0], range[1]).trim().match(/(file:\/\/\S+|https?:\/\/\S+)$/);
+    return (m && !/^[%#]/.test(text.slice(range[0], range[1]).trim())) ? m[1] : null;
+}
+
+// {line} the raw line with the JSON written into it, or {error} saying what is wrong
+function line_from_json(raw, edited)
+{
+    const lead = raw.slice(0, raw.length - raw.trimStart().length);
+    const line = raw.trim();
+    if (!edited || typeof edited !== 'object' || Array.isArray(edited)) {
+        return {error: 'The JSON is one object, in { }.'};
+    }
+    if (line[0] === '%') {
+        const entries = Object.entries(edited);
+        if (entries.length !== 1 || typeof entries[0][1] !== 'string' || !entries[0][1].trim() || entries[0][0].includes(':')) {
+            return {error: 'A directive is one key and its text value, as {"design": "basic"}.'};
+        }
+        return {line: `${lead}% ${entries[0][0]}: ${entries[0][1]}`};
+    }
+    if (line[0] === '#') {
+        if (!Array.isArray(edited.namespaces) || edited.namespaces.some(v => typeof v !== 'string' || v.includes('|'))) {
+            return {error: '"namespaces" is a list of names, as ["Mail", "Work"].'};
+        }
+        const hashes = line.match(/^#+/)[0];
+        return {line: `${lead}${hashes} ${edited.namespaces.map(v => v.trim()).filter(Boolean).join(' | ')}`};
+    }
+    const item = parse(raw, {spans: true}).items[0];
+    if (typeof edited.label !== 'string' || /#|\n/.test(edited.label)) {
+        return {error: '"label" is text without #.'};
+    }
+    if (typeof edited.href !== 'string' || !/^(file:\/\/\S+|https?:\/\/\S+)$/.test(edited.href)) {
+        return {error: '"href" is a link starting with https://, http:// or file://, without spaces.'};
+    }
+    if (!Array.isArray(edited.tags) || edited.tags.some(v => typeof v !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(v))) {
+        return {error: '"tags" are words of letters, digits, _ and -, as ["work"].'};
+    }
+    if (edited.image_url !== null && (typeof edited.image_url !== 'string' || /\s/.test(edited.image_url))) {
+        return {error: '"image_url" is null or a file name without spaces, as "private://m.png".'};
+    }
+    if (!edited.meta || typeof edited.meta !== 'object' || Array.isArray(edited.meta)
+        || Object.entries(edited.meta).some(([key, value]) => !/^[a-zA-Z0-9_-]+$/.test(key) || typeof value !== 'string' || !/^[^\s#]+$/.test(value))) {
+        return {error: '"meta" holds words and their values, as {"w": "2"}.'};
+    }
+    return {line: line_from_item(raw, item, {...edited, image_url: edited.image_url || null})};
+}
+
+// Two-space JSON, a list or an object of plain values kept on one line
+function json_format(value)
+{
+    return JSON.stringify(value, null, 2).replace(/([[{])\n\s*([^[\]{}]*?)\n\s*([\]}])/g, (all, open, inner, close) => `${open}${inner.replace(/,\n\s*/g, ', ')}${close}`);
+}
+
+// 1-based line of a character offset
+function line_at(text, offset)
+{
+    return text.slice(0, offset).split('\n').length;
+}
+
+// [start, end) of the 1-based line n
+function line_range(text, n)
+{
+    let start = 0;
+    for (let i = 1; i < n; ++i) {
+        const next = text.indexOf('\n', start);
+        if (next === -1) {
+            return [text.length, text.length];
+        }
+        start = next + 1;
+    }
+    const end = text.indexOf('\n', start);
+    return [start, (end === -1) ? text.length : end];
+}
+
+function code_scroll_sync(textarea, pre)
+{
+    pre.scrollTop = textarea.scrollTop;
+    pre.scrollLeft = textarea.scrollLeft;
+}
+
+function load_tab()
+{
+    try {
+        const value = localStorage.getItem('navplace.playground.tab');
+        return ['basic', 'advanced'].includes(value) ? value : 'basic';
+    }
+    catch {
+        return 'basic';
+    }
+}
+
+function save_tab(value)
+{
+    try {
+        localStorage.setItem('navplace.playground.tab', value);
+    }
+    catch {
     }
 }
 
