@@ -542,9 +542,11 @@ async function main()
     window.addEventListener('resize', render_split);
 
     render_split();
+    // The first preview waits for the list: a saved draft may name a design that is gone
+    const designs_loaded = load_designs();
     editor.value = load_draft() ?? await load_sample('showcase') ?? '';
+    await designs_loaded;
     render();
-    load_designs();
 
     function render() {
         let parsed;
@@ -556,16 +558,22 @@ async function main()
             status.dataset.error = '';
             return;
         }
-        const design = parsed.meta.design || 'basic';
+        let design = parsed.meta.design || 'basic';
         design_select.value = design;
-        // A half-typed name would load a missing page
+        // A half-typed name would load a missing page: the design shown stays,
+        // or basic when none is shown yet
         if (designs && !designs.includes(design)) {
-            status.textContent = `No design named "${design}". The preview shows the last design that exists.`;
+            status.textContent = `No design named "${design}". The preview shows "${frame_design ?? 'basic'}".`;
             status.dataset.error = '';
-            return;
+            if (frame_design) {
+                return;
+            }
+            design = 'basic';
         }
-        status.textContent = `${parsed.items.length} ${parsed.items.length === 1 ? 'link' : 'links'}`;
-        delete status.dataset.error;
+        else {
+            status.textContent = `${parsed.items.length} ${parsed.items.length === 1 ? 'link' : 'links'}`;
+            delete status.dataset.error;
+        }
         if (design !== frame_design) {
             frame_design = design;
             frame_ready = false;
@@ -630,7 +638,6 @@ async function main()
                 design_select.append(new Option(option.label, option.value));
             }
             designs = options.map(v => v.value);
-            render();
         }
         catch {
             design_select.disabled = true;
