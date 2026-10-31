@@ -28,11 +28,12 @@ cp -r designs/ build/www/
 rm build/www/lib/*.cli.js
 rm build/www/lib/*.test.js
 
-# The playground lists the designs from here
+# The playground lists the designs from here, each with the files of its folder
 node -e '
 const fs = require("fs");
 const names = fs.readdirSync("build/www/designs").filter(v => fs.existsSync(`build/www/designs/${v}/index.html`)).sort();
-fs.writeFileSync("build/www/designs/index.json", JSON.stringify(names.map(v => ({value: v, label: v})), null, 4) + "\n");
+const options = names.map(v => ({value: v, label: v, files: fs.readdirSync(`build/www/designs/${v}`).sort()}));
+fs.writeFileSync("build/www/designs/index.json", JSON.stringify(options, null, 4) + "\n");
 '
 
 EXIT_MESSAGE="${GREEN}bin/build-www succeeded${RESET}"

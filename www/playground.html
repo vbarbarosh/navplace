@@ -257,6 +257,9 @@
             color: var(--text);
             border-color: var(--text-mute);
         }
+        .btn[hidden] {
+            display: none;
+        }
         .btn[aria-pressed="true"] {
             border-color: var(--accent);
             background: var(--accent-soft);
@@ -323,8 +326,17 @@
             gap: 1px;
             background: var(--border);
         }
+        .app[data-tab="design"] .work {
+            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+            grid-template-areas: "design preview";
+            gap: 1px;
+            background: var(--border);
+        }
         .pane-editor {
             grid-area: links;
+        }
+        .pane-design {
+            grid-area: design;
         }
         .pane-json {
             grid-area: json;
@@ -336,11 +348,73 @@
             grid-area: divider;
         }
         .app:not([data-tab="advanced"]) .pane-json,
+        .app:not([data-tab="design"]) .pane-design,
+        .app[data-tab="design"] .pane-editor,
         .app:not([data-tab="basic"]) .divider {
             display: none;
         }
-        .app[data-tab="advanced"] .pane {
+        .app:not([data-tab="basic"]) .pane {
             background: var(--panel);
+        }
+
+        /* ---------- The design's files ---------- */
+        .design-heading {
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 33px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
+        .design-files {
+            display: flex;
+            gap: 4px;
+            min-width: 0;
+            overflow-x: auto;
+        }
+        .design-files button,
+        .design-actions .btn {
+            height: 22px;
+            padding: 0 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+        .design-files button {
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-soft);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            white-space: nowrap;
+        }
+        .design-files button[aria-selected="true"] {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--text);
+        }
+        .design-files button[data-edited]::after {
+            content: " •";
+            color: var(--accent);
+        }
+        .design-files span {
+            align-self: center;
+            color: var(--text-mute);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px;
+            letter-spacing: 0;
+            text-transform: none;
+            white-space: nowrap;
+        }
+        .design-state {
+            letter-spacing: 0;
+            text-transform: none;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .design-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
         }
 
         /* ---------- Coloured editor: a transparent textarea over its colours ---------- */
@@ -373,6 +447,17 @@
             overflow: hidden;
             color: var(--text);
             pointer-events: none;
+        }
+        .code > pre.gutter {
+            inset: 0 auto 0 0;
+            width: 48px;
+            padding: 14px 10px 48px 0;
+            color: var(--text-mute);
+            text-align: right;
+        }
+        .with-gutter > pre:not(.gutter),
+        .with-gutter > textarea {
+            padding-left: 60px;
         }
         .code > textarea {
             resize: none;
@@ -555,6 +640,10 @@
                 grid-template-rows: 45vh 40vh 70vh;
                 grid-template-areas: "links" "json" "preview";
             }
+            .app[data-tab="design"] .work {
+                grid-template-rows: 70vh 70vh;
+                grid-template-areas: "design" "preview";
+            }
             .divider {
                 display: none;
             }
@@ -599,6 +688,7 @@
         <div class="tabs" role="tablist" aria-label="Playground mode">
             <button type="button" role="tab" data-tab="basic" aria-selected="true">Basic</button>
             <button type="button" role="tab" data-tab="advanced" aria-selected="false">Advanced</button>
+            <button type="button" role="tab" data-tab="design" aria-selected="false">Design</button>
         </div>
         <label>Design <select aria-label="Design"></select></label>
         <button class="btn" type="button" data-action="reset" title="Replace the text with the sample for this design">Reset</button>
@@ -624,6 +714,22 @@
             </div>
             <pre class="json-locked" title="Worked out by the parser; change them where they come from"></pre>
             <p class="json-error" role="status"></p>
+        </section>
+        <section class="pane pane-design" aria-label="Design">
+            <div class="pane-heading design-heading">
+                <code class="design-name"></code>
+                <span class="design-files" role="tablist" aria-label="Files of the design"></span>
+                <span class="design-state"></span>
+                <span class="design-actions">
+                    <button class="btn" type="button" data-action="design-undo" hidden>Undo</button>
+                    <button class="btn" type="button" data-action="design-load" hidden></button>
+                </span>
+            </div>
+            <div class="code with-gutter">
+                <pre class="gutter" aria-hidden="true"></pre>
+                <pre aria-hidden="true"></pre>
+                <textarea aria-label="The design's code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+            </div>
         </section>
         <section class="pane pane-preview" aria-label="Preview">
             <div class="pane-heading">Preview</div>
@@ -669,6 +775,19 @@ async function main()
     let current_line = 1;
     let json_line = null;
     let preview_observer = null;
+    const design_editor = document.querySelector('.pane-design textarea');
+    const design_colours = document.querySelector('.pane-design .code > pre:not(.gutter)');
+    const design_gutter = document.querySelector('.pane-design .gutter');
+    const design_load_button = document.querySelector('[data-action="design-load"]');
+    const design_undo_button = document.querySelector('[data-action="design-undo"]');
+    let files_by_design = {};
+    // The design's code, the same under every tab: {name, all, files, originals, current}
+    let design = load_design_draft();
+    let design_undo = null;
+    let design_request = null;
+    let design_timer;
+    let text_design = 'basic';
+    let preview_key = null;
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
@@ -700,8 +819,43 @@ async function main()
             tab = button.dataset.tab;
             save_tab(tab);
             render_tab();
+            render();
         });
     }
+    design_editor.addEventListener('input', function () {
+        design.files[design.current] = design_editor.value;
+        design_undo = null;
+        save_design_draft(design);
+        render_design_pane(false);
+        clearTimeout(design_timer);
+        design_timer = setTimeout(preview_update, 400);
+    });
+    design_editor.addEventListener('scroll', function () {
+        code_scroll_sync(design_editor, design_colours);
+        design_gutter.scrollTop = design_editor.scrollTop;
+    });
+    // Tab indents in the code; Ctrl+Z takes it back like any typing
+    design_editor.addEventListener('keydown', function (event) {
+        if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
+            event.preventDefault();
+            document.execCommand('insertText', false, '    ');
+        }
+    });
+    // Load swaps a design in on purpose; Undo brings back what it replaced
+    design_load_button.addEventListener('click', async function () {
+        const previous = design;
+        if (await design_load(text_design)) {
+            design_undo = previous;
+            render_design_pane(true);
+        }
+    });
+    design_undo_button.addEventListener('click', function () {
+        design = design_undo;
+        design_undo = null;
+        save_design_draft(design);
+        render_design_pane(true);
+        preview_update();
+    });
     // Picking a design loads its sample; without one, only the design line changes
     design_select.addEventListener('change', async function () {
         const design = design_select.value;
@@ -730,7 +884,8 @@ async function main()
     // A design focuses its own search box on load; typing keeps going in the editor
     frame.addEventListener('load', function () {
         if (refocus) {
-            editor.focus();
+            refocus.focus();
+            refocus = null;
         }
         preview_observe();
     });
@@ -790,6 +945,7 @@ async function main()
             button.setAttribute('aria-selected', String(button.dataset.tab === tab));
         }
         render_cursor_line();
+        render_design_pane(true);
     }
 
     // The colours, the JSON and the lit tile follow the line the cursor is on
@@ -918,30 +1074,139 @@ async function main()
             status.dataset.error = '';
             return;
         }
-        let design = parsed.meta.design || 'basic';
-        design_select.value = design;
+        let name = parsed.meta.design || 'basic';
+        design_select.value = name;
         // A half-typed name would load a missing page: the design shown stays,
         // or basic when none is shown yet
-        if (designs && !designs.includes(design)) {
-            status.textContent = `No design named "${design}". The preview shows "${frame_design ?? 'basic'}".`;
+        if (designs && !designs.includes(name)) {
+            status.textContent = `No design named "${name}". The preview shows "${frame_design ?? 'basic'}".`;
             status.dataset.error = '';
             if (frame_design) {
+                if (frame_ready) {
+                    post_text();
+                }
                 return;
             }
-            design = 'basic';
+            name = 'basic';
         }
         else {
             status.textContent = `${parsed.items.length} ${parsed.items.length === 1 ? 'link' : 'links'}`;
             delete status.dataset.error;
         }
-        if (design !== frame_design) {
-            frame_design = design;
-            frame_ready = false;
-            refocus = (document.activeElement === editor);
-            frame.src = `designs/${encodeURIComponent(design)}/index.html`;
+        text_design = name;
+        // The code follows the text's design until it is edited; then only Load replaces it
+        if (!design_is_edited(design) && design?.name !== name) {
+            design_load(name);
         }
-        else if (frame_ready) {
-            post_text();
+        render_design_pane(false);
+        preview_update();
+    }
+
+    // Basic shows the design's own page while its code is untouched; otherwise the
+    // preview is the code in the Design tab
+    function preview_update() {
+        let key;
+        if (tab === 'basic' && !design_is_edited(design)) {
+            key = `src:${text_design}`;
+        }
+        else if (design) {
+            key = `doc:${JSON.stringify(design.files)}`;
+        }
+        else {
+            return;
+        }
+        if (key === preview_key) {
+            if (frame_ready) {
+                post_text();
+            }
+            return;
+        }
+        preview_key = key;
+        frame_ready = false;
+        refocus = [editor, json_editor, design_editor].includes(document.activeElement) ? document.activeElement : null;
+        if (key.startsWith('src:')) {
+            frame_design = text_design;
+            frame.removeAttribute('srcdoc');
+            frame.src = `designs/${encodeURIComponent(text_design)}/index.html`;
+        }
+        else {
+            frame_design = design.name;
+            frame.srcdoc = render_design_doc(design, new URL(`designs/${encodeURIComponent(design.name)}/`, location.href).href);
+        }
+    }
+
+    // The text files of a design's folder; true once they are in
+    async function design_load(name) {
+        const request = design_request = {};
+        const all = files_by_design[name] ?? ['index.html'];
+        const names = all.filter(v => /\.(html|css|js)$/i.test(v));
+        let texts;
+        try {
+            texts = await Promise.all(names.map(async function (file) {
+                const response = await fetch(`designs/${encodeURIComponent(name)}/${encodeURIComponent(file)}`);
+                if (!response.ok) {
+                    throw new Error(`${file}: ${response.status}`);
+                }
+                return response.text();
+            }));
+        }
+        catch (error) {
+            status.textContent = `The code of "${name}" did not load: ${error.message}.`;
+            status.dataset.error = '';
+            return false;
+        }
+        if (request !== design_request) {
+            return false;
+        }
+        const files = Object.fromEntries(names.map((file, i) => [file, texts[i]]));
+        design = {name, all, files, originals: {...files}, current: names.includes('index.html') ? 'index.html' : names[0]};
+        save_design_draft(design);
+        render_design_pane(true);
+        preview_update();
+        return true;
+    }
+
+    // `whole` puts the current file into the editor; otherwise only the marks around it change
+    function render_design_pane(whole) {
+        if (!design) {
+            return;
+        }
+        const edited = design_is_edited(design);
+        document.querySelector('.design-name').textContent = `designs/${design.name}/`;
+        const files = document.querySelector('.design-files');
+        files.replaceChildren(...design.all.map(function (file) {
+            if (!(file in design.files)) {
+                const span = document.createElement('span');
+                span.textContent = file;
+                return span;
+            }
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.role = 'tab';
+            button.textContent = file;
+            button.setAttribute('aria-selected', String(file === design.current));
+            button.toggleAttribute('data-edited', design.files[file] !== design.originals[file]);
+            button.addEventListener('click', function () {
+                design.current = file;
+                save_design_draft(design);
+                render_design_pane(true);
+            });
+            return button;
+        }));
+        document.querySelector('.design-state').textContent = edited ? 'edited' : '';
+        design_load_button.textContent = `Load ${text_design}`;
+        design_load_button.title = `Replace this code with the files of designs/${text_design}/`;
+        design_load_button.hidden = !edited && design.name === text_design;
+        design_undo_button.hidden = !design_undo;
+        if (whole && design_editor.value !== design.files[design.current]) {
+            design_editor.value = design.files[design.current];
+            design_editor.scrollTop = 0;
+        }
+        if (tab === 'design') {
+            design_colours.innerHTML = render_code_html(design_editor.value);
+            design_gutter.textContent = design_editor.value.split('\n').map((v, i) => i + 1).join('\n');
+            code_scroll_sync(design_editor, design_colours);
+            design_gutter.scrollTop = design_editor.scrollTop;
         }
     }
 
@@ -998,6 +1263,7 @@ async function main()
                 design_select.append(new Option(option.label, option.value));
             }
             designs = options.map(v => v.value);
+            files_by_design = Object.fromEntries(options.map(v => [v.value, v.files ?? ['index.html']]));
         }
         catch {
             design_select.disabled = true;
@@ -1159,11 +1425,79 @@ function code_scroll_sync(textarea, pre)
     pre.scrollLeft = textarea.scrollLeft;
 }
 
+function design_is_edited(design)
+{
+    return !!design && Object.keys(design.files).some(v => design.files[v] !== design.originals[v]);
+}
+
+// The design's index.html for the preview: its folder as the base, so its own files and
+// ../../lib load as on the site; a changed file comes in as a blob of its own, so the lines
+// of index.html stay where they are
+function render_design_doc(design, base)
+{
+    let html = design.files['index.html'] ?? '';
+    for (const [file, text] of Object.entries(design.files)) {
+        if (file === 'index.html' || text === design.originals[file]) {
+            continue;
+        }
+        const body = /\.css$/i.test(file) ? css_with_absolute_urls(text, base) : text;
+        const type = /\.css$/i.test(file) ? 'text/css' : 'text/javascript';
+        const url = URL.createObjectURL(new Blob([body], {type}));
+        html = html.replace(new RegExp(`((?:href|src)\\s*=\\s*["'])(?:\\./)?${regexp_escape(file)}(["'])`, 'g'), `$1${url}$2`);
+    }
+    const head = `<base href="${base.replaceAll('"', '&quot;')}">`;
+    const at = html.match(/<head[^>]*>/i) ?? html.match(/<html[^>]*>/i) ?? html.match(/<!doctype[^>]*>/i);
+    if (!at) {
+        return head + html;
+    }
+    const i = at.index + at[0].length;
+    return html.slice(0, i) + head + html.slice(i);
+}
+
+// A stylesheet from a blob has no folder: its url(...) are made whole against the design's
+function css_with_absolute_urls(css, base)
+{
+    return css.replace(/url\(\s*(["']?)([^"')]+)\1\s*\)/g, function (all, quote, url) {
+        return /^(data:|[a-z]+:|\/|#)/i.test(url) ? all : `url("${new URL(url, base).href}")`;
+    });
+}
+
+function regexp_escape(text)
+{
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function load_design_draft()
+{
+    try {
+        const value = JSON.parse(localStorage.getItem('navplace.playground.design'));
+        return (value?.name && value.files && value.originals) ? value : null;
+    }
+    catch {
+        return null;
+    }
+}
+
+// Only edited code is kept; an untouched design comes from the site again
+function save_design_draft(design)
+{
+    try {
+        if (design_is_edited(design)) {
+            localStorage.setItem('navplace.playground.design', JSON.stringify(design));
+        }
+        else {
+            localStorage.removeItem('navplace.playground.design');
+        }
+    }
+    catch {
+    }
+}
+
 function load_tab()
 {
     try {
         const value = localStorage.getItem('navplace.playground.tab');
-        return ['basic', 'advanced'].includes(value) ? value : 'basic';
+        return ['basic', 'advanced', 'design'].includes(value) ? value : 'basic';
     }
     catch {
         return 'basic';
