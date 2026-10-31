@@ -319,29 +319,25 @@
         }
 
         /* ---------- Work area ---------- */
+        /* --a and --b are the panes' widths, set from the sizes each tab keeps */
         .work {
             position: relative;
             display: grid;
-            grid-template-columns: minmax(0, var(--split, 40%)) 1px minmax(0, 1fr);
-            grid-template-areas: "links divider preview";
+            grid-template-columns: minmax(0, var(--a, 33.33%)) 1px minmax(0, 1fr);
+            grid-template-rows: minmax(0, 1fr) auto auto;
+            grid-template-areas: "links d1 preview";
             border: 1px solid var(--border);
             border-radius: 12px;
             background: var(--panel);
             overflow: hidden;
         }
         .app[data-tab="advanced"] .work {
-            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1fr);
-            grid-template-rows: minmax(0, 1fr) auto;
-            grid-template-areas: "links json preview" "errors errors errors";
-            gap: 1px;
-            background: var(--border);
+            grid-template-columns: minmax(0, var(--a, 33.33%)) 1px minmax(0, var(--b, 33.33%)) 1px minmax(0, 1fr);
+            grid-template-areas: "links d1 json d2 preview" "dh dh dh dh dh" "errors errors errors errors errors";
         }
         .app[data-tab="design"] .work {
-            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-            grid-template-rows: minmax(0, 1fr) auto;
-            grid-template-areas: "design preview" "errors errors";
-            gap: 1px;
-            background: var(--border);
+            grid-template-columns: minmax(0, var(--a, 66.67%)) 1px minmax(0, 1fr);
+            grid-template-areas: "design d1 preview" "dh dh dh" "errors errors errors";
         }
         .pane-editor {
             grid-area: links;
@@ -358,14 +354,22 @@
         .pane-preview {
             grid-area: preview;
         }
-        .divider {
-            grid-area: divider;
+        .divider[data-divider="1"] {
+            grid-area: d1;
+        }
+        .divider[data-divider="2"] {
+            grid-area: d2;
+        }
+        .divider-errors {
+            grid-area: dh;
         }
         .app:not([data-tab="advanced"]) .pane-json,
         .app:not([data-tab="design"]) .pane-design,
         .app[data-tab="basic"] .pane-errors,
         .app[data-tab="design"] .pane-editor,
-        .app:not([data-tab="basic"]) .divider {
+        .app:not([data-tab="advanced"]) .divider[data-divider="2"],
+        .app[data-tab="basic"] .divider-errors,
+        .work:not([data-errors]) .divider-errors {
             display: none;
         }
         .app:not([data-tab="basic"]) .pane {
@@ -380,7 +384,7 @@
             display: none;
         }
         .errors-list {
-            height: 76px;
+            height: var(--errors-height, 76px);
             margin: 0;
             padding: 4px 0;
             overflow: auto;
@@ -659,7 +663,15 @@
             position: absolute;
             inset: 0 -5px;
         }
-        .divider:hover, .work[data-dragging] .divider {
+        .divider-errors {
+            height: 1px;
+            cursor: row-resize;
+        }
+        .divider-errors::before {
+            inset: -5px 0;
+        }
+        .divider:hover,
+        .divider[data-dragging] {
             background: var(--accent);
         }
         .divider:focus-visible {
@@ -670,6 +682,9 @@
         .work[data-dragging] {
             cursor: col-resize;
             user-select: none;
+        }
+        .work[data-dragging="errors"] {
+            cursor: row-resize;
         }
         .work[data-dragging] iframe {
             pointer-events: none;
@@ -708,7 +723,9 @@
             .divider {
                 display: none;
             }
-            .pane-preview {
+            .pane-preview,
+            .pane-json,
+            .pane-errors {
                 border-top: 1px solid var(--border);
             }
             .code > pre,
@@ -766,7 +783,7 @@
                 <textarea aria-label="Collection source" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
             </div>
         </section>
-        <div class="divider" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize panels" aria-controls="editor-pane" aria-valuemin="0" aria-valuemax="100" title="Drag to resize, double-click to reset"></div>
+        <div class="divider" data-divider="1" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize the panes" aria-valuemin="0" aria-valuemax="100" title="Drag to resize, double-click to reset"></div>
         <section class="pane pane-json" aria-label="JSON of the line">
             <div class="pane-heading"><span>JSON</span><code class="json-where"></code></div>
             <div class="code">
@@ -792,10 +809,12 @@
                 <textarea aria-label="The design's code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
             </div>
         </section>
+        <div class="divider" data-divider="2" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize the JSON and the preview" aria-valuemin="0" aria-valuemax="100" title="Drag to resize, double-click to reset"></div>
         <section class="pane pane-preview" aria-label="Preview">
             <div class="pane-heading">Preview</div>
             <iframe title="Collection preview"></iframe>
         </section>
+        <div class="divider divider-errors" role="separator" tabindex="0" aria-orientation="horizontal" aria-label="Resize the errors" title="Drag to resize, double-click to reset"></div>
         <section class="pane pane-errors" aria-label="Errors">
             <div class="pane-heading"><span class="errors-title">No errors</span></div>
             <ul class="errors-list"></ul>
@@ -808,7 +827,8 @@
 <script src="lib/line_from_item.js"></script>
 <script src="playground-colours.js"></script>
 <script>
-const default_split = 0.4;
+// Each tab's pane widths, as parts of the whole width; the errors panel's height in px
+const SIZES_DEFAULT = {basic: [1 / 3], advanced: [1 / 3, 1 / 3], design: [2 / 3], errors: 76};
 
 main();
 
@@ -826,14 +846,15 @@ async function main()
     const frame = document.querySelector('.pane-preview iframe');
     const design_select = document.querySelector('.toolbar select');
     const status = document.querySelector('.status');
-    const divider = document.querySelector('.divider');
+    const dividers = document.querySelectorAll('.divider[data-divider]');
+    const divider_errors = document.querySelector('.divider-errors');
     const copy_button = document.querySelector('[data-action="copy"]');
     let designs = null;
     let frame_design = null;
     let frame_ready = false;
     let refocus = false;
     let render_timer;
-    let split = load_split() ?? default_split;
+    const sizes = load_sizes();
     let sample_request = null;
     let copy_timer;
     let tab = load_tab();
@@ -966,48 +987,93 @@ async function main()
         preview_observe();
     });
 
-    divider.addEventListener('pointerdown', function (event) {
+    for (const divider of dividers) {
+        const index = Number(divider.dataset.divider) - 1;
+        divider.addEventListener('pointerdown', function (event) {
+            if (event.button !== 0) {
+                return;
+            }
+            event.preventDefault();
+            divider.setPointerCapture(event.pointerId);
+            divider.toggleAttribute('data-dragging', true);
+            work.setAttribute('data-dragging', 'columns');
+        });
+        divider.addEventListener('pointermove', function (event) {
+            if (divider.hasPointerCapture(event.pointerId)) {
+                const rect = work.getBoundingClientRect();
+                sizes_move(index, (event.clientX - rect.left) / rect.width);
+            }
+        });
+        divider.addEventListener('lostpointercapture', function () {
+            divider.toggleAttribute('data-dragging', false);
+            work.removeAttribute('data-dragging');
+            save_sizes(sizes);
+        });
+        divider.addEventListener('keydown', function (event) {
+            const step = event.shiftKey ? 0.1 : 0.02;
+            const at = sizes[tab].slice(0, index + 1).reduce((a, b) => a + b, 0);
+            if (event.key === 'ArrowLeft') {
+                sizes_move(index, at - step);
+            }
+            else if (event.key === 'ArrowRight') {
+                sizes_move(index, at + step);
+            }
+            else {
+                return;
+            }
+            event.preventDefault();
+            save_sizes(sizes);
+        });
+        divider.addEventListener('dblclick', function () {
+            sizes[tab] = SIZES_DEFAULT[tab].slice();
+            render_sizes();
+            save_sizes(sizes);
+        });
+    }
+    divider_errors.addEventListener('pointerdown', function (event) {
         if (event.button !== 0) {
             return;
         }
         event.preventDefault();
-        divider.setPointerCapture(event.pointerId);
-        work.toggleAttribute('data-dragging', true);
+        divider_errors.setPointerCapture(event.pointerId);
+        divider_errors.toggleAttribute('data-dragging', true);
+        work.setAttribute('data-dragging', 'errors');
     });
-    divider.addEventListener('pointermove', function (event) {
-        if (divider.hasPointerCapture(event.pointerId)) {
-            const rect = work.getBoundingClientRect();
-            split = clamp_split((event.clientX - rect.left) / rect.width);
-            render_split();
+    divider_errors.addEventListener('pointermove', function (event) {
+        if (divider_errors.hasPointerCapture(event.pointerId)) {
+            const list = document.querySelector('.errors-list');
+            sizes.errors = list.getBoundingClientRect().bottom - event.clientY - (list.offsetTop - divider_errors.offsetTop);
+            render_sizes();
         }
     });
-    divider.addEventListener('lostpointercapture', function () {
-        work.toggleAttribute('data-dragging', false);
-        save_split(split);
+    divider_errors.addEventListener('lostpointercapture', function () {
+        divider_errors.toggleAttribute('data-dragging', false);
+        work.removeAttribute('data-dragging');
+        save_sizes(sizes);
     });
-    divider.addEventListener('keydown', function (event) {
-        const step = event.shiftKey ? 0.1 : 0.02;
-        if (event.key === 'ArrowLeft') {
-            split = clamp_split(split - step);
+    divider_errors.addEventListener('keydown', function (event) {
+        const step = event.shiftKey ? 60 : 12;
+        if (event.key === 'ArrowUp') {
+            sizes.errors += step;
         }
-        else if (event.key === 'ArrowRight') {
-            split = clamp_split(split + step);
+        else if (event.key === 'ArrowDown') {
+            sizes.errors -= step;
         }
         else {
             return;
         }
         event.preventDefault();
-        render_split();
-        save_split(split);
+        render_sizes();
+        save_sizes(sizes);
     });
-    divider.addEventListener('dblclick', function () {
-        split = default_split;
-        render_split();
-        save_split(null);
+    divider_errors.addEventListener('dblclick', function () {
+        sizes.errors = SIZES_DEFAULT.errors;
+        render_sizes();
+        save_sizes(sizes);
     });
-    window.addEventListener('resize', render_split);
+    window.addEventListener('resize', render_sizes);
 
-    render_split();
+    render_sizes();
     // The first preview waits for the list: a saved draft may name a design that is gone
     const designs_loaded = load_designs();
     editor.value = load_draft() ?? await load_sample('showcase') ?? '';
@@ -1017,6 +1083,7 @@ async function main()
 
     function render_tab() {
         app.dataset.tab = tab;
+        render_sizes();
         for (const button of document.querySelectorAll('.tabs [data-tab]')) {
             button.setAttribute('aria-selected', String(button.dataset.tab === tab));
         }
@@ -1310,6 +1377,7 @@ async function main()
         title.textContent = errors.length ? `Errors: ${errors.length}` : 'No errors';
         title.toggleAttribute('data-count', errors.length > 0);
         document.querySelector('.pane-errors').toggleAttribute('data-count', errors.length > 0);
+        work.toggleAttribute('data-errors', errors.length > 0);
         document.querySelector('.errors-list').replaceChildren(...errors.map(function (error) {
             const li = document.createElement('li');
             const reachable = !!error.where?.line && (error.where.file === 'links.txt' || (!!design && error.where.file in design.files));
@@ -1442,18 +1510,36 @@ async function main()
         frame.contentWindow.postMessage({type: 'navplace:items-text', text: editor.value}, '*');
     }
 
-    // A narrow window squeezes the split without forgetting it
-    function render_split() {
-        const value = clamp_split(split);
-        work.style.setProperty('--split', `${(value * 100).toFixed(2)}%`);
-        divider.setAttribute('aria-valuenow', String(Math.round(value * 100)));
+    // Divider `index` of the current tab to the place `at` (a part of the width): the panes on
+    // its two sides change, the others keep their width
+    function sizes_move(index, at) {
+        const parts = sizes[tab];
+        const before = parts.slice(0, index).reduce((a, b) => a + b, 0);
+        const end = (index + 1 < parts.length) ? before + parts[index] + parts[index + 1] : 1;
+        const min = 200 / work.clientWidth;
+        const max = end - ((index + 1 < parts.length) ? min : 280 / work.clientWidth);
+        const value = Math.min(max, Math.max(before + min, at)) - before;
+        if (index + 1 < parts.length) {
+            parts[index + 1] = end - before - value;
+        }
+        parts[index] = value;
+        render_sizes();
     }
 
-    // Each pane keeps a usable width
-    function clamp_split(value) {
-        const min = 240 / work.clientWidth;
-        const max = 1 - 320 / work.clientWidth;
-        return (min < max) ? Math.min(max, Math.max(min, value)) : 0.5;
+    // A narrow window squeezes the panes without forgetting their sizes
+    function render_sizes() {
+        const parts = sizes[tab];
+        const min = Math.min(200 / work.clientWidth, 0.3);
+        const shown = parts.map(v => Math.max(min, v));
+        work.style.setProperty('--a', `${(shown[0] * 100).toFixed(2)}%`);
+        work.style.setProperty('--b', `${((shown[1] ?? 0) * 100).toFixed(2)}%`);
+        let at = 0;
+        for (const divider of dividers) {
+            at += shown[Number(divider.dataset.divider) - 1] ?? 0;
+            divider.setAttribute('aria-valuenow', String(Math.round(at * 100)));
+        }
+        sizes.errors = Math.min(Math.max(40, sizes.errors), Math.max(40, work.clientHeight * 0.6));
+        work.style.setProperty('--errors-height', `${Math.round(sizes.errors)}px`);
     }
 
     async function load_designs() {
@@ -1813,26 +1899,36 @@ function load_draft()
     }
 }
 
-function load_split()
+// Kept sizes over the defaults; Basic's split from before the tabs counts as Basic's
+function load_sizes()
 {
+    const out = JSON.parse(JSON.stringify(SIZES_DEFAULT));
     try {
-        const value = parseFloat(localStorage.getItem('navplace.playground.split'));
-        return Number.isFinite(value) ? value : null;
+        const saved = JSON.parse(localStorage.getItem('navplace.playground.sizes')) ?? {};
+        for (const key of Object.keys(SIZES_DEFAULT)) {
+            const value = saved[key];
+            if (Array.isArray(value) && value.length === out[key].length && value.every(v => Number.isFinite(v) && v > 0) && value.reduce((a, b) => a + b, 0) < 1) {
+                out[key] = value;
+            }
+            else if (key === 'errors' && Number.isFinite(value)) {
+                out.errors = value;
+            }
+        }
+        const split = parseFloat(localStorage.getItem('navplace.playground.split'));
+        if (!saved.basic && split > 0 && split < 1) {
+            out.basic = [split];
+        }
     }
     catch {
-        return null;
     }
+    return out;
 }
 
-function save_split(value)
+function save_sizes(sizes)
 {
     try {
-        if (value === null) {
-            localStorage.removeItem('navplace.playground.split');
-        }
-        else {
-            localStorage.setItem('navplace.playground.split', String(value));
-        }
+        localStorage.setItem('navplace.playground.sizes', JSON.stringify(sizes));
+        localStorage.removeItem('navplace.playground.split');
     }
     catch {
     }
