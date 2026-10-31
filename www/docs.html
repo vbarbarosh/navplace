@@ -503,7 +503,7 @@
         <tr><td>Web</td><td>Collections stored on the server, in MySQL</td><td>Keeping a collection the desktop app loads and refreshes; the site itself, with the <a href="playground.html">Playground</a>.</td></tr>
     </tbody>
 </table>
-<p>The <a href="playground.html">Playground</a> is the quickest way to try it: pick a design, edit the links, see the preview, then copy the embed code or open it in CodePen.</p>
+<p>The <a href="playground.html">Playground</a> is the quickest way to try it: pick a design, edit the links, see the preview, then copy the embed code or open it in CodePen. It has three tabs over the same work: <strong>Basic</strong> is the text and the preview; <strong>Advanced</strong> colours the links and shows the JSON of the line the cursor is on, editable both ways; <strong>Design</strong> edits the design's own files beside the preview. Under Advanced and Design, an errors panel names the line each error came from.</p>
 
 <!-- ============================================================ -->
 <h2 id="desktop-app">Desktop app</h2>
@@ -764,6 +764,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
     <li>Fonts, scripts and images ship inside the folder or inline: the desktop app <a href="#network-gate">blocks remote requests</a>.</li>
 </ul>
 <p>The same file runs in the desktop app (links from <code>window.ElectronApp</code>), inside the embed widget and in the Playground (links by <code>postMessage</code>). The full guide for writing one: <a href="https://github.com/vbarbarosh/navplace/blob/master/specs/DESIGN.ai.md">specs/DESIGN.ai.md</a>.</p>
+<p>To work on one, open the Playground's <strong>Design</strong> tab: the <code>% design:</code> line opens the design's folder there, a tab per file, and every edit redraws the preview. The edits stay in the browser until <strong>Load</strong> brings a design's files back; copy them into <code>designs/&lt;name&gt;/</code> to keep them.</p>
 
 <!-- ============================================================ -->
 <h2 id="embed">Embed widget</h2>
@@ -931,7 +932,7 @@ Gmail   https://mail.google.com/
 
 <h3 id="architecture-site">The site and the releases</h3>
 <ul>
-    <li><code>bin/build-www</code> puts the site together in <code>build/www/</code>: <code>www/</code>, <code>lib/</code> without the tests and the CLI, <code>designs/</code> without the drafts, and <code>designs/index.json</code>, the Playground's list of designs.</li>
+    <li><code>bin/build-www</code> puts the site together in <code>build/www/</code>: <code>www/</code>, <code>lib/</code> without the tests and the CLI, <code>designs/</code> without the drafts, and <code>designs/index.json</code>, the Playground's list of designs with the files of each.</li>
     <li>Every <code>master</code> push that touches the site runs <code>bin/deploy-www</code>: <code>bin/build-www</code>, then a Cloudflare Worker (<code>src/cloudflare/</code>) that answers the site's files from the edge, a missing one as a 404, and passes everything else, <code>/api</code> and <code>/auth</code>, on to the server.</li>
     <li>Every <code>master</code> push builds both AppImages as workflow artifacts. A tag <code>electron-v*</code> builds a GitHub release with the Electron AppImage; <code>src/desktop-electron/bin/release patch|minor|major</code>, run on <code>master</code>, bumps the version, commits, tags and pushes.</li>
 </ul>
