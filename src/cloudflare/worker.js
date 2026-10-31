@@ -5,6 +5,11 @@ export default {
         if (url.pathname === '/') {
             return env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
         }
+        // The site's own paths come only from its files: a missing one is a
+        // 404 here, never an old copy left on the server
+        if (/^\/(designs|lib)\//.test(url.pathname) || url.pathname.endsWith('.html')) {
+            return new Response('Not found', {status: 404});
+        }
         // /api, /auth and the rest go on to the server behind navplace.com
         return fetch(request);
     },
