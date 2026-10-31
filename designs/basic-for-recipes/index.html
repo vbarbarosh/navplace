@@ -241,14 +241,15 @@
                 return;
             }
 
+            // A link's picture loads only in the desktop app (private://); elsewhere the card has none
+            function has_image(item)
+            {
+                return !!item.image_url && (!!window.ElectronApp || !item.image_url.startsWith('private://'));
+            }
+
             itemsContainer.innerHTML = items.map(item => `
                     <a href="${item.href}" class="recipe-card" target="_blank">
-                        <div class="image-container">
-                            ${item.image_url ?
-                `<img src="${item.image_url}" alt="${item.label}" class="recipe-image">` :
-                `<div class="recipe-image" style="background: linear-gradient(135deg, var(--soft-beige), var(--cream));"></div>`
-            }
-                        </div>
+                        ${has_image(item) ? `<div class="image-container"><img src="${item.image_url}" alt="${item.label}" class="recipe-image"></div>` : ''}
                         <div class="recipe-content">
                             <div class="recipe-header">
                                 ${item.icon_url ? `<img src="${item.icon_url}" alt="" class="favicon">` : ''}
