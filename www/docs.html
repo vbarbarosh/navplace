@@ -205,11 +205,15 @@
             padding: 16px 0 0;
         }
 
+        /* The links stand 8px out to the left for their highlight; the scroll box makes room
+           for that, or it clips the highlight flush against the text */
         .toc {
             position: sticky;
             top: 72px;
             align-self: start;
             max-height: calc(100vh - 88px);
+            margin-left: -8px;
+            padding-left: 8px;
             overflow-y: auto;
             font-size: 13px;
         }
