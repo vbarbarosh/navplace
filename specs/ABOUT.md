@@ -98,10 +98,9 @@ A **design** is a swappable visual theme applied to a collection. The same links
 
 Designs that ship in this repo, grouped by intent:
 
-- **Launchers** — `basic`, `google-chrome`, several `basic-for-internal*` iterations.
-- **Showcases / portfolios** — `showcase`, `github`, `basic-for-portfolio`, `basic-for-portfolio2`.
+- **Launchers** — `basic`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
+- **Showcases / portfolios** — `showcase`, `github`, `basic-for-portfolio`.
 - **Themed grids** — `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes`.
-- **Experimental** — `_plain-*` variants used as design sandboxes.
 
 Each design is a self-contained folder under `designs/<name>/` with its own `index.html`; the parser hands it a list of items and the design decides how to draw them.
 
@@ -150,7 +149,7 @@ A design is a self-contained HTML folder under `designs/<name>/` that consumes t
 - `basic`, `github`, `google-chrome` — minimal, search-first launchers with an input at the top and a list/grid of links below.
 - `showcase` — a personal page: name header, email link, grid of items. (This is what `vbarbarosh.com` uses.)
 - `basic-for-kids2`, `basic-for-recipes` — themed presentations with their own typography, colors, and layout.
-- `basic-for-portfolio*`, `basic-for-internal*` — iterations on portfolio and internal-tool launchers.
+- `basic-for-portfolio`, `basic-for-internal2`, `basic-for-internal3-with-groups` — a portfolio and two internal-tool launchers.
 
 **Can I embed NavPlace on my own site?**
 Yes. One `<script src="…/embed.js" data-links="…">` tag in any HTML page. The script creates an iframe pointing at the chosen design and pipes the `data-links` text into it via `postMessage`. The iframe sizes itself to its container — the example in `www/index.html` pins it to the viewport with `position: fixed; inset: 0`.

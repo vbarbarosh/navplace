@@ -160,9 +160,8 @@ Each design is a self-contained folder under `designs/<name>/` with its own `ind
 Inventory (as of this writing):
 
 - **Canonical / battle-tested** — `showcase` (presentation) and `github` (launcher). These are the production-quality references; use them as the template for new designs and lead with them when recommending designs to users.
-- Launcher-style (search input + list/grid): `github` ★, `basic`, `google-chrome`, `basic-for-internal`, `basic-for-internal2`, `basic-for-internal3-with-groups`, `basic-for-internal4`.
-- Presentation-style (themed, content-first): `showcase` ★, `basic-for-portfolio`, `basic-for-portfolio2`, `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes`.
-- Experimental / drafts: `_plain-pro1-deepseek-huge-tiles`, `_plain-pro1-grok-big-tiles`, `_plain-pro2-deepseek`, `_plain-recipe-deepseek` (LLM-generated drafts; not polished).
+- Launcher-style (search input + list/grid): `github` ★, `basic`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
+- Presentation-style (themed, content-first): `showcase` ★, `basic-for-portfolio`, `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes`.
 
 `showcase` is used by https://vbarbarosh.com (a single embed tag, no build step). `github` is the default fallback in `desktop-electron/main.js` when `% design:` is missing or unknown.
 

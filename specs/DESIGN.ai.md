@@ -6,7 +6,7 @@ produce a working `index.html`.
 
 ## Reference designs (read these first)
 
-Two existing designs are the canonical, battle-tested references. When generating a new design, base patterns on these — not on the experimental `_plain-*` drafts or the `basic-for-internal*` iterations.
+Two existing designs are the canonical, battle-tested references. When generating a new design, base patterns on these — not on the less polished `basic-for-*` designs.
 
 - **`designs/showcase/`** — the canonical **presentation-style** reference. Powers https://vbarbarosh.com in production. Vanilla JS, no framework. Uses `meta` mapping to bind `% title:` / `% email:` / `% subtitle:` into the page chrome. Has a working light/dark/system theme switcher with `localStorage`. Uses `navplace.navigate(item, e)` on click so multi-open works.
 
@@ -260,7 +260,7 @@ When designing, decide which family the brief belongs to. Each has a different r
 
 - **Launcher style** — search-first, dense list/table, keyboard-driven. Best for the desktop app. Optimize for typing speed and information density.
   - **Canonical reference: `designs/github/`.** Imitate this for launcher briefs.
-  - Other examples (less polished): `basic`, `google-chrome`, `basic-for-internal*`.
+  - Other examples (less polished): `basic`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
 - **Presentation style** — themed page with personality, items as a styled grid or wall, search is secondary. Best for hosted pages and embeds. Optimize for visual identity.
   - **Canonical reference: `designs/showcase/`.** Imitate this for presentation briefs.
   - Other examples (less polished): `basic-for-portfolio*`, `basic-for-kids2`, `basic-for-recipes`.

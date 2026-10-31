@@ -27,7 +27,6 @@ cp -r lib/ build/www/
 cp -r designs/ build/www/
 rm build/www/lib/*.cli.js
 rm build/www/lib/*.test.js
-rm -rf build/www/designs/_plain*
 
 # The playground lists the designs from here
 node -e '
