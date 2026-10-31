@@ -41,7 +41,6 @@ function render_links_line_html(raw)
         return `<span class="c-ignored">${html_escape(raw)}</span>`;
     }
     const parts = [
-        ...item.spans.label.map(at => ({at, kind: 'c-label'})),
         ...item.spans.tags.map(v => ({at: v.at, kind: 'c-tag'})),
         ...item.spans.meta.map(v => ({at: v.at, kind: 'c-tag'})),
         {at: item.spans.href, kind: 'c-url'},
