@@ -528,16 +528,6 @@
         .code > textarea:focus {
             outline: none;
         }
-        /* Basic is the plain text it always was */
-        .app[data-tab="basic"] .code > pre {
-            display: none;
-        }
-        .app[data-tab="basic"] .code > textarea {
-            color: var(--text);
-        }
-        .app[data-tab="basic"] .code > textarea::selection {
-            color: inherit;
-        }
         .c-current {
             display: inline-block;
             min-width: 100%;
@@ -1019,14 +1009,15 @@ async function main()
     // The colours, the JSON and the lit tile follow the line the cursor is on
     function render_cursor_line() {
         current_line = line_at(editor.value, editor.selectionStart);
-        if (tab !== 'advanced') {
+        if (tab === 'design') {
             preview_mark();
             return;
         }
-        editor_colours.innerHTML = render_links_html(editor.value, current_line);
+        // Basic has the colours too; the line and its JSON are Advanced's
+        editor_colours.innerHTML = render_links_html(editor.value, (tab === 'advanced') ? current_line : 0);
         code_scroll_sync(editor, editor_colours);
         // What is typed in the JSON is not taken from under the person typing it
-        if (document.activeElement !== json_editor || json_line !== current_line) {
+        if (tab === 'advanced' && (document.activeElement !== json_editor || json_line !== current_line)) {
             json_render();
         }
         preview_mark();
