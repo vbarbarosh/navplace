@@ -923,7 +923,9 @@
                 if (typeof window.navplace === "function") {
                     window.navplace({
                         input: input,
-                        update: function (items) { render(items); }
+                        update: function (items) { render(items); },
+                        // Enter is handled above: it opens the active row
+                        navigate: function () {}
                     });
                     flashStatus("bound");
                 } else {
