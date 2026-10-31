@@ -21,7 +21,7 @@ repo=`git rev-parse --show-toplevel`
 
 MERGE_LOCK=$(test -e "$repo/MERGE_LOCK" && cat "$repo/MERGE_LOCK" | grep -v '^#'; true)
 if test -n "$MERGE_LOCK"; then
-    echo -e "${RED}error: merging master → production was locked${RESET} ⚠️"
+    echo -e "${RED}error: releasing was locked${RESET} ⚠️"
     echo -e "${RED}${MERGE_LOCK}${RESET}"
     exit 1
 fi
@@ -35,8 +35,8 @@ major|minor|patch)
     ;;
 esac
 
-if test `git rev-parse --abbrev-ref HEAD` != production; then
-    echo error: switch branch to production >&2
+if test `git rev-parse --abbrev-ref HEAD` != master; then
+    echo error: switch branch to master >&2
     exit 1
 fi
 
@@ -61,7 +61,7 @@ fi
 git commit -m "release $tag"
 
 git tag $tag
-git push origin production
+git push origin master
 git push origin $tag
 
 EXIT_MESSAGE="${GREEN}bin/release succeeded${RESET}"

@@ -950,7 +950,7 @@ Gmail   https://mail.google.com/
 <h3 id="architecture-site">The site and the releases</h3>
 <ul>
     <li><code>bin/build-www</code> puts the site together in <code>build/www/</code>: <code>www/</code>, <code>lib/</code> without the tests and the CLI, <code>designs/</code> without the drafts, and <code>designs/index.json</code>, the Playground's list of designs.</li>
-    <li>Every <code>master</code> push builds both AppImages as workflow artifacts. A tag <code>electron-v*</code> on the <code>production</code> branch builds a GitHub release with the Electron AppImage; <code>src/desktop-electron/bin/release patch|minor|major</code> bumps the version, tags and pushes.</li>
+    <li>Every <code>master</code> push builds both AppImages as workflow artifacts. A tag <code>electron-v*</code> builds a GitHub release with the Electron AppImage; <code>src/desktop-electron/bin/release patch|minor|major</code>, run on <code>master</code>, bumps the version, commits, tags and pushes.</li>
 </ul>
 
 <!-- ============================================================ -->

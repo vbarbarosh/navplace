@@ -41,17 +41,8 @@ jobs:
               ;;
 
             refs/tags/electron-v*)
-              tag_commit=$(git rev-list -n 1 "$GITHUB_REF_NAME")
-              git fetch --no-tags origin production:refs/remotes/origin/production
-
-              if git merge-base --is-ancestor "$tag_commit" origin/production; then
-                echo "build=true" >> "$GITHUB_OUTPUT"
-                echo "release=true" >> "$GITHUB_OUTPUT"
-              else
-                echo "build=false" >> "$GITHUB_OUTPUT"
-                echo "release=false" >> "$GITHUB_OUTPUT"
-                echo "::notice::Skipping AppImage build because $GITHUB_REF_NAME is not on origin/production."
-              fi
+              echo "build=true" >> "$GITHUB_OUTPUT"
+              echo "release=true" >> "$GITHUB_OUTPUT"
               ;;
 
             *)
