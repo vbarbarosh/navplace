@@ -70,6 +70,15 @@
             padding: 0;
         }
 
+        /* Scrollbars and form controls in the page's theme, as on the other pages */
+        html {
+            color-scheme: light;
+        }
+
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
             font-size: 14px;
@@ -367,6 +376,9 @@
         .errors-title[data-count] {
             color: var(--danger);
         }
+        .pane-errors:not([data-count]) {
+            display: none;
+        }
         .errors-list {
             height: 76px;
             margin: 0;
@@ -528,9 +540,10 @@
         .code > textarea:focus {
             outline: none;
         }
+        /* Across the whole pane: its 16px left and 48px right padding too */
         .c-current {
             display: inline-block;
-            min-width: 100%;
+            min-width: calc(100% + 64px);
             margin: 0 -16px;
             padding: 0 16px;
             background: var(--c-current);
@@ -622,12 +635,14 @@
             letter-spacing: 0;
             text-transform: none;
         }
-        /* What shows before a design paints, or when it paints nothing */
+        /* What shows before a design paints, or when it paints nothing. A design keeps its
+           own scheme: one that differs from the frame's would get an opaque canvas over this */
         .pane iframe {
             flex: 1;
             width: 100%;
             border: 0;
             background: var(--panel);
+            color-scheme: normal;
         }
 
         /* ---------- Divider ---------- */
@@ -1294,6 +1309,7 @@ async function main()
         const title = document.querySelector('.errors-title');
         title.textContent = errors.length ? `Errors: ${errors.length}` : 'No errors';
         title.toggleAttribute('data-count', errors.length > 0);
+        document.querySelector('.pane-errors').toggleAttribute('data-count', errors.length > 0);
         document.querySelector('.errors-list').replaceChildren(...errors.map(function (error) {
             const li = document.createElement('li');
             const reachable = !!error.where?.line && (error.where.file === 'links.txt' || (!!design && error.where.file in design.files));
