@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Organize, navigate, and share your links from a single text file. Pick a design, paste your links, and make yourself at home.">
-    <title>NavPlace — Your links, in one place</title>
+    <meta name="description" content="NavPlace is a desktop app that opens your links in a few keystrokes: press Ctrl+Shift+Alt+N, type a few letters, hit Enter.">
+    <title>NavPlace — Every link, a keystroke away</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 29 29'%3E%3Crect width='29' height='29' rx='8' fill='%23286445'/%3E%3Cg transform='translate(5 5) scale(0.79)' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 19 4-14 10 10-14 4Z'/%3E%3Cpath d='m9 5 3 7 7 3M12 12l-7 7'/%3E%3C/g%3E%3C/svg%3E">
     <script>
         // Apply theme before paint to avoid flash
@@ -20,8 +20,7 @@
         })();
     </script>
     <style>
-        :root,
-        [data-theme="light"] {
+        :root {
             --bg: #fafaf9;
             --panel: #ffffff;
             --border: #e7e5e4;
@@ -31,11 +30,15 @@
             --text-mute: #a8a29e;
             --accent: #0f766e;
             --accent-soft: #f0fdfa;
+            --accent-ink: #ffffff;
             --code-bg: #f5f5f4;
+            --desk: linear-gradient(135deg, #cfe3dc 0%, #e4ddd0 55%, #d8d3e6 100%);
+            --window-bar: #ebe9e6;
+            --window-shadow: 0 30px 60px -20px rgba(28, 25, 23, 0.35), 0 0 0 1px rgba(28, 25, 23, 0.08);
             --focus: 0 0 0 3px rgba(15, 118, 110, 0.18);
         }
 
-        [data-theme="dark"] {
+        :root[data-theme="dark"] {
             --bg: #0c0c0e;
             --panel: #161618;
             --border: #27272a;
@@ -45,7 +48,11 @@
             --text-mute: #71717a;
             --accent: #2dd4bf;
             --accent-soft: #0f2926;
+            --accent-ink: #042f2e;
             --code-bg: #111113;
+            --desk: linear-gradient(135deg, #10302b 0%, #1c1a17 55%, #1d1a2b 100%);
+            --window-bar: #232326;
+            --window-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
             --focus: 0 0 0 3px rgba(45, 212, 191, 0.22);
         }
 
@@ -53,44 +60,63 @@
             box-sizing: border-box;
         }
 
-        html, body {
+        html {
+            color-scheme: light;
+            scroll-behavior: smooth;
+            scroll-padding-top: 64px;
+        }
+
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+        }
+
+        html,
+        body {
             margin: 0;
             padding: 0;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-            font-size: 14px;
-            line-height: 1.5;
+            font-size: 15px;
+            line-height: 1.55;
             color: var(--text);
             background: var(--bg);
             -webkit-font-smoothing: antialiased;
-            transition: background-color 160ms ease, color 160ms ease;
         }
 
         a {
-            transition: color 120ms ease;
             color: var(--text-soft);
             text-decoration: none;
         }
+
         a:hover {
             color: var(--text);
         }
 
-        code, pre {
+        code,
+        pre,
+        kbd {
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 12px;
         }
 
         button {
             font: inherit;
             color: inherit;
             cursor: pointer;
-            user-select: none;
         }
-        button:focus-visible, a:focus-visible {
+
+        button:focus-visible,
+        a:focus-visible {
             outline: none;
             box-shadow: var(--focus);
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            letter-spacing: -0.02em;
         }
 
         .sr-only {
@@ -106,28 +132,42 @@
         }
 
         .page {
-            max-width: 960px;
+            max-width: 1040px;
             margin: 0 auto;
             padding: 0 16px;
         }
 
         /* ---------- Top bar ---------- */
         .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: color-mix(in srgb, var(--bg) 88%, transparent);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid transparent;
+        }
+
+        .topbar.scrolled {
+            border-bottom-color: var(--border);
+        }
+
+        .topbar-row {
             display: flex;
             align-items: center;
-            gap: 16px;
-            height: 52px;
+            gap: 20px;
+            height: 56px;
         }
+
         .brand {
             display: flex;
             align-items: center;
             gap: 9px;
-            margin-right: auto;
             color: var(--text);
             font-weight: 720;
             font-size: 18px;
             letter-spacing: -0.6px;
         }
+
         .mark {
             display: grid;
             place-items: center;
@@ -137,633 +177,1018 @@
             color: #ffffff;
             background: #286445;
         }
+
+        .version {
+            padding: 1px 6px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-mute);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0;
+        }
+
         .topbar nav {
             display: flex;
-            gap: 16px;
-            font-size: 13px;
+            gap: 18px;
+            margin-left: auto;
+            font-size: 14px;
             white-space: nowrap;
         }
 
-        .theme {
-            display: flex;
-            padding: 2px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--panel);
-        }
-        .theme button {
-            transition: color 120ms ease, background-color 120ms ease;
+        .icon-link {
             display: grid;
             place-items: center;
-            width: 26px;
-            height: 22px;
+            width: 32px;
+            height: 32px;
             padding: 0;
             border: 0;
-            border-radius: 6px;
+            border-radius: 8px;
             background: transparent;
-            color: var(--text-mute);
-        }
-        .theme button:hover {
-            color: var(--text);
-        }
-        .theme button[aria-pressed="true"] {
-            color: var(--text);
-            background: var(--code-bg);
+            color: var(--text-soft);
         }
 
-        /* ---------- Intro ---------- */
-        .intro {
-            padding: 18px 0 16px;
+        .icon-link:hover {
+            color: var(--text);
         }
+
+        .icon-link svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .theme-switch .moon,
+        :root[data-theme="dark"] .theme-switch .sun {
+            display: none;
+        }
+
+        :root[data-theme="dark"] .theme-switch .moon {
+            display: block;
+        }
+
+        .topbar .ends {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ---------- Hero ---------- */
+        .hero {
+            padding: 56px 0 0;
+            text-align: center;
+        }
+
         .eyebrow {
-            margin: 0 0 4px;
+            margin: 0 0 10px;
             color: var(--accent);
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 650;
             letter-spacing: 0.12em;
             text-transform: uppercase;
         }
-        .intro h1 {
-            margin: 0;
-            font-size: 26px;
-            line-height: 1.2;
-            letter-spacing: -0.02em;
+
+        .hero h1 {
+            font-size: clamp(34px, 6vw, 56px);
+            line-height: 1.05;
+            letter-spacing: -0.035em;
         }
-        .intro p:last-child {
-            max-width: 560px;
+
+        .hero .lead {
+            max-width: 600px;
+            margin: 16px auto 0;
+            color: var(--text-soft);
+            font-size: 18px;
+        }
+
+        .lead kbd {
+            font-size: 14px;
+        }
+
+        .cta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 26px;
+        }
+
+        .cta-note {
+            margin: 12px 0 0;
+            color: var(--text-mute);
+            font-size: 13px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 42px;
+            padding: 0 18px;
+            border: 1px solid var(--border-strong);
+            border-radius: 10px;
+            background: var(--panel);
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            border-color: var(--text-mute);
+            color: var(--text);
+        }
+
+        .btn-primary {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: var(--accent-ink);
+        }
+
+        .btn-primary:hover {
+            border-color: var(--accent);
+            color: var(--accent-ink);
+            filter: brightness(1.08);
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* ---------- Keys ---------- */
+        kbd {
+            display: inline-block;
+            min-width: 1.9em;
+            padding: 0.1em 0.45em;
+            border: 1px solid var(--border-strong);
+            border-bottom-width: 2px;
+            border-radius: 6px;
+            background: var(--panel);
+            color: var(--text);
+            font-size: 0.85em;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .keys {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .keys kbd {
+            transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
+        }
+
+        .keys kbd.down {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: var(--accent-ink);
+            transform: translateY(1px);
+        }
+
+        .keys .then {
+            color: var(--text-mute);
+        }
+
+        /* ---------- The app window ---------- */
+        .desk {
+            position: relative;
+            margin-top: 44px;
+            padding: clamp(14px, 4vw, 44px);
+            border-radius: 20px;
+            background: var(--desk);
+        }
+
+        .window {
+            transition: opacity 220ms ease, transform 220ms ease;
+            max-width: 880px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #0d1117;
+            box-shadow: var(--window-shadow);
+            text-align: left;
+        }
+
+        .window.away {
+            opacity: 0;
+            transform: scale(0.97) translateY(8px);
+        }
+
+        .window-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 36px;
+            padding: 0 12px;
+            background: var(--window-bar);
+            color: var(--text-soft);
+            font-size: 13px;
+        }
+
+        .window-title {
+            flex: 1;
+            overflow: hidden;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 7px;
+        }
+
+        .window-controls.spacer {
+            visibility: hidden;
+        }
+
+        .window-controls span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border-strong);
+        }
+
+        .window-controls span:last-child {
+            background: #e5534b;
+        }
+
+        .window-view {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .window-view iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 0;
+            transform-origin: 0 0;
+        }
+
+        .desk-keys {
+            display: flex;
+            justify-content: center;
+            margin-top: 18px;
+            font-size: 15px;
+        }
+
+        .opened {
+            transition: opacity 200ms ease, transform 200ms ease;
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: calc(100% - 28px);
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: var(--panel);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.45);
+            color: var(--text);
+            font-size: 13px;
+            opacity: 0;
+            transform: translate(-50%, -8px);
+            pointer-events: none;
+        }
+
+        .opened.shown {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        .opened svg {
+            flex: none;
+            width: 16px;
+            height: 16px;
+            color: var(--accent);
+        }
+
+        .opened span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .try {
+            margin: 14px 0 0;
+            color: var(--text-soft);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .try code {
+            padding: 1px 6px;
+            border-radius: 5px;
+            background: var(--code-bg);
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        /* ---------- Sections ---------- */
+        .section {
+            padding: 88px 0 0;
+        }
+
+        .section-head {
+            max-width: 620px;
+        }
+
+        .section-head h2 {
+            font-size: clamp(26px, 4vw, 34px);
+            line-height: 1.15;
+        }
+
+        .section-head p {
+            margin: 10px 0 0;
+            color: var(--text-soft);
+            font-size: 17px;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 32px 0 0;
+            padding: 0;
+            list-style: none;
+            counter-reset: step;
+        }
+
+        .steps li {
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--panel);
+        }
+
+        .steps .keys {
+            justify-content: flex-start;
+            min-height: 40px;
+            font-size: 18px;
+        }
+
+        .steps h3 {
+            margin-top: 16px;
+            font-size: 18px;
+        }
+
+        .steps h3::before {
+            content: counter(step) ". ";
+            counter-increment: step;
+            color: var(--accent);
+        }
+
+        .steps p {
             margin: 6px 0 0;
             color: var(--text-soft);
         }
 
-        .btn {
-            transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
-            display: inline-flex;
+        .more {
+            display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 6px;
-            height: 26px;
-            padding: 0 10px;
-            border: 1px solid var(--border-strong);
-            border-radius: 7px;
-            background: var(--panel);
-            color: var(--text);
-            font-size: 12px;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-        .btn:hover {
-            color: var(--text);
-            border-color: var(--text-mute);
-        }
-        .btn-primary {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: var(--bg);
-        }
-        .btn-primary:hover {
-            color: var(--bg);
-            border-color: var(--text);
-            background: var(--text);
+            gap: 10px 14px;
+            margin-top: 16px;
+            padding: 16px 22px;
+            border: 1px dashed var(--border-strong);
+            border-radius: 14px;
+            color: var(--text-soft);
         }
 
-        /* ---------- Demo ---------- */
-        .demo {
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: var(--panel);
-            overflow: hidden;
+        .more strong {
+            color: var(--text);
         }
-        .demo-bar {
-            display: flex;
+
+        .more code {
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: var(--code-bg);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
             align-items: center;
-            gap: 12px;
-            padding: 6px 6px 6px 14px;
-            border-bottom: 1px solid var(--border);
+            gap: 40px;
         }
-        .demo-bar h2 {
-            margin: 0;
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
+
+        .points {
+            margin: 22px 0 0;
+            padding: 0;
+            list-style: none;
         }
-        .demo-tabs {
-            display: flex;
-            gap: 4px;
-            min-width: 0;
-            overflow-x: auto;
-        }
-        .demo-bar [role="tab"] {
-            transition: color 120ms ease, background-color 120ms ease;
-            height: 26px;
-            padding: 0 10px;
-            border: 0;
-            border-radius: 6px;
-            background: transparent;
+
+        .points li {
+            position: relative;
+            margin-top: 12px;
+            padding-left: 26px;
             color: var(--text-soft);
-            font-size: 12px;
-            white-space: nowrap;
         }
-        .demo-bar [role="tab"]:hover {
+
+        .points li::before {
+            content: "";
+            position: absolute;
+            top: 0.55em;
+            left: 4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .points code {
             color: var(--text);
+            font-size: 13px;
         }
-        .demo-bar [role="tab"][aria-selected="true"] {
-            color: var(--accent);
-            background: var(--accent-soft);
-        }
-        .demo-view {
-            display: flex;
-            flex: none;
-            margin-left: auto;
-            padding: 2px;
+
+        .file {
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: var(--panel);
         }
-        .demo-view button {
-            transition: color 120ms ease, background-color 120ms ease;
-            height: 22px;
-            padding: 0 9px;
-            border: 0;
-            border-radius: 6px;
-            background: transparent;
-            color: var(--text-mute);
-            font-size: 12px;
-            white-space: nowrap;
-        }
-        .demo-view button:hover {
-            color: var(--text);
-        }
-        .demo-view button[aria-pressed="true"] {
-            color: var(--text);
-            background: var(--code-bg);
-        }
-        .demo-view code {
-            font-size: 11px;
-        }
-        .demo-window textarea {
-            display: block;
-            width: 100%;
-            min-height: 320px;
-            margin: 0;
-            padding: 16px 20px;
-            border: 0;
-            border-radius: 0;
-            overflow: hidden auto;
-            resize: none;
-            white-space: pre;
-            color: var(--text);
-            background: var(--code-bg);
+
+        .file-name {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-soft);
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
             font-size: 13px;
-            line-height: 1.6;
-        }
-        .demo-window textarea:focus {
-            outline: none;
-        }
-        .demo-window > [hidden] {
-            display: none;
-        }
-        .demo-frames {
-            position: relative;
-            height: 520px;
-        }
-        .demo-frames > div {
-            position: absolute;
-            inset: 0;
-        }
-        .demo-frames > div[hidden] {
-            display: none;
-        }
-        .demo-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 6px 6px 14px;
-            border-top: 1px solid var(--border);
-        }
-        .demo-actions p {
-            margin: 0 auto 0 0;
-            color: var(--text-mute);
-            font-size: 12px;
-        }
-        noscript p {
-            margin: 0;
-            padding: 10px 14px;
-            color: var(--text-soft);
         }
 
-        /* ---------- Notes ---------- */
-        .notes {
+        .file pre {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            background: var(--code-bg);
+            color: var(--text);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .file .c {
+            color: var(--accent);
+        }
+
+        .file .t {
+            color: var(--text-mute);
+        }
+
+        .install {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 24px;
-            padding: 20px 0;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 32px 0 0;
+            padding: 0;
+            list-style: none;
         }
-        .notes h2 {
-            margin: 0 0 2px;
-            font-size: 13px;
-            font-weight: 600;
+
+        .install li {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--panel);
         }
-        .notes p {
+
+        .install h3 {
+            font-size: 17px;
+        }
+
+        .install p {
             margin: 0;
             color: var(--text-soft);
+            font-size: 14px;
+        }
+
+        .install pre {
+            margin: 0;
+            padding: 10px 12px;
+            overflow-x: auto;
+            border-radius: 8px;
+            background: var(--code-bg);
+            color: var(--text);
             font-size: 13px;
         }
 
-        /* ---------- Footer ---------- */
-        footer {
+        .install .btn {
+            align-self: flex-start;
+        }
+
+        .web {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 24px;
+            margin-top: 28px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--panel);
+        }
+
+        .web pre {
+            margin: 0;
+            padding: 12px 14px;
+            overflow-x: auto;
+            border-radius: 8px;
+            background: var(--code-bg);
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .web-links {
             display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            padding: 12px 0 20px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        footer {
+            margin-top: 88px;
             border-top: 1px solid var(--border);
             color: var(--text-mute);
-            font-size: 12px;
+            font-size: 13px;
         }
+
+        .footer-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px 24px;
+            padding-top: 22px;
+            padding-bottom: 32px;
+        }
+
         footer p {
             margin: 0;
         }
+
+        footer nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
         footer a {
             color: var(--text-mute);
         }
 
-        @media (max-width: 720px) {
-            .demo-bar h2 {
-                display: none;
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
             }
-            .demo-bar {
-                flex-wrap: wrap;
-                gap: 6px;
-                padding-left: 6px;
+
+            .window,
+            .opened,
+            .keys kbd {
+                transition: none;
             }
-            .demo-tabs {
-                flex-basis: 100%;
-                order: 1;
+        }
+
+        @media (max-width: 860px) {
+            .steps,
+            .install {
+                grid-template-columns: 1fr;
             }
-            .demo-view {
-                margin-left: 0;
-            }
-            .demo-frames {
-                height: 480px;
-            }
-            .demo-window textarea {
-                padding: 12px 14px;
-                font-size: 12px;
-            }
-            .demo-actions {
-                flex-wrap: wrap;
-            }
-            .demo-actions p {
-                flex-basis: 100%;
-            }
-            .topbar nav a[href^="https:"] {
-                display: none;
-            }
-            .notes {
+
+            .split {
                 grid-template-columns: minmax(0, 1fr);
+                gap: 24px;
+            }
+
+            .web {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .web-links {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .topbar nav .wide {
+                display: none;
+            }
+
+            .topbar-row {
                 gap: 12px;
             }
-            footer {
-                flex-direction: column;
-                gap: 4px;
+
+            .topbar nav {
+                gap: 14px;
+            }
+
+            .hero {
+                padding-top: 36px;
+            }
+
+            .hero .lead {
+                font-size: 16px;
+            }
+
+            .section {
+                padding-top: 64px;
+            }
+
+            .desk-keys {
+                font-size: 13px;
             }
         }
     </style>
 </head>
 <body>
-<div class="page">
 
-    <header class="topbar">
+<header class="topbar">
+    <div class="page topbar-row">
         <a class="brand" href="./" aria-label="NavPlace home">
             <span class="mark" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 19 4-14 10 10-14 4Z"/><path d="m9 5 3 7 7 3M12 12l-7 7"/></svg></span>
             NavPlace
+            <span class="version" title="The released desktop app">v1.1.3</span>
         </a>
         <nav aria-label="Main navigation">
-            <a href="playground.html">Playground</a>
+            <a class="wide" href="#how">How it works</a>
             <a href="docs.html">Docs</a>
-            <a href="https://github.com/vbarbarosh/navplace">GitHub <span aria-hidden="true">↗</span></a>
-            <a href="https://github.com/vbarbarosh/navplace/releases/latest">Desktop app <span aria-hidden="true">↗</span></a>
+            <a class="wide" href="playground.html">Playground</a>
         </nav>
-        <div class="theme" role="group" aria-label="Theme">
-            <button type="button" data-theme-value="light" title="Light" aria-label="Light">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-            </button>
-            <button type="button" data-theme-value="dark" title="Dark" aria-label="Dark">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <div class="ends">
+            <a class="icon-link" href="https://github.com/vbarbarosh/navplace" title="NavPlace on GitHub" aria-label="NavPlace on GitHub">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-1.97c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+            </a>
+            <button class="icon-link theme-switch" type="button" title="Switch theme" aria-label="Switch theme">
+                <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"/></svg>
+                <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"/></svg>
             </button>
         </div>
-    </header>
+    </div>
+</header>
 
-    <main>
-        <section class="intro" aria-labelledby="title">
-            <p class="eyebrow">One file. Many possibilities.</p>
-            <h1 id="title">Your links, in one place.</h1>
-            <p>A little home for everywhere you go. Organize your links in plain text, pick a design, and find your way in a few keystrokes.</p>
-        </section>
+<main class="page">
 
-        <section class="demo" aria-labelledby="demo-title">
-            <div class="demo-bar">
-                <h2 id="demo-title">Try a collection</h2>
-                <div class="demo-tabs" role="tablist" aria-label="Example collection"></div>
-                <div class="demo-view" role="group" aria-label="View">
-                    <button type="button" data-view="source"><code>links.txt</code></button>
-                    <button type="button" data-view="preview">Preview</button>
+    <section class="hero" aria-labelledby="title">
+        <p class="eyebrow">Desktop app for Linux</p>
+        <h1 id="title">Every link, a keystroke away.</h1>
+        <p class="lead">Press <span class="keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd><kbd>N</kbd></span>, type a few letters, hit <kbd>Enter</kbd>. NavPlace opens the link in your browser and steps aside until you need it again.</p>
+        <div class="cta">
+            <a class="btn btn-primary" href="https://github.com/vbarbarosh/navplace/releases/latest">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                Download for Linux
+            </a>
+            <a class="btn" href="#how">How it works</a>
+        </div>
+        <p class="cta-note">v1.1.3 · AppImage · free and open source</p>
+
+        <div class="desk">
+            <div class="window" aria-label="The NavPlace app window, live">
+                <div class="window-bar">
+                    <span class="window-controls spacer" aria-hidden="true"><span></span><span></span><span></span></span>
+                    <span class="window-title">GitHub Theme | NavPlace — v1.1.3</span>
+                    <span class="window-controls" aria-hidden="true"><span></span><span></span><span></span></span>
+                </div>
+                <div class="window-view">
+                    <iframe title="NavPlace, the github design" tabindex="-1"></iframe>
                 </div>
             </div>
-            <div class="demo-window">
-                <textarea aria-label="Collection source" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
-                <div class="demo-frames" hidden></div>
+            <div class="desk-keys" aria-hidden="true">
+                <span class="keys">
+                    <kbd data-key="Ctrl">Ctrl</kbd><kbd data-key="Shift">Shift</kbd><kbd data-key="Alt">Alt</kbd><kbd data-key="N">N</kbd>
+                    <span class="then">→</span>
+                    <kbd data-key="typed" class="typed">a few letters</kbd>
+                    <span class="then">→</span>
+                    <kbd data-key="Enter">Enter</kbd>
+                </span>
             </div>
-            <div class="demo-actions">
-                <p>Edit the links, then open Preview to see your version.</p>
-                <button class="btn" type="button" data-action="copy">Copy embed</button>
-                <button class="btn btn-primary" type="button" data-action="codepen">Open in CodePen <span aria-hidden="true">↗</span></button>
+            <div class="opened" role="status">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+                <span></span>
             </div>
-            <span class="sr-only" role="status"></span>
-            <noscript><p>Enable JavaScript to try the collections, or <a href="https://github.com/vbarbarosh/navplace">explore NavPlace on GitHub</a>.</p></noscript>
-        </section>
+        </div>
+        <p class="try">This is the app, live. Type <code>mail</code>, <code>docs</code> or <code>git cal</code>, then <kbd>Enter</kbd>.</p>
+    </section>
 
-        <section class="notes" aria-label="Why NavPlace">
-            <div>
-                <h2>Start with plain text</h2>
-                <p>A name and a URL. Your collection stays simple and easy to edit.</p>
-            </div>
-            <div>
-                <h2>Make it your own</h2>
-                <p>From a personal start page to a portfolio. Same links, a different look.</p>
-            </div>
-            <div>
-                <h2>Keep it close</h2>
-                <p>Embed it on the web or use the desktop app for everyday navigation.</p>
-            </div>
-        </section>
-    </main>
+    <section class="section" id="how" aria-labelledby="how-title">
+        <div class="section-head">
+            <h2 id="how-title">Three keys, and you are there</h2>
+            <p>No tabs to hunt for, no bookmarks bar to dig through. The same few moves, dozens of times a day.</p>
+        </div>
+        <ol class="steps">
+            <li>
+                <span class="keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd><kbd>N</kbd></span>
+                <h3>Summon</h3>
+                <p>The window shows at once. NavPlace stays running in the background, so there is nothing to start.</p>
+            </li>
+            <li>
+                <span class="keys"><kbd>m</kbd><kbd>a</kbd><kbd>i</kbd><kbd>l</kbd></span>
+                <h3>Type a few letters</h3>
+                <p>Links narrow down by name, tag and address as you type; the top match is ready to go.</p>
+            </li>
+            <li>
+                <span class="keys"><kbd>Enter</kbd></span>
+                <h3>Go</h3>
+                <p>The link opens in your browser and the window hides, ready for the next time.</p>
+            </li>
+        </ol>
+        <div class="more">
+            <strong>Several at once:</strong>
+            <code>git mail cal</code>
+            <span>opens the top match for each word, your whole morning in one line.</span>
+        </div>
+    </section>
 
-    <footer>
+    <section class="section split" aria-labelledby="file-title">
+        <div>
+            <div class="section-head">
+                <h2 id="file-title">Your links are one text file</h2>
+                <p>No account and no database. A name and an address on each line; edit it in any editor.</p>
+            </div>
+            <ul class="points">
+                <li>It lives at <code>~/.navplace/README.md</code>; the app reads it again every time you summon it.</li>
+                <li><code># A heading</code> groups links, <code>#tag</code> adds words to search by.</li>
+                <li><code>% design:</code> picks the look; any NavPlace design runs full-window.</li>
+                <li>Keep it on a server instead: set <code>collection_url</code> in <code>~/.navplace/settings.yaml</code>.</li>
+            </ul>
+        </div>
+        <div class="file">
+            <div class="file-name">~/.navplace/README.md</div>
+<pre><span class="c">% design: github</span>
+
+ChatGPT          <span class="t">#ai</span>    https://chatgpt.com/
+GitHub           <span class="t">#dev</span>   https://github.com/
+Gmail            <span class="t">#mail</span>  https://mail.google.com/
+Google Calendar  <span class="t">#work</span>  https://calendar.google.com/
+Google Drive     <span class="t">#work</span>  https://drive.google.com/
+MDN Web Docs     <span class="t">#docs</span>  https://developer.mozilla.org/
+Node.js          <span class="t">#docs</span>  https://nodejs.org/en/docs
+Electron         <span class="t">#docs</span>  https://www.electronjs.org/docs/latest/</pre>
+        </div>
+    </section>
+
+    <section class="section" id="download" aria-labelledby="download-title">
+        <div class="section-head">
+            <h2 id="download-title">Set up in a minute</h2>
+            <p>One AppImage, nothing to install system-wide.</p>
+        </div>
+        <ol class="install">
+            <li>
+                <h3>1. Download</h3>
+                <p>The latest release, a single AppImage file.</p>
+                <a class="btn btn-primary" href="https://github.com/vbarbarosh/navplace/releases/latest">Download for Linux</a>
+            </li>
+            <li>
+                <h3>2. Run</h3>
+                <p>Make it executable and start it.</p>
+<pre>chmod +x NavPlace-*.AppImage
+./NavPlace-*.AppImage</pre>
+            </li>
+            <li>
+                <h3>3. Add the hotkey</h3>
+                <p>Once, on GNOME: registers <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd><kbd>N</kbd>. Needs <code>node</code> on your PATH.</p>
+<pre>./NavPlace-*.AppImage --configure-gnome</pre>
+            </li>
+        </ol>
+    </section>
+
+    <section class="section" aria-labelledby="web-title">
+        <div class="section-head">
+            <h2 id="web-title">The same file, on the web</h2>
+            <p>Every NavPlace design also works as a web page or a widget: one script tag on any page.</p>
+        </div>
+        <div class="web">
+<pre>&lt;script src="https://navplace.com/lib/embed.js" data-links="
+% design: showcase
+GitHub   https://github.com/
+"&gt;&lt;/script&gt;</pre>
+            <div class="web-links">
+                <a class="btn" href="playground.html">Try the designs</a>
+                <a class="btn" href="docs.html">Read the docs</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <div class="page footer-row">
         <p>A small tool for a more organized web.</p>
-        <a href="https://github.com/vbarbarosh/navplace/blob/master/LICENSE">Open source · MIT license <span aria-hidden="true">↗</span></a>
-    </footer>
-
-</div>
+        <nav aria-label="Footer">
+            <a href="docs.html">Docs</a>
+            <a href="playground.html">Playground</a>
+            <a href="https://github.com/vbarbarosh/navplace">GitHub</a>
+            <a href="https://github.com/vbarbarosh/navplace/blob/master/LICENSE">MIT license</a>
+        </nav>
+    </div>
+</footer>
 
 <script>
-const demos = [
-    {value: 'github', label: 'Developer', links: `
-% design: github
+// The collection the desktop app writes on its first start (src/desktop-electron/main.js)
+const DEFAULT_README = `% design: github
 
-# GitHub
-smcss                   https://smcss.vbarbarosh.com/concepts/
-node-helpers            https://vbarbarosh.github.io/node-helpers
-type-helpers            https://vbarbarosh.github.io/type-helpers
-laravel-debug-eval      https://github.com/vbarbarosh/laravel-debug-eval
-express-helpers         https://vbarbarosh.github.io/express-helpers
-ffmpeg-helpers          https://vbarbarosh.github.io/ffmpeg-helpers
-math-helpers            https://vbarbarosh.github.io/math-helpers
-puppeteer-helpers       https://vbarbarosh.github.io/puppeteer-helpers
-sqlite-helpers          https://vbarbarosh.github.io/sqlite-helpers
-user-friendly-status    https://vbarbarosh.github.io/user-friendly-status
-vue-modal               https://vbarbarosh.github.io/vue-modal
-vue-pager               https://vbarbarosh.github.io/vue-pager
+ChatGPT             #ai      https://chatgpt.com/
+GitHub              #dev     https://github.com/
+Gmail               #mail    https://mail.google.com/
+Google Calendar     #work    https://calendar.google.com/
+Google Drive        #work    https://drive.google.com/
+MDN Web Docs        #docs    https://developer.mozilla.org/
+Node.js             #docs    https://nodejs.org/en/docs
+Electron            #docs    https://www.electronjs.org/docs/latest/
+`;
 
-# CodePen
-CodePen                 https://codepen.io/vbarbarosh
-
-# LinkedIn
-LinkedIn                https://www.linkedin.com/in/vbarbarosh/
-
-# StackOverflow
-StackOverflow           https://stackoverflow.com/users/1478566/vbarbarosh/
-`},
-    {value: 'showcase', label: 'Portfolio', links: `
-% design: showcase
-% title: Vladimir Barbarosh
-% email: hello@vbarbarosh.com
-
-# GitHub
-smcss                   https://smcss.vbarbarosh.com/concepts/
-node-helpers            https://vbarbarosh.github.io/node-helpers
-type-helpers            https://vbarbarosh.github.io/type-helpers
-laravel-debug-eval      https://github.com/vbarbarosh/laravel-debug-eval
-express-helpers         https://vbarbarosh.github.io/express-helpers
-ffmpeg-helpers          https://vbarbarosh.github.io/ffmpeg-helpers
-math-helpers            https://vbarbarosh.github.io/math-helpers
-puppeteer-helpers       https://vbarbarosh.github.io/puppeteer-helpers
-sqlite-helpers          https://vbarbarosh.github.io/sqlite-helpers
-user-friendly-status    https://vbarbarosh.github.io/user-friendly-status
-vue-modal               https://vbarbarosh.github.io/vue-modal
-vue-pager               https://vbarbarosh.github.io/vue-pager
-
-# CodePen
-CodePen                 https://codepen.io/vbarbarosh
-
-# LinkedIn
-LinkedIn                https://www.linkedin.com/in/vbarbarosh/
-
-# StackOverflow
-StackOverflow           https://stackoverflow.com/users/1478566/vbarbarosh/
-`},
-    {value: 'basic-for-recipes', label: 'Recipes', links: `
-% design: basic-for-recipes
-
-Bon Appétit         https://www.bonappetit.com/recipes
-Serious Eats        https://www.seriouseats.com/recipes
-BBC Good Food       https://www.bbcgoodfood.com/recipes
-NYT Cooking         https://cooking.nytimes.com
-Budget Bytes        https://www.budgetbytes.com
-Minimalist Baker    https://minimalistbaker.com/recipes
-Allrecipes          https://www.allrecipes.com
-Food & Wine         https://www.foodandwine.com/recipes
-King Arthur Baking  https://www.kingarthurbaking.com/recipes
-Epicurious          https://www.epicurious.com/recipes-menus
-`},
-    {value: 'basic-for-kids2', label: 'Kids', links: `
-% design: basic-for-kids2
-
-National Geographic Kids    https://kids.nationalgeographic.com
-PBS KIDS                    https://pbskids.org
-Khan Academy Kids           https://learn.khanacademy.org/khan-academy-kids
-Coolmath Games              https://www.coolmathgames.com
-NASA Kids' Club             https://www.nasa.gov/kidsclub
-Duolingo ABC (Literacy)     https://www.duolingo.com/abc
-Scratch (Coding)            https://scratch.mit.edu
-Storyline Online (Read Alouds)  https://storylineonline.net
-Exploratorium (Science)         https://www.exploratorium.edu/explore
-Google Arts & Culture           https://artsandculture.google.com/
-`},
-];
+// What the demo types by itself until the visitor takes over
+const SCRIPT = ['mail', 'docs', 'git cal'];
 
 main();
 
 function main()
 {
-    const tablist = document.querySelector('.demo-tabs');
-    const source = document.querySelector('.demo-window textarea');
-    const frames = document.querySelector('.demo-frames');
-    const copy_button = document.querySelector('[data-action="copy"]');
-    const copy_status = document.querySelector('.demo [role="status"]');
-    let current = demos[0];
-    let view = 'source';
-    let copy_timer;
+    const topbar = document.querySelector('.topbar');
+    const win = document.querySelector('.window');
+    const view = document.querySelector('.window-view');
+    const iframe = view.querySelector('iframe');
+    const opened = document.querySelector('.opened');
+    const opened_text = opened.querySelector('span');
+    const typed_key = document.querySelector('[data-key="typed"]');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let ready = false;
+    let playing = !reduced;
+    let opened_timer;
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
 
-    for (const button of document.querySelectorAll('[data-theme-value]')) {
-        button.addEventListener('click', () => save_theme(button.dataset.themeValue));
-    }
-    set_theme(document.documentElement.dataset.theme);
-
-    for (const demo of demos) {
-        const tab = document.createElement('button');
-        tab.type = 'button';
-        tab.role = 'tab';
-        tab.textContent = demo.label;
-        tab.addEventListener('click', () => select(demo));
-        demo.text = demo.links.trim();
-        demo.tab = tab;
-        tablist.append(tab);
-    }
-
-    for (const button of document.querySelectorAll('[data-view]')) {
-        button.addEventListener('click', () => show(button.dataset.view));
-    }
-
-    source.addEventListener('input', function () {
-        current.text = source.value;
-        fit_source();
+    document.querySelector('.theme-switch').addEventListener('click', function () {
+        save_theme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
     });
-    window.addEventListener('resize', fit_source);
-    copy_button.addEventListener('click', copy);
-    document.querySelector('[data-action="codepen"]').addEventListener('click', () => open_codepen(format_snippet(current.text)));
 
-    show(view);
-    select(current);
+    window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 4), {passive: true});
 
-    function show(next) {
-        view = next;
-        source.hidden = (view !== 'source');
-        frames.hidden = (view !== 'preview');
-        for (const button of document.querySelectorAll('[data-view]')) {
-            button.setAttribute('aria-pressed', String(button.dataset.view === view));
-        }
-        if (view === 'preview') {
-            render_preview();
-        }
-        else {
-            fit_source();
-        }
-    }
+    new ResizeObserver(fit_window).observe(view);
+    fit_window();
 
-    // links.txt grows with its text; a long line scrolls sideways
-    function fit_source() {
-        if (source.hidden) {
+    window.addEventListener('message', function (event) {
+        if (event.source !== iframe.contentWindow || event.data?.type !== 'navplace:ready') {
             return;
         }
-        const scroll_y = window.scrollY;
-        source.style.height = 'auto';
-        source.style.height = `${source.scrollHeight + source.offsetHeight - source.clientHeight}px`;
-        window.scrollTo(window.scrollX, scroll_y);
+        iframe.contentWindow.postMessage({type: 'navplace:items-text', text: DEFAULT_README}, '*');
+    });
+    iframe.addEventListener('load', function () {
+        const doc = iframe.contentDocument;
+        // The app opens a link in the browser; here it opens in a new tab and the page stays
+        iframe.contentWindow.open = function (href) {
+            window.open(href, '_blank', 'noopener,noreferrer');
+            show_opened([href]);
+            return null;
+        };
+        doc.addEventListener('pointerdown', take_over);
+        doc.addEventListener('keydown', take_over);
+        ready = true;
+        if (playing) {
+            play();
+        }
+    });
+    iframe.src = 'designs/github/index.html';
+
+    // Typing anywhere on the page goes to the app's search, the first letter too
+    document.addEventListener('keydown', function (event) {
+        if (!ready || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) {
+            return;
+        }
+        if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) {
+            return;
+        }
+        if (event.key.length !== 1 || event.key === ' ' && document.activeElement !== document.body) {
+            return;
+        }
+        take_over();
+        const input = search_input();
+        if (!input) {
+            return;
+        }
+        event.preventDefault();
+        input.focus({preventScroll: true});
+        set_query(input.value + event.key);
+    });
+
+    function fit_window()
+    {
+        const width = view.clientWidth;
+        // The app's window is 1200×1000 at zoom 1.25: 960 CSS pixels wide
+        const inner_width = (width < 600) ? 640 : 960;
+        const inner_height = (width < 600) ? 560 : 520;
+        const scale = width / inner_width;
+        iframe.style.width = `${inner_width}px`;
+        iframe.style.height = `${inner_height}px`;
+        iframe.style.transform = `scale(${scale})`;
+        view.style.height = `${Math.round(inner_height * scale)}px`;
     }
 
-    function select(demo) {
-        current = demo;
-        source.value = demo.text;
-        source.scrollLeft = 0;
-        fit_source();
-        clearTimeout(copy_timer);
-        copy_button.textContent = 'Copy embed';
-        copy_status.textContent = '';
-        for (const v of demos) {
-            v.tab.setAttribute('aria-selected', String(v === demo));
+    function search_input()
+    {
+        return iframe.contentDocument?.querySelector('input[type=search]');
+    }
+
+    function set_query(value)
+    {
+        const input = search_input();
+        input.value = value;
+        input.dispatchEvent(new Event('input', {bubbles: true}));
+        typed_key.textContent = value || 'a few letters';
+    }
+
+    function take_over()
+    {
+        if (!playing) {
+            return;
         }
-        if (view === 'preview') {
-            render_preview();
+        playing = false;
+        win.classList.remove('away');
+        press([]);
+        set_query('');
+    }
+
+    function show_opened(hrefs)
+    {
+        opened_text.textContent = `Opened in your browser: ${hrefs.map(v => new URL(v).host).join(', ')}`;
+        opened.classList.add('shown');
+        clearTimeout(opened_timer);
+        opened_timer = setTimeout(() => opened.classList.remove('shown'), 2200);
+    }
+
+    function press(keys)
+    {
+        for (const kbd of document.querySelectorAll('.desk-keys kbd')) {
+            kbd.classList.toggle('down', keys.includes(kbd.dataset.key));
         }
     }
 
-    function render_preview() {
-        const demo = current;
-        for (const v of demos) {
-            if (v.frame) {
-                v.frame.hidden = (v !== demo);
+    async function play()
+    {
+        await sleep(900);
+        for (let round = 0; playing; round++) {
+            const query = SCRIPT[round % SCRIPT.length];
+            press(['Ctrl', 'Shift', 'Alt', 'N']);
+            win.classList.remove('away');
+            await sleep(700);
+            press([]);
+            for (let i = 1; i <= query.length && playing; i++) {
+                press(['typed']);
+                set_query(query.slice(0, i));
+                await sleep(170);
             }
-        }
-        // Each design is embedded once, the way a visitor would embed it
-        if (!demo.frame) {
-            demo.script = document.createElement('script');
-            demo.frame = document.createElement('div');
-            demo.script.src = 'lib/embed.js';
-            demo.script.dataset.links = demo.text;
-            demo.frame.append(demo.script);
-            frames.append(demo.frame);
-        }
-        // embed.js sends data-links again once the reloaded design is ready
-        else if (demo.script.dataset.links !== demo.text) {
-            demo.script.dataset.links = demo.text;
-            demo.frame.querySelector('iframe').src = `designs/${parse_design(demo.text)}/index.html`;
-        }
-    }
-
-    async function copy() {
-        const demo = current;
-        try {
-            await navigator.clipboard.writeText(format_snippet(demo.text));
-            if (demo !== current) {
+            press([]);
+            await sleep(1100);
+            if (!playing) {
                 return;
             }
-            copy_button.textContent = 'Copied!';
-            copy_status.textContent = 'Embed code copied to clipboard.';
-            clearTimeout(copy_timer);
-            copy_timer = setTimeout(() => copy_button.textContent = 'Copy embed', 2000);
+            press(['Enter']);
+            show_opened(top_matches(query));
+            await sleep(450);
+            if (!playing) {
+                return;
+            }
+            press([]);
+            win.classList.add('away');
+            await sleep(1700);
+            if (!playing) {
+                return;
+            }
+            set_query('');
         }
-        catch {
-            copy_status.textContent = 'Copy unavailable. Open in CodePen to get the embed code.';
-        }
+    }
+
+    // The top match of each word, as the app picks them
+    function top_matches(query)
+    {
+        const lines = DEFAULT_README.split('\n').filter(v => /^\S.*https?:\/\//.test(v) && !v.startsWith('%'));
+        return query.split(' ').filter(Boolean).map(function (word) {
+            const line = lines.find(v => v.toLowerCase().includes(word.toLowerCase()));
+            return line.match(/https?:\/\/\S+/)[0];
+        });
     }
 }
 
-function set_theme(theme)
+function sleep(ms)
 {
-    document.documentElement.dataset.theme = theme;
-    for (const button of document.querySelectorAll('[data-theme-value]')) {
-        button.setAttribute('aria-pressed', String(button.dataset.themeValue === theme));
-    }
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function save_theme(theme)
 {
-    set_theme(theme);
+    document.documentElement.dataset.theme = theme;
     try {
         localStorage.setItem('navplace.theme', theme);
     }
     catch {
     }
-}
-
-function parse_design(links)
-{
-    const line = links.split('\n').findLast(v => /^%\s*design\s*:/.test(v));
-    return (line && line.slice(line.indexOf(':') + 1).trim()) || 'basic';
-}
-
-function format_snippet(links)
-{
-    const attr = links.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
-    return `<div style="position:fixed;inset:0;">\n<script src="https://navplace.com/lib/embed.js" data-links="\n${attr}\n"><\/script>\n</div>\n`;
-}
-
-function open_codepen(html)
-{
-    const form = document.createElement('form');
-    const input = document.createElement('input');
-    form.action = 'https://codepen.io/pen/define';
-    form.method = 'POST';
-    form.target = '_blank';
-    input.type = 'hidden';
-    input.name = 'data';
-    input.value = JSON.stringify({title: 'NavPlace collection', html, css: '', js: ''});
-    form.append(input);
-    document.body.append(form);
-    form.submit();
-    form.remove();
 }
 </script>
 
