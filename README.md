@@ -17,12 +17,11 @@ Grab the AppImage that fits your use:
 | Build                       | Built on            | Download                                                                                                                      |
 |-----------------------------|---------------------|-------------------------------------------------------------------------------------------------------------------------------|
 | Stable release              | tagged releases     | [releases/latest](https://github.com/vbarbarosh/navplace/releases/latest)                                                     |
-| Electron — source of truth  | every `master` push | [appimage-electron.yml](https://github.com/vbarbarosh/navplace/actions/workflows/appimage-electron.yml?query=branch%3Amaster) |
-| Deno — experimental AI port | every `master` push | [appimage-deno.yml](https://github.com/vbarbarosh/navplace/actions/workflows/appimage-deno.yml?query=branch%3Amaster)         |
+| Electron                    | every `master` push | [appimage-electron.yml](https://github.com/vbarbarosh/navplace/actions/workflows/appimage-electron.yml?query=branch%3Amaster) |
 
 For a `master` build, open the latest successful run and download its artifact
-(named like `NavPlace-Electron-master-20260704_223730-abc1234-AppImage`, or
-`NavPlace-Deno-...` for the Deno port), then make it executable:
+(named like `NavPlace-Electron-master-20260704_223730-abc1234-AppImage`),
+then make it executable:
 
 ```bash
 chmod +x NavPlace-*.AppImage
