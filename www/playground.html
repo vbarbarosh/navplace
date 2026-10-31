@@ -322,13 +322,15 @@
         }
         .app[data-tab="advanced"] .work {
             grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1fr);
-            grid-template-areas: "links json preview";
+            grid-template-rows: minmax(0, 1fr) auto;
+            grid-template-areas: "links json preview" "errors errors errors";
             gap: 1px;
             background: var(--border);
         }
         .app[data-tab="design"] .work {
             grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-            grid-template-areas: "design preview";
+            grid-template-rows: minmax(0, 1fr) auto;
+            grid-template-areas: "design preview" "errors errors";
             gap: 1px;
             background: var(--border);
         }
@@ -337,6 +339,9 @@
         }
         .pane-design {
             grid-area: design;
+        }
+        .pane-errors {
+            grid-area: errors;
         }
         .pane-json {
             grid-area: json;
@@ -349,12 +354,62 @@
         }
         .app:not([data-tab="advanced"]) .pane-json,
         .app:not([data-tab="design"]) .pane-design,
+        .app[data-tab="basic"] .pane-errors,
         .app[data-tab="design"] .pane-editor,
         .app:not([data-tab="basic"]) .divider {
             display: none;
         }
         .app:not([data-tab="basic"]) .pane {
             background: var(--panel);
+        }
+
+        /* ---------- Errors: from the parser and from the preview ---------- */
+        .errors-title[data-count] {
+            color: var(--danger);
+        }
+        .errors-list {
+            height: 76px;
+            margin: 0;
+            padding: 4px 0;
+            overflow: auto;
+            list-style: none;
+            font-size: 12px;
+        }
+        .errors-list li {
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+            padding: 2px 16px;
+        }
+        .errors-list li::before {
+            content: "✗";
+            color: var(--danger);
+        }
+        .errors-where {
+            flex: none;
+            min-width: 130px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: var(--c-url);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12px;
+            text-align: left;
+        }
+        button.errors-where {
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        span.errors-where {
+            color: var(--text-mute);
+        }
+        .errors-what {
+            min-width: 0;
+            overflow-wrap: anywhere;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+        .errors-count {
+            color: var(--text-mute);
         }
 
         /* ---------- The design's files ---------- */
@@ -637,12 +692,12 @@
                 grid-template-areas: "links" "preview";
             }
             .app[data-tab="advanced"] .work {
-                grid-template-rows: 45vh 40vh 70vh;
-                grid-template-areas: "links" "json" "preview";
+                grid-template-rows: 45vh 40vh 70vh auto;
+                grid-template-areas: "links" "json" "preview" "errors";
             }
             .app[data-tab="design"] .work {
-                grid-template-rows: 70vh 70vh;
-                grid-template-areas: "design" "preview";
+                grid-template-rows: 70vh 70vh auto;
+                grid-template-areas: "design" "preview" "errors";
             }
             .divider {
                 display: none;
@@ -735,6 +790,10 @@
             <div class="pane-heading">Preview</div>
             <iframe title="Collection preview"></iframe>
         </section>
+        <section class="pane pane-errors" aria-label="Errors">
+            <div class="pane-heading"><span class="errors-title">No errors</span></div>
+            <ul class="errors-list"></ul>
+        </section>
     </main>
 
 </div>
@@ -788,6 +847,10 @@ async function main()
     let design_timer;
     let text_design = 'basic';
     let preview_key = null;
+    // {where: {file, line} | null, what, count}; the parser's error and the preview's own
+    let parse_error = null;
+    let preview_errors = [];
+    let blob_files = {};
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
@@ -875,6 +938,10 @@ async function main()
 
     // A design says it is ready on every load; it gets the text in reply
     window.addEventListener('message', function (event) {
+        if (event.source === frame.contentWindow && event.data?.type === 'navplace:error') {
+            preview_error_add(event.data);
+            return;
+        }
         if (event.source !== frame.contentWindow || event.data?.type !== 'navplace:ready') {
             return;
         }
@@ -1072,8 +1139,12 @@ async function main()
         catch (error) {
             status.textContent = `${error.message}. The preview shows the last text that parsed.`;
             status.dataset.error = '';
+            parse_error = {where: {file: 'links.txt', line: line_of_parse_error(editor.value)}, what: error.message, count: 1};
+            render_errors();
             return;
         }
+        parse_error = null;
+        render_errors();
         let name = parsed.meta.design || 'basic';
         design_select.value = name;
         // A half-typed name would load a missing page: the design shown stays,
@@ -1123,6 +1194,8 @@ async function main()
         }
         preview_key = key;
         frame_ready = false;
+        preview_errors = [];
+        render_errors();
         refocus = [editor, json_editor, design_editor].includes(document.activeElement) ? document.activeElement : null;
         if (key.startsWith('src:')) {
             frame_design = text_design;
@@ -1131,7 +1204,11 @@ async function main()
         }
         else {
             frame_design = design.name;
-            frame.srcdoc = render_design_doc(design, new URL(`designs/${encodeURIComponent(design.name)}/`, location.href).href);
+            for (const url of Object.keys(blob_files)) {
+                URL.revokeObjectURL(url);
+            }
+            blob_files = {};
+            frame.srcdoc = render_design_doc(design, new URL(`designs/${encodeURIComponent(design.name)}/`, location.href).href, blob_files);
         }
     }
 
@@ -1164,6 +1241,82 @@ async function main()
         render_design_pane(true);
         preview_update();
         return true;
+    }
+
+    // The same error again counts up instead of making a new row
+    function preview_error_add(data) {
+        const where = error_where(data.source, data.line, frame_design, blob_files);
+        const what = String(data.message).slice(0, 500);
+        const same = preview_errors.find(v => v.what === what && JSON.stringify(v.where) === JSON.stringify(where));
+        if (same) {
+            same.count += 1;
+        }
+        else if (preview_errors.length < 50) {
+            preview_errors.push({where, what, count: 1});
+        }
+        render_errors();
+    }
+
+    function render_errors() {
+        const errors = parse_error ? [parse_error, ...preview_errors] : preview_errors;
+        const title = document.querySelector('.errors-title');
+        title.textContent = errors.length ? `Errors: ${errors.length}` : 'No errors';
+        title.toggleAttribute('data-count', errors.length > 0);
+        document.querySelector('.errors-list').replaceChildren(...errors.map(function (error) {
+            const li = document.createElement('li');
+            const reachable = !!error.where?.line && (error.where.file === 'links.txt' || (!!design && error.where.file in design.files));
+            const where = document.createElement(reachable ? 'button' : 'span');
+            where.className = 'errors-where';
+            where.textContent = error.where ? `${error.where.file}${error.where.line ? ` : ${error.where.line}` : ''}` : 'preview';
+            if (reachable) {
+                where.type = 'button';
+                where.title = 'Go to this line';
+                where.addEventListener('click', () => error_go(error.where));
+            }
+            const what = document.createElement('span');
+            what.className = 'errors-what';
+            what.textContent = error.what;
+            li.append(where, what);
+            if (error.count > 1) {
+                const count = document.createElement('span');
+                count.className = 'errors-count';
+                count.textContent = `×${error.count}`;
+                li.append(count);
+            }
+            return li;
+        }));
+    }
+
+    // To the line: links.txt in Advanced, a design's file in Design
+    function error_go(where) {
+        let textarea = editor;
+        if (where.file === 'links.txt') {
+            if (tab !== 'advanced') {
+                tab = 'advanced';
+                save_tab(tab);
+                render_tab();
+            }
+        }
+        else if (design && where.file in design.files) {
+            design.current = where.file;
+            save_design_draft(design);
+            if (tab !== 'design') {
+                tab = 'design';
+                save_tab(tab);
+            }
+            render_tab();
+            textarea = design_editor;
+        }
+        else {
+            return;
+        }
+        const range = line_range(textarea.value, where.line);
+        textarea.focus();
+        textarea.setSelectionRange(range[0], range[1]);
+        const line_height = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
+        textarea.scrollTop = Math.max(0, (where.line - 4) * line_height);
+        textarea.dispatchEvent(new Event('scroll'));
+        render_cursor_line();
     }
 
     // `whole` puts the current file into the editor; otherwise only the marks around it change
@@ -1425,6 +1578,83 @@ function code_scroll_sync(textarea, pre)
     pre.scrollLeft = textarea.scrollLeft;
 }
 
+// Runs first in the preview: its errors, failed loads and console.error go to the Playground
+const PREVIEW_ERRORS_HOOK = `(function () {
+    function send(message, source, line) {
+        parent.postMessage({type: 'navplace:error', message: String(message), source: source || '', line: line || 0}, '*');
+    }
+    function where_of(error) {
+        const m = String(error && error.stack || '').match(/(about:srcdoc|blob:[^\\s)]+?|https?:[^\\s)]+?):(\\d+):\\d+/);
+        return m ? [m[1], Number(m[2])] : ['', 0];
+    }
+    window.addEventListener('error', function (event) {
+        const target = event.target;
+        if (target && target !== window && (target.src || target.href)) {
+            send('Could not load ' + (target.src || target.href), target.src || target.href, 0);
+            return;
+        }
+        send(event.message, event.filename, event.lineno);
+    }, true);
+    window.addEventListener('unhandledrejection', function (event) {
+        const where = where_of(event.reason);
+        send('Unhandled: ' + (event.reason && event.reason.message || event.reason), where[0], where[1]);
+    });
+    const console_error = console.error;
+    console.error = function () {
+        const error = Array.from(arguments).find(v => v instanceof Error);
+        const where = where_of(error);
+        send(Array.from(arguments).map(v => (v instanceof Error) ? v.message : String(v)).join(' '), where[0], where[1]);
+        return console_error.apply(console, arguments);
+    };
+})();`.replace(/\n\s*/g, ' ');
+
+// {file, line} for an error's source: index.html for the page itself, a file of the design,
+// or a path of the site such as lib/navplace.js; null when it has none
+function error_where(source, line, design_name, blob_files)
+{
+    if (!source) {
+        return null;
+    }
+    if (source === 'about:srcdoc') {
+        return {file: 'index.html', line};
+    }
+    if (blob_files[source]) {
+        return {file: blob_files[source], line};
+    }
+    let url;
+    try {
+        url = new URL(source);
+    }
+    catch {
+        return {file: source, line};
+    }
+    if (!/^https?:$/.test(url.protocol)) {
+        return {file: source, line: 0};
+    }
+    if (url.origin !== location.origin) {
+        return {file: url.host + url.pathname, line: 0};
+    }
+    const prefix = `/designs/${design_name}/`;
+    const path = decodeURIComponent(url.pathname);
+    const at = path.indexOf(prefix);
+    return {file: (at !== -1) ? path.slice(at + prefix.length) : path.replace(/^\//, ''), line};
+}
+
+// The 1-based line parse() stops at: the first line that does not parse on its own
+function line_of_parse_error(text)
+{
+    const lines = text.split('\n');
+    for (let i = 0, end = lines.length; i < end; ++i) {
+        try {
+            parse(lines[i]);
+        }
+        catch {
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
 function design_is_edited(design)
 {
     return !!design && Object.keys(design.files).some(v => design.files[v] !== design.originals[v]);
@@ -1433,7 +1663,7 @@ function design_is_edited(design)
 // The design's index.html for the preview: its folder as the base, so its own files and
 // ../../lib load as on the site; a changed file comes in as a blob of its own, so the lines
 // of index.html stay where they are
-function render_design_doc(design, base)
+function render_design_doc(design, base, blob_files)
 {
     let html = design.files['index.html'] ?? '';
     for (const [file, text] of Object.entries(design.files)) {
@@ -1443,9 +1673,11 @@ function render_design_doc(design, base)
         const body = /\.css$/i.test(file) ? css_with_absolute_urls(text, base) : text;
         const type = /\.css$/i.test(file) ? 'text/css' : 'text/javascript';
         const url = URL.createObjectURL(new Blob([body], {type}));
+        blob_files[url] = file;
         html = html.replace(new RegExp(`((?:href|src)\\s*=\\s*["'])(?:\\./)?${regexp_escape(file)}(["'])`, 'g'), `$1${url}$2`);
     }
-    const head = `<base href="${base.replaceAll('"', '&quot;')}">`;
+    // On the line of <head>, so every line of index.html keeps its number
+    const head = `<base href="${base.replaceAll('"', '&quot;')}"><script>${PREVIEW_ERRORS_HOOK}<\/script>`;
     const at = html.match(/<head[^>]*>/i) ?? html.match(/<html[^>]*>/i) ?? html.match(/<!doctype[^>]*>/i);
     if (!at) {
         return head + html;
