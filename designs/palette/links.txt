@@ -1,0 +1,17 @@
+% design: palette
+% title: My links
+
+# Daily
+Gmail              https://mail.google.com/
+Google Calendar    https://calendar.google.com/
+GitHub             https://github.com/
+ChatGPT            https://chatgpt.com/
+
+# Docs
+MDN Web Docs       https://developer.mozilla.org/
+Node.js            https://nodejs.org/en/docs
+Electron           https://www.electronjs.org/docs/latest/
+
+# Fun
+YouTube            https://www.youtube.com/
+Wikipedia          https://en.wikipedia.org/

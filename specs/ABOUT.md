@@ -98,8 +98,8 @@ A **design** is a swappable visual theme applied to a collection. The same links
 
 Designs that ship in this repo, grouped by intent:
 
-- **Launchers** — `basic`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
-- **Showcases / portfolios** — `showcase`, `github`, `basic-for-portfolio`.
+- **Launchers** — `palette`, `basic`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
+- **Showcases / portfolios** — `showcase`, `cards`, `github`, `basic-for-portfolio`.
 - **Themed grids** — `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes`.
 
 Each design is a self-contained folder under `designs/<name>/` with its own `index.html`; the parser hands it a list of items and the design decides how to draw them.

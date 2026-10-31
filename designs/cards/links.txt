@@ -1,0 +1,18 @@
+% design: cards
+% title: Link Collection
+% subtitle: Tools and references for every day
+
+# Development
+GitHub             https://github.com/
+MDN Web Docs       https://developer.mozilla.org/
+Stack Overflow     https://stackoverflow.com/
+CodePen            https://codepen.io/
+
+# Design
+Figma              https://www.figma.com/
+Dribbble           https://dribbble.com/
+
+# Productivity
+Notion             https://www.notion.so/
+Trello             https://trello.com/
+Google Calendar    https://calendar.google.com/
