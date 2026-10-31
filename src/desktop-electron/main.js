@@ -26,14 +26,14 @@ const wait_for_socket_connections = require('./helpers/wait_for_socket_connectio
 
 const DEFAULT_README = `% design: github
 
-ChatGPT             #ai      https://chatgpt.com/
-GitHub              #dev     https://github.com/
-Gmail               #mail    https://mail.google.com/
-Google Calendar     #work    https://calendar.google.com/
-Google Drive        #work    https://drive.google.com/
-MDN Web Docs        #docs    https://developer.mozilla.org/
-Node.js             #docs    https://nodejs.org/en/docs
-Electron            #docs    https://www.electronjs.org/docs/latest/
+ChatGPT          https://chatgpt.com/
+GitHub           https://github.com/
+Gmail            https://mail.google.com/
+Google Calendar  https://calendar.google.com/
+Google Drive     https://drive.google.com/
+MDN Web Docs     https://developer.mozilla.org/
+Node.js          https://nodejs.org/en/docs
+Electron         https://www.electronjs.org/docs/latest/
 `;
 
 cli(main);

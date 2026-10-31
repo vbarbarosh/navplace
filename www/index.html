@@ -628,10 +628,6 @@
             color: var(--accent);
         }
 
-        .file .t {
-            color: var(--text-mute);
-        }
-
         .install {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -902,7 +898,7 @@
             </div>
             <ul class="points">
                 <li>It lives at <code>~/.navplace/README.md</code>; the app reads it again every time you summon it.</li>
-                <li><code># A heading</code> groups links, <code>#tag</code> adds words to search by.</li>
+                <li><code># A heading</code> groups links.</li>
                 <li><code>% design:</code> picks the look; any NavPlace design runs full-window.</li>
                 <li>Keep it on a server instead: set <code>collection_url</code> in <code>~/.navplace/settings.yaml</code>.</li>
             </ul>
@@ -911,14 +907,14 @@
             <div class="file-name">~/.navplace/README.md</div>
 <pre><span class="c">% design: github</span>
 
-ChatGPT          <span class="t">#ai</span>    https://chatgpt.com/
-GitHub           <span class="t">#dev</span>   https://github.com/
-Gmail            <span class="t">#mail</span>  https://mail.google.com/
-Google Calendar  <span class="t">#work</span>  https://calendar.google.com/
-Google Drive     <span class="t">#work</span>  https://drive.google.com/
-MDN Web Docs     <span class="t">#docs</span>  https://developer.mozilla.org/
-Node.js          <span class="t">#docs</span>  https://nodejs.org/en/docs
-Electron         <span class="t">#docs</span>  https://www.electronjs.org/docs/latest/</pre>
+ChatGPT          https://chatgpt.com/
+GitHub           https://github.com/
+Gmail            https://mail.google.com/
+Google Calendar  https://calendar.google.com/
+Google Drive     https://drive.google.com/
+MDN Web Docs     https://developer.mozilla.org/
+Node.js          https://nodejs.org/en/docs
+Electron         https://www.electronjs.org/docs/latest/</pre>
         </div>
     </section>
 
@@ -982,14 +978,14 @@ GitHub   https://github.com/
 // The collection the desktop app writes on its first start (src/desktop-electron/main.js)
 const DEFAULT_README = `% design: github
 
-ChatGPT             #ai      https://chatgpt.com/
-GitHub              #dev     https://github.com/
-Gmail               #mail    https://mail.google.com/
-Google Calendar     #work    https://calendar.google.com/
-Google Drive        #work    https://drive.google.com/
-MDN Web Docs        #docs    https://developer.mozilla.org/
-Node.js             #docs    https://nodejs.org/en/docs
-Electron            #docs    https://www.electronjs.org/docs/latest/
+ChatGPT          https://chatgpt.com/
+GitHub           https://github.com/
+Gmail            https://mail.google.com/
+Google Calendar  https://calendar.google.com/
+Google Drive     https://drive.google.com/
+MDN Web Docs     https://developer.mozilla.org/
+Node.js          https://nodejs.org/en/docs
+Electron         https://www.electronjs.org/docs/latest/
 `;
 
 // What the demo types by itself until the visitor takes over

@@ -43,14 +43,14 @@ interface SseHub {
 
 const DEFAULT_README = `% design: github
 
-ChatGPT             #ai      https://chatgpt.com/
-GitHub              #dev     https://github.com/
-Gmail               #mail    https://mail.google.com/
-Google Calendar     #work    https://calendar.google.com/
-Google Drive        #work    https://drive.google.com/
-MDN Web Docs        #docs    https://developer.mozilla.org/
-Node.js             #docs    https://nodejs.org/en/docs
-Deno Desktop        #docs    https://docs.deno.com/runtime/desktop/
+ChatGPT          https://chatgpt.com/
+GitHub           https://github.com/
+Gmail            https://mail.google.com/
+Google Calendar  https://calendar.google.com/
+Google Drive     https://drive.google.com/
+MDN Web Docs     https://developer.mozilla.org/
+Node.js          https://nodejs.org/en/docs
+Deno Desktop     https://docs.deno.com/runtime/desktop/
 `;
 
 const BRIDGE_JS = String.raw`
