@@ -144,11 +144,7 @@
             z-index: 10;
             background: color-mix(in srgb, var(--bg) 88%, transparent);
             backdrop-filter: blur(8px);
-            border-bottom: 1px solid transparent;
-        }
-
-        .topbar.scrolled {
-            border-bottom-color: var(--border);
+            border-bottom: 1px solid var(--border);
         }
 
         .topbar-row {
@@ -995,7 +991,6 @@ main();
 
 function main()
 {
-    const topbar = document.querySelector('.topbar');
     const win = document.querySelector('.window');
     const view = document.querySelector('.window-view');
     const iframe = view.querySelector('iframe');
@@ -1014,7 +1009,6 @@ function main()
         save_theme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
     });
 
-    window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 4), {passive: true});
 
     new ResizeObserver(fit_window).observe(view);
     fit_window();

@@ -118,11 +118,7 @@
             z-index: 10;
             background: color-mix(in srgb, var(--bg) 88%, transparent);
             backdrop-filter: blur(8px);
-            border-bottom: 1px solid transparent;
-        }
-
-        .topbar.scrolled {
-            border-bottom-color: var(--border);
+            border-bottom: 1px solid var(--border);
         }
 
         .topbar-row {
@@ -1028,13 +1024,11 @@ function main()
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
 
-    const topbar = document.querySelector('.topbar');
 
     document.querySelector('.theme-switch').addEventListener('click', function () {
         save_theme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
     });
 
-    window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 4), {passive: true});
 
     for (const link of document.querySelectorAll('.toc a[href^="#"]')) {
         const heading = document.getElementById(link.getAttribute('href').slice(1));
