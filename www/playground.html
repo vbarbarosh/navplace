@@ -838,6 +838,9 @@ async function main()
     let design_timer;
     let text_design = 'basic';
     let preview_key = null;
+    let links_count = 0;
+    // Unedited code of designs the text names while the Design tab holds another's edits
+    const fetched_designs = {};
     // {where: {file, line} | null, what, count}; the parser's error and the preview's own
     let parse_error = null;
     let preview_errors = [];
@@ -1153,9 +1156,9 @@ async function main()
             name = 'basic';
         }
         else {
-            status.textContent = `${parsed.items.length} ${parsed.items.length === 1 ? 'link' : 'links'}`;
             delete status.dataset.error;
         }
+        links_count = parsed.items.length;
         text_design = name;
         // The code follows the text's design until it is edited; then only Load replaces it
         if (!design_is_edited(design) && design?.name !== name) {
@@ -1165,19 +1168,35 @@ async function main()
         preview_update();
     }
 
-    // Basic shows the design's own page while its code is untouched; otherwise the
-    // preview is the code in the Design tab
+    // The preview shows the text's design. Its edited code shows only while the text names
+    // that design; the Design tab shows its code whatever the text names. Basic shows a
+    // design's own page while its code is untouched; the other tabs draw the code, which
+    // lets the errors panel see the page's errors.
     function preview_update() {
+        const own = !!design && (tab === 'design' || design.name === text_design);
+        let shown = null;
         let key;
-        if (tab === 'basic' && !design_is_edited(design)) {
+        if (own && (tab !== 'basic' || design_is_edited(design))) {
+            shown = design;
+        }
+        else if (tab === 'basic') {
             key = `src:${text_design}`;
         }
-        else if (design) {
-            key = `doc:${JSON.stringify(design.files)}`;
+        else if (fetched_designs[text_design]) {
+            shown = fetched_designs[text_design];
         }
         else {
+            const name = text_design;
+            design_fetch(name).then(function (value) {
+                fetched_designs[name] = value;
+                preview_update();
+            }, e => preview_errors_set(`The code of "${name}" did not load: ${e.message}.`));
             return;
         }
+        if (shown) {
+            key = `doc:${shown.name}:${JSON.stringify(shown.files)}`;
+        }
+        status_render();
         if (key === preview_key) {
             if (frame_ready) {
                 post_text();
@@ -1189,35 +1208,57 @@ async function main()
         preview_errors = [];
         render_errors();
         refocus = [editor, json_editor, design_editor].includes(document.activeElement) ? document.activeElement : null;
-        if (key.startsWith('src:')) {
+        if (!shown) {
             frame_design = text_design;
             frame.removeAttribute('srcdoc');
             frame.src = `designs/${encodeURIComponent(text_design)}/index.html`;
         }
         else {
-            frame_design = design.name;
+            frame_design = shown.name;
             for (const url of Object.keys(blob_files)) {
                 URL.revokeObjectURL(url);
             }
             blob_files = {};
-            frame.srcdoc = render_design_doc(design, new URL(`designs/${encodeURIComponent(design.name)}/`, location.href).href, blob_files);
+            frame.srcdoc = render_design_doc(shown, new URL(`designs/${encodeURIComponent(shown.name)}/`, location.href).href, blob_files);
         }
     }
 
-    // The text files of a design's folder; true once they are in
-    async function design_load(name) {
-        const request = design_request = {};
+    // Says when the preview is code edited in the Design tab, not the design's own page
+    function status_render() {
+        if (status.dataset.error !== undefined) {
+            return;
+        }
+        const count = links_count;
+        const edited = !!design && design_is_edited(design) && (tab === 'design' || design.name === text_design);
+        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${edited ? ` · ${design.name}, edited in Design` : ''}`;
+    }
+
+    function preview_errors_set(message) {
+        preview_errors = [{where: null, what: message, count: 1}];
+        render_errors();
+    }
+
+    // The text files of a design's folder, as {name, all, files, originals, current}
+    async function design_fetch(name) {
         const all = files_by_design[name] ?? ['index.html'];
         const names = all.filter(v => /\.(html|css|js)$/i.test(v));
-        let texts;
+        const texts = await Promise.all(names.map(async function (file) {
+            const response = await fetch(`designs/${encodeURIComponent(name)}/${encodeURIComponent(file)}`);
+            if (!response.ok) {
+                throw new Error(`${file}: ${response.status}`);
+            }
+            return response.text();
+        }));
+        const files = Object.fromEntries(names.map((file, i) => [file, texts[i]]));
+        return {name, all, files, originals: {...files}, current: names.includes('index.html') ? 'index.html' : names[0]};
+    }
+
+    // The Design tab takes a design's files; true once they are in
+    async function design_load(name) {
+        const request = design_request = {};
+        let value;
         try {
-            texts = await Promise.all(names.map(async function (file) {
-                const response = await fetch(`designs/${encodeURIComponent(name)}/${encodeURIComponent(file)}`);
-                if (!response.ok) {
-                    throw new Error(`${file}: ${response.status}`);
-                }
-                return response.text();
-            }));
+            value = await design_fetch(name);
         }
         catch (error) {
             status.textContent = `The code of "${name}" did not load: ${error.message}.`;
@@ -1227,8 +1268,7 @@ async function main()
         if (request !== design_request) {
             return false;
         }
-        const files = Object.fromEntries(names.map((file, i) => [file, texts[i]]));
-        design = {name, all, files, originals: {...files}, current: names.includes('index.html') ? 'index.html' : names[0]};
+        design = value;
         save_design_draft(design);
         render_design_pane(true);
         preview_update();
