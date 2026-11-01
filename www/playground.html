@@ -1069,6 +1069,22 @@ async function main()
         code_scroll_sync(design_editor, design_colours);
         design_gutter.scrollTop = design_editor.scrollTop;
     });
+    // Chrome's insertText fires two input events per line it inserts: while textarea_text_replace runs, the first
+    // beforeinput goes through and the rest wait; one input follows the whole edit
+    let text_replacing = null;
+    document.addEventListener('beforeinput', function (event) {
+        if (text_replacing?.textarea === event.target) {
+            if (text_replacing.before_sent) {
+                event.stopImmediatePropagation();
+            }
+            text_replacing.before_sent = true;
+        }
+    }, true);
+    document.addEventListener('input', function (event) {
+        if (text_replacing?.textarea === event.target) {
+            event.stopImmediatePropagation();
+        }
+    }, true);
     // Tab indents and Shift+Tab outdents by 4 spaces, every selected line alike; Ctrl+Z takes it back like any typing
     for (const textarea of [editor, design_editor]) {
         textarea.addEventListener('keydown', function (event) {
@@ -1922,10 +1938,18 @@ async function main()
     // Through the editing commands, so Ctrl+Z takes it back
     function textarea_text_replace(textarea, start, end, text) {
         textarea.setSelectionRange(start, end);
-        if (!document.execCommand('insertText', false, text)) {
-            textarea.setRangeText(text, start, end, 'end');
-            textarea.dispatchEvent(new Event('input'));
+        text_replacing = {textarea, before_sent: false};
+        let done = false;
+        try {
+            done = document.execCommand('insertText', false, text);
         }
+        finally {
+            text_replacing = null;
+        }
+        if (!done) {
+            textarea.setRangeText(text, start, end, 'end');
+        }
+        textarea.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText'}));
     }
 
     function editor_note_show(text) {
