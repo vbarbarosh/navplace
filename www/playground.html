@@ -1965,10 +1965,7 @@ async function main()
     // Through the editing commands, so Ctrl+Z brings the previous text back
     function replace_text(text) {
         editor.focus();
-        editor.select();
-        if (!document.execCommand('insertText', false, text)) {
-            editor.value = text;
-        }
+        textarea_text_replace(editor, 0, editor.value.length, text);
         editor.setSelectionRange(0, 0);
         editor.scrollTop = 0;
         save_draft(editor.value);
