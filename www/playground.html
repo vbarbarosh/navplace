@@ -119,6 +119,8 @@
 
         .app {
             display: grid;
+            /* A long status line is cut with an ellipsis, never widens the page */
+            grid-template-columns: minmax(0, 1fr);
             grid-template-rows: auto auto minmax(0, 1fr);
             height: 100vh;
             height: 100dvh;
@@ -955,9 +957,18 @@ async function main()
     let parse_warnings = [];
     let preview_errors = [];
     let blob_files = {};
-    // What the last pasted picture became, shown in the status line for a while
-    let paste_note = '';
-    let paste_timer;
+    // What the last pasted or renamed picture did, shown in the status line for a while
+    let editor_note = '';
+    let editor_note_timer;
+    // The text before the edit an input event reports; null for an edit made by code, which has no
+    // beforeinput, Reset and a paste among them
+    let picture_text = null;
+    // {line, from}: a picture's name on that line waits, empty or another's, so its links still say `from`
+    let picture_rename = null;
+    // Hashes of the texts a rename followed, a keystroke in and its links not yet renamed: an undo or
+    // redo that lands on one takes one step more, so one Ctrl+Z takes back the keystroke and the links
+    const picture_rename_marks = new Set();
+    let picture_renaming = false;
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
@@ -977,8 +988,29 @@ async function main()
         const file = picture_file_from_clipboard(event.clipboardData);
         if (file) {
             event.preventDefault();
-            picture_paste(file);
+            picture_paste(file, editor.selectionStart);
         }
+    });
+    editor.addEventListener('beforeinput', function () {
+        picture_text = editor.value;
+    });
+    // A picture renamed on its `% picture` line takes its links' `@name` with it
+    editor.addEventListener('input', function (event) {
+        const before = picture_text;
+        picture_text = null;
+        if (picture_renaming || before === null) {
+            return;
+        }
+        if (event.inputType === 'historyUndo' || event.inputType === 'historyRedo') {
+            picture_rename = null;
+            if (picture_rename_marks.has(hash_of_text(editor.value))) {
+                picture_renaming = true;
+                document.execCommand(event.inputType === 'historyUndo' ? 'undo' : 'redo');
+                picture_renaming = false;
+            }
+            return;
+        }
+        picture_links_rename(before, editor.value);
     });
     editor.addEventListener('scroll', () => code_scroll_sync(editor, editor_colours));
     json_editor.addEventListener('scroll', () => code_scroll_sync(json_editor, json_colours));
@@ -1493,8 +1525,10 @@ async function main()
         const edited = !!design && design_is_edited(design) && (tab === 'design' || design.name === text_design);
         const left_out = left_out_count ? ` · ${left_out_count} left out by % ns` : '';
         const skipped = parse_warnings.length ? ` · ${parse_warnings.length} ${parse_warnings.length === 1 ? 'line' : 'lines'} skipped, see Warnings` : '';
-        const pasted = paste_note ? ` · ${paste_note}` : '';
-        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${left_out}${skipped}${edited ? ` · ${design.name}, edited in Design` : ''}${pasted}`;
+        const note = editor_note ? ` · ${editor_note}` : '';
+        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${left_out}${skipped}${edited ? ` · ${design.name}, edited in Design` : ''}${note}`;
+        // Cut short when the toolbar is narrow; the whole line on hover
+        status.title = status.textContent;
         status.toggleAttribute('data-warn', parse_warnings.length > 0);
     }
 
@@ -1685,9 +1719,11 @@ async function main()
         }
     }
 
-    // The picture goes in as `% picture <name>: data:…` on a line of its own at the end, through the
-    // editing commands so Ctrl+Z takes it out; the cursor follows it there, its name selected to rename
-    async function picture_paste(file) {
+    // The picture goes in as `% picture <name>: data:…` on a line of its own at the end, in one edit
+    // through the editing commands, so one Ctrl+Z takes it all out. Pasted on a link, the link takes
+    // `@name` before its url, in place of the one it had, and the cursor stays there; anywhere else
+    // the cursor follows the picture to the end, its name selected to rename
+    async function picture_paste(file, at) {
         let picture;
         try {
             picture = await picture_from_file(file);
@@ -1695,31 +1731,111 @@ async function main()
         catch (error) {
             picture = {url: null, note: error.message};
         }
-        if (picture.url) {
-            const name = picture_name_from_file_name(file.name, picture_names_of_text(editor.value));
-            const end = editor.value.length;
-            const glue = (end && !editor.value.endsWith('\n')) ? '\n' : '';
-            const line = `% picture ${name}: ${picture.url}`;
-            editor.focus();
-            editor.setSelectionRange(end, end);
-            if (!document.execCommand('insertText', false, glue + line)) {
-                editor.setRangeText(glue + line, end, end, 'end');
-                editor.dispatchEvent(new Event('input'));
-            }
-            const name_start = end + glue.length + '% picture '.length;
+        if (!picture.url) {
+            editor_note_show(`picture not pasted: ${picture.note}`);
+            return;
+        }
+        const text = editor.value;
+        const name = picture_name_from_file_name(file.name, picture_names_of_text(text));
+        const glue = (text && !text.endsWith('\n')) ? '\n' : '';
+        const line = `% picture ${name}: ${picture.url}`;
+        const n = line_at(text, Math.min(at, text.length));
+        const spans = item_spans_at_line(text, n);
+        const shrunk = picture.note ? `, ${picture.note}` : '';
+        editor.focus();
+        if (spans) {
+            const line_start = line_range(text, n)[0];
+            const scroll = [editor.scrollTop, editor.scrollLeft];
+            const [start, end] = spans.image ? [line_start + spans.image[0], line_start + spans.image[1]] : [line_start + spans.href[0], line_start + spans.href[0]];
+            const ref = spans.image ? `@${name}` : `@${name} `;
+            editor_text_replace(start, text.length, ref + text.slice(end) + glue + line);
+            editor.setSelectionRange(start + name.length + 1, start + name.length + 1);
+            editor.scrollTop = scroll[0];
+            editor.scrollLeft = scroll[1];
+            editor_note_show(`pasted @${name} on line ${n}, the picture at the end${shrunk}`);
+        }
+        else {
+            editor_text_replace(text.length, text.length, glue + line);
+            const name_start = text.length + glue.length + '% picture '.length;
             editor.setSelectionRange(name_start, name_start + name.length);
             editor.scrollTop = editor.scrollHeight;
             editor.scrollLeft = 0;
-            code_scroll_sync(editor, editor_colours);
-            paste_note = `pasted @${name}${picture.note ? `, ${picture.note}` : ''}`;
+            editor_note_show(`pasted @${name}${shrunk}`);
         }
-        else {
-            paste_note = `picture not pasted: ${picture.note}`;
+        code_scroll_sync(editor, editor_colours);
+    }
+
+    // `before` is the text before a keystroke, the editor's the text after it. When the keystroke
+    // changed the name on a `% picture` line, the links with the old `@name` take the new one, in one
+    // edit after it. Links of a name another `% picture` line also gives are that line's: they stay
+    function picture_links_rename(before, now) {
+        const lines = now.split('\n');
+        const lines_before = before.split('\n');
+        const n = line_at(now, editor.selectionStart);
+        if (lines.length !== lines_before.length || (picture_rename && picture_rename.line !== n)) {
+            picture_rename = null;
         }
+        if (lines.length !== lines_before.length) {
+            return;
+        }
+        const from = picture_rename?.from ?? picture_name_of_line(lines_before[n - 1]);
+        const name = picture_name_of_line(lines[n - 1]);
+        if (!from || from === name || lines.some((v, i) => i !== n - 1 && picture_name_of_line(v) === from)) {
+            picture_rename = null;
+            return;
+        }
+        if (!name || lines.some((v, i) => i !== n - 1 && picture_name_of_line(v) === name)) {
+            picture_rename = {line: n, from};
+            if (name) {
+                editor_note_show(`@${name} is another picture's: the links keep @${from}`);
+            }
+            return;
+        }
+        picture_rename = null;
+        const refs = picture_refs_of_text(now, from);
+        if (!refs.length) {
+            return;
+        }
+        const span = [refs[0], refs[refs.length - 1] + from.length];
+        let middle = '';
+        let last = span[0];
+        for (const ref of refs) {
+            middle += now.slice(last, ref) + name;
+            last = ref + from.length;
+        }
+        middle += now.slice(last, span[1]);
+        const shift = refs.filter(v => v < editor.selectionStart).length * (name.length - from.length);
+        const selection = [editor.selectionStart + shift, editor.selectionEnd + shift];
+        const scroll = [editor.scrollTop, editor.scrollLeft];
+        if (picture_rename_marks.size > 1000) {
+            picture_rename_marks.clear();
+        }
+        picture_rename_marks.add(hash_of_text(now));
+        picture_renaming = true;
+        editor_text_replace(span[0], span[1], middle);
+        picture_renaming = false;
+        editor.setSelectionRange(selection[0], selection[1]);
+        editor.scrollTop = scroll[0];
+        editor.scrollLeft = scroll[1];
+        code_scroll_sync(editor, editor_colours);
+        editor_note_show(`@${name} on ${refs.length} ${refs.length === 1 ? 'link' : 'links'} too`);
+    }
+
+    // Through the editing commands, so Ctrl+Z takes it back
+    function editor_text_replace(start, end, text) {
+        editor.setSelectionRange(start, end);
+        if (!document.execCommand('insertText', false, text)) {
+            editor.setRangeText(text, start, end, 'end');
+            editor.dispatchEvent(new Event('input'));
+        }
+    }
+
+    function editor_note_show(text) {
+        editor_note = text;
         status_render();
-        clearTimeout(paste_timer);
-        paste_timer = setTimeout(function () {
-            paste_note = '';
+        clearTimeout(editor_note_timer);
+        editor_note_timer = setTimeout(function () {
+            editor_note = '';
             status_render();
         }, 8000);
     }
@@ -2065,11 +2181,7 @@ function picture_name_from_file_name(file_name, names)
 // Every name a `% picture <name>:` line gives, the lines parse() skips too
 function picture_names_of_text(text)
 {
-    const out = new Set();
-    for (const m of text.matchAll(/^\s*%\s*picture\s+(\S+?)\s*:/gm)) {
-        out.add(m[1]);
-    }
-    return out;
+    return new Set(text.split('\n').map(picture_name_of_line).filter(Boolean));
 }
 
 // {url, note}: the file as a data url, as it is when it fits PICTURE_URL_MAX; otherwise drawn smaller
@@ -2096,7 +2208,7 @@ async function picture_from_file(file)
         canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
         const smaller = canvas.toDataURL('image/webp', 0.85);
         if (smaller.length <= PICTURE_URL_MAX) {
-            return {url: smaller, note: `drawn smaller: ${bitmap.width}×${bitmap.height} → ${canvas.width}×${canvas.height}, ${format_kb(url.length)} → ${format_kb(smaller.length)}`};
+            return {url: smaller, note: `drawn smaller to ${canvas.width}×${canvas.height}, ${format_kb(url.length)} → ${format_kb(smaller.length)}`};
         }
         side = Math.floor(side * 0.75);
     }
@@ -2116,6 +2228,50 @@ function data_url_from_blob(blob)
 function format_kb(chars)
 {
     return `${Math.round(chars / 1000)} KB`;
+}
+
+// The name a `% picture <name>:` line gives, or null on any other line; `% picture https://…` has none
+function picture_name_of_line(line)
+{
+    return line.match(/^\s*%\s*picture\s+([^\s:]+)\s*:(?!\/\/)/)?.[1] ?? null;
+}
+
+// Where `@name` stands on the links, the offsets of the name after each `@`
+function picture_refs_of_text(text, name)
+{
+    const out = [];
+    let start = 0;
+    for (const line of text.split('\n')) {
+        const m = /^[%#]/.test(line.trim()) ? null : line.match(/(^|\s)@(\S+)\s+(?:file|https?):\/\/\S+\s*$/);
+        if (m && m[2] === name) {
+            out.push(start + m.index + m[1].length + 1);
+        }
+        start += line.length + 1;
+    }
+    return out;
+}
+
+// The spans of the link on the 1-based line n as parse() finds them, or null when the line is no
+// link; a link % ns leaves out is one too
+function item_spans_at_line(text, n)
+{
+    const without_ns = text.split('\n').map(v => /^\s*%\s*ns\s*:/.test(v) ? '' : v).join('\n');
+    try {
+        return parse(without_ns, {spans: true}).items.find(v => v.line === n)?.spans ?? null;
+    }
+    catch {
+        return null;
+    }
+}
+
+// FNV-1a of the text: enough to know a text seen before without keeping it
+function hash_of_text(text)
+{
+    let out = 0x811c9dc5;
+    for (let i = 0, end = text.length; i < end; ++i) {
+        out = Math.imul(out ^ text.charCodeAt(i), 0x01000193);
+    }
+    return `${text.length}:${out >>> 0}`;
 }
 
 // The text's % picture names and their urls; {} when it has none or does not parse
