@@ -636,6 +636,13 @@
             letter-spacing: 0;
             text-transform: none;
         }
+        .pane-heading a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .pane-heading a:hover {
+            text-decoration: underline;
+        }
         /* What shows before a design paints, or when it paints nothing. A design keeps its
            own scheme: one that differs from the frame's would get an opaque canvas over this */
         .pane iframe {
@@ -774,7 +781,7 @@
 
     <main class="work">
         <section class="pane pane-editor" id="editor-pane" aria-label="Source">
-            <div class="pane-heading"><code>links.txt</code></div>
+            <div class="pane-heading"><code>links.txt</code><a href="docs.html#format" target="_blank" title="The format: directives, sections, links">Format <span aria-hidden="true">↗</span></a></div>
             <div class="code">
                 <pre aria-hidden="true"></pre>
                 <textarea aria-label="Collection source" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
