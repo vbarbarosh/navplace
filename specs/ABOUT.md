@@ -27,7 +27,7 @@ Every collection is a small plain-text document. The same file drives all three
 surfaces:
 
 - **Electron app** — a global hotkey opens a window that hosts your chosen design full-window. Type a few letters, hit Enter, the link opens in your default browser. Built for speed.
-- **Web app** — edit, host, and share collections. Each collection gets a URL you can bookmark or send to someone.
+- **Playground** — on navplace.com: edit a collection, see it in any design, then copy the embed code or open it in CodePen.
 - **Embed widget** — a one-line `<script>` tag (`embed.js`) renders the same collection inside any web page.
 
 ## Desktop app
@@ -76,7 +76,7 @@ Syntax:
 - `#tag` and `#key=value` — inline on a link line, attach tags or per-item metadata.
 - `@image-name` — inline reference to a local image (`~/.navplace/<image-name>`), used by designs that show artwork next to links.
 
-The same parser (`lib/parse.js`) is used by Electron, the web app, and the embed widget — behavior stays identical across surfaces. It also transliterates Cyrillic to Latin so typing `git` finds an item labeled `Гитхаб`.
+The same parser (`lib/parse.js`) is used by Electron, the Playground, and the embed widget — behavior stays identical across surfaces. It also transliterates Cyrillic to Latin so typing `git` finds an item labeled `Гитхаб`.
 
 The Electron app reads its source from **`~/.navplace/README.md`**.
 
@@ -158,10 +158,10 @@ Yes. One `<script src="…/embed.js" data-links="…">` tag in any HTML page. Th
 It depends on the surface:
 
 - **Desktop app** — a single file on your machine: `~/.navplace/README.md`. Edit it in any text editor.
-- **Web app** — collections are stored server-side via the Express API in `src/http/` (MySQL via Knex).
 - **Embed widget** — fully self-contained; links live inline in `data-links` on the host page.
+- **Playground** — the text you edit, kept in your browser.
 
-A cross-surface sync layer is in active development. Until it lands, collections move with the file, the URL, or the embed tag.
+There is no server and no account. To keep links in one place, put them in a file anywhere on the web and pull it in with `% include: <url>`.
 
 **Is there a global hotkey for the desktop app?**
 On GNOME/Linux, **Ctrl+Shift+Alt+N** is wired up by running `bin/configure-gnome` once. It registers the keybinding via `dconf` and installs `navplace.desktop`. The hotkey runs `desktop-electron/launcher.js` — a tiny Node script that pings a Unix socket at `~/.config/navplace/navplace.sock`, so summoning the app is essentially instant after the first launch. Other desktop environments aren't wired up yet; the underlying mechanism (socket + hide-on-blur) is portable, the keybinding glue isn't.
@@ -179,7 +179,7 @@ Yes — MIT licensed, on GitHub.
 - **`lib/navplace.js`** — runtime that wires the input box to the filter, manages selection, and dispatches `navigate`.
 - **`lib/embed.js`** — third-party embed; loads the chosen design in an iframe and forwards `data-links` via `postMessage`.
 - **`desktop-electron/`** — `main.js` (window, socket server, single-instance lock, favicon cache, `private://` and `app://` protocol handlers), `launcher.js` (the fast Unix-socket ping), `renderer.js` (preload bridge).
-- **`src/http/`** — Express server: landing pages, collection API, dashboard, static `/lib` and `/designs`.
+- **`src/cloudflare/`** — the Worker on navplace.com: the site's files and `/icon/`; anything else is a 404.
 - **`designs/`** — each design is a self-contained HTML folder that consumes the parsed items.
 
 ## Status & contributing

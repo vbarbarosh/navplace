@@ -23,7 +23,7 @@ A **design** is a single self-contained HTML file that renders a NavPlace collec
 A design must work in **three runtime contexts** without any context-specific code:
 
 1. **Desktop app (Electron)** — the file is loaded directly via `file://` from disk. Items come from `window.ElectronApp.api_items_all()`.
-2. **Web app (Express)** — the file is served as a static asset. Items come from postMessage when embedded.
+2. **navplace.com and its Playground** — the file is served as a static asset from `build/www/` by the Cloudflare Worker. Items come from postMessage.
 3. **Embed widget** — the file runs inside an `<iframe>` on a third-party page. Items come from postMessage.
 
 The NavPlace runtime (`lib/navplace.js`) handles all three transparently. A design just needs to follow the contract below.
@@ -338,7 +338,7 @@ See `designs/showcase/index.html` for a working pattern: three buttons, `localSt
 ## Testing a new design
 
 1. Drop the folder in `designs/<your-name>/`.
-2. Open it directly in a browser via the web app: `npm run watch` then visit `http://localhost:<port>/designs/<your-name>/index.html`. The runtime falls back to a built-in demo source (`ChatGPT / GitHub / Gmail`) so you'll see real items right away.
+2. Build the site and open it in the Playground: `bin/build-www`, then `python3 -m http.server -d build/www` and visit `http://localhost:8000/playground.html`, or open `http://localhost:8000/designs/<your-name>/index.html` directly. The runtime falls back to a built-in demo source (`ChatGPT / GitHub / Gmail`) so you'll see real items right away.
 3. To test with real items, create `~/.navplace/README.md` with `% design: <your-name>` and a few link lines, then `npm start` to open it in the desktop app.
 4. To test the embed surface, paste into any HTML page:
    ```html

@@ -28,23 +28,6 @@ chmod +x NavPlace-*.AppImage
 ./NavPlace-*.AppImage
 ```
 
-## Desktop settings
-
-The Electron app uses `~/.navplace/settings.yaml` for user settings and secrets.
-Copy the template at `src/desktop-electron/config/settings.example.yaml` to that path to
-get started:
-
-```yaml
-personal_access_token: ""
-collection_url: ""
-events_url: ""
-```
-
-Leave these values empty to keep the current local behavior: the app reads
-`~/.navplace/README.md`. Fill `collection_url` with the full collection API URL
-to load that collection remotely. Fill `events_url` with the full events API
-URL to refresh the desktop app after collection updates.
-
 ## GNOME hotkey setup
 
 The Electron AppImage supports a one-time GNOME setup flag:

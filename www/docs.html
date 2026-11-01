@@ -611,7 +611,7 @@
     <tbody>
         <tr><td>Desktop app</td><td><code>~/.navplace/README.md</code></td><td>Daily navigation: hotkey, a few letters, Enter.</td></tr>
         <tr><td>Embed widget</td><td>The <code>data-links</code> attribute of its script tag</td><td>A page, or a part of one, on any site.</td></tr>
-        <tr><td>Web</td><td>Collections stored on the server, in MySQL</td><td>Keeping a collection the desktop app loads and refreshes; the site itself, with the <a href="playground.html">Playground</a>.</td></tr>
+        <tr><td>Playground</td><td>Its text, kept in this browser</td><td>Trying the format and the designs, then copying the embed code or opening it in CodePen.</td></tr>
     </tbody>
 </table>
 <p>The <a href="playground.html">Playground</a> is the quickest way to try it: pick a design, edit the links, see the preview, then copy the embed code or open it in CodePen. It has three tabs over the same work: <strong>Basic</strong> is the text and the preview; <strong>Advanced</strong> colours the links and shows the JSON of the line the cursor is on, or under <strong>File</strong> of the whole file, editable both ways; <strong>Design</strong> edits the design's own files beside the preview. Under Advanced and Design, an errors panel names the line each error came from, and in orange each line that was skipped with a warning, which is underlined in the text with why after it. Ctrl+V with a picture on the clipboard, a screenshot or a copied image file, adds <code>% picture image1: data:…</code> on a new last line, its name selected to rename; on a link's line, the link takes <code>@image1</code> too, in place of the picture it had. A copied file gives its own name, and a name already taken gets 2, 3, 4. Renaming a picture, on its <code>% picture</code> line or in a link's <code>@name</code>, renames it everywhere, and one Ctrl+Z takes back both; a link given another picture's name shows that picture instead. A failed load stays in the errors panel only while the text still has that picture. A picture over 100 KB as a data url is drawn smaller, as WebP, until it fits. Drag the lines between the panes to resize them; each tab keeps its sizes.</p>
@@ -923,7 +923,7 @@ Gmail   https://mail.google.com/
         <tr><td><code>{type: 'navplace:focus'}</code></td><td>page → design</td><td>Every key pressed on the host page; it focuses the design's search box.</td></tr>
     </tbody>
 </table>
-<p>Links open in the top window. The widget shows only its own <code>data-links</code>: editing a collection on the server does not change it, and <code>% include:</code> does nothing here.</p>
+<p>Links open in the top window. The widget shows only its own <code>data-links</code>: <code>% include:</code> does nothing here.</p>
 
 <!-- ============================================================ -->
 <h2 id="libraries">Libraries</h2>
@@ -953,29 +953,21 @@ Gmail   https://mail.google.com/
         <tr><td><code>lib/</code></td><td>The shared code: <a href="#libraries">Libraries</a>.</td></tr>
         <tr><td><code>designs/</code></td><td>One folder per design.</td></tr>
         <tr><td><code>src/desktop-electron/</code></td><td>The desktop app.</td></tr>
-        <tr><td><code>src/http/</code></td><td>The server: routes, the events WebSocket, logging, Sentry.</td></tr>
-        <tr><td><code>db/</code>, <code>knexfile.js</code></td><td>The database: Knex migrations for <code>users</code> and <code>collections</code>.</td></tr>
+        <tr><td><code>src/cloudflare/</code></td><td>The Worker on navplace.com: the site's files from <code>build/www/</code> and <code>/icon/</code>; anything else is a 404.</td></tr>
         <tr><td><code>www/</code></td><td>The site: the home page, the Playground, these docs.</td></tr>
         <tr><td><code>docs/</code></td><td>Notes in markdown: the format, instant launch, Chrome on Wayland; the format cheat sheet.</td></tr>
         <tr><td><code>specs/</code></td><td>The product brief and the guide for writing designs.</td></tr>
         <tr><td><code>demos/</code></td><td>Standalone pages that embed a design.</td></tr>
-        <tr><td><code>bin/</code></td><td>Scripts: <code>build-www</code>, <code>test</code>, <code>watch</code>, <code>migrate</code>, <code>migrate-make</code>, <code>migrate-rollback</code>, <code>events</code>.</td></tr>
+        <tr><td><code>bin/</code></td><td>Scripts: <code>build-www</code>, <code>deploy-www</code>, <code>test</code>.</td></tr>
     </tbody>
 </table>
 
 <h3 id="architecture-desktop">The desktop app</h3>
 <ul>
-    <li><code>main.js</code>: the window, the settings, loading the collection and its includes, the socket the launcher pings, the single-instance lock, the <code>private://</code> and <code>app://</code> protocols, the network gate, the events WebSocket.</li>
+    <li><code>main.js</code>: the window, loading <code>~/.navplace/README.md</code> and its includes, the socket the launcher pings, the single-instance lock, the <code>private://</code> and <code>app://</code> protocols, the network gate.</li>
     <li><code>launcher.js</code>: the hotkey side; Node built-ins only.</li>
     <li><code>renderer.js</code>: the preload that gives designs <code>window.ElectronApp</code>.</li>
     <li><code>helpers/</code>: <code>resolve_includes</code> and <code>parse_include_spec</code> for <code>% include:</code>, <code>configure_gnome</code>, <code>focus_chrome_window</code>, <code>wait_for_socket_connections</code>.</li>
-</ul>
-
-<h3 id="architecture-server">The server</h3>
-<ul>
-    <li><code>create_app.js</code>: a log line per request, the user from <code>X-Auth-User</code>, the static <code>/lib</code> and <code>/designs</code>, the routes, errors as plain text.</li>
-    <li><code>services/events.js</code>: the events WebSocket and its heartbeat.</li>
-    <li>MySQL through Knex. The server waits for the database (30 tries, a second apart) and applies pending migrations at start.</li>
 </ul>
 
 <h3 id="architecture-site">The site</h3>
@@ -989,9 +981,6 @@ Gmail   https://mail.google.com/
 npm ci
 npm test
 
-# the server behind Authwall: Authwall on :3000, MySQL, Adminer on :8080
-docker compose up
-
 # the desktop app from source
 cd src/desktop-electron
 npm ci
@@ -1001,31 +990,20 @@ npm run build    # the AppImage, into src/desktop-electron/build/
 
 # the static site, into build/www/
 bin/build-www</code></pre>
-<table>
-    <thead>
-        <tr><th>Server variable</th><th>Effect</th></tr>
-    </thead>
-    <tbody>
-        <tr><td><code>NAVPLACE_DB</code></td><td>Required, <code>mysql://user:password@host/db</code>. Anything else stops the start.</td></tr>
-        <tr><td><code>PORT</code></td><td>Default <code>3000</code>.</td></tr>
-        <tr><td><code>LISTEN</code></td><td>Default <code>127.0.0.1</code>.</td></tr>
-        <tr><td><code>LOGGER</code></td><td><code>stdout</code> (default) or <code>daily</code>.</td></tr>
-    </tbody>
-</table>
 
 <!-- ============================================================ -->
 <h2 id="faq">FAQ</h2>
 <h3 id="faq-platforms">Which platforms does the desktop app run on?</h3>
 <p>Linux, as an AppImage. The global hotkey is set up for GNOME only.</p>
 <h3 id="faq-data">Where are my links?</h3>
-<p>Desktop app: <code>~/.navplace/README.md</code>. Embed widget: in its <code>data-links</code>. Server: in MySQL.</p>
+<p>Desktop app: <code>~/.navplace/README.md</code>. Embed widget: in its <code>data-links</code>. Playground: in this browser. There is no server: <code>% include:</code> pulls links from any url.</p>
 <h3 id="faq-collections">Can the desktop app show several collections?</h3>
 <p>It reads one source. <code>% include:</code> pulls other documents into it.</p>
 <h3 id="faq-case">Why does <code>Git</code> find nothing?</h3>
 <p>The links' text is lower case and what you type is matched as typed: type <code>git</code>.</p>
 <h3 id="faq-fonts">Why does my design look different in the desktop app?</h3>
 <p>The desktop app blocks remote fonts, scripts and images. Ship them inside the design's folder or inline them.</p>
-<h3 id="faq-embed-update">Does the embed widget follow changes on the server?</h3>
+<h3 id="faq-embed-update">Does the embed widget follow changes to my links?</h3>
 <p>No. It shows the text in its <code>data-links</code>.</p>
 <h3 id="faq-license">Is it open source?</h3>
 <p>Yes, MIT: <a href="https://github.com/vbarbarosh/navplace/blob/master/LICENSE">LICENSE</a>.</p>

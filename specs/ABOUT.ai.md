@@ -13,7 +13,7 @@ NavPlace renders a plain-text list of links via three surfaces, all driven by th
 | Surface | Entry point | Source of links |
 |---|---|---|
 | Desktop app (Electron) | `desktop-electron/main.js` | `~/.navplace/README.md` |
-| Web app (Express) | `src/http/index.js` → `create_app.js` | MySQL (via Knex), served through `src/http/routes/api/collections.js` |
+| Playground | `www/playground.html` on navplace.com | Its own text, kept in the browser's localStorage, sent to the design by `postMessage` |
 | Embed widget | `<script src=".../lib/embed.js" data-links="…">` | Inline `data-links` attribute on the host page |
 
 The shared parser is `lib/parse.js`. The shared filter compiler is `lib/filter1_from_spec.js`. The shared runtime that wires input → filter → navigation is `lib/navplace.js`.
@@ -117,29 +117,9 @@ Goal: every summon after the first is a socket ping, not a process start.
 
 Other desktop environments are not wired by `bin/configure-gnome`; the socket mechanism is portable, the dconf glue is not.
 
-## Web app
+## The site
 
-Express app constructed in `src/http/create_app.js`. Entry point `src/http/index.js`. Server bootstrap helpers in `src/http/helpers/express/`.
-
-Routes (registered via `express_routes(app, require(...))`):
-- `landing` (`src/http/routes/landing.js`) — `GET /`, `GET /index.html` → `www/index.html`; `GET /collections`, `GET /collections.html` → `www/collections.html`.
-- `health` (`src/http/routes/health.js`).
-- `dashboard` (`src/http/routes/dashboard.js`).
-- `api/collections` (`src/http/routes/api/collections.js`) — collection CRUD.
-
-Static mounts:
-- `/lib` → `lib/` (serves `parse.js`, `embed.js`, `navplace.js`, `filter1_from_spec.js`).
-- `/designs` → `designs/`.
-
-Auth: requests are authenticated externally; the `x-auth-user` header carries an `authwall_user_uid`. `src/http/create_app.js` looks the user up in the `users` table and auto-provisions on first sight (`src/http/models/user_create.js`). No login UI lives in this repo.
-
-Database: MySQL via Knex. Config in `knexfile.js`, migrations in `db/migrations/`. Connection accessor in `db/index.js`. The `docker-compose.yaml` provides a local MySQL.
-
-Logging: ALS-scoped logger in `src/http/services/logger/`, attached per-request in `create_app.js`.
-
-Error reporting: Sentry, wired in `src/http/services/sentry.js`.
-
-Websockets: `src/http/services/notifications.js`, attached as `app.setup_server` and used by the bootstrap to upgrade the HTTP server.
+navplace.com is a Cloudflare Worker (`src/cloudflare/worker.js`) serving `build/www/`, which `bin/build-www` puts together: the pages in `www/`, `lib/` and `designs/`. The Worker also answers `/icon/<host>`; anything else is a 404. There is no server, no database and no account: to keep links in one place, a collection pulls them from any url with `% include: <url>`.
 
 ## Embed widget
 
@@ -179,21 +159,12 @@ desktop-electron/              desktop app
   launcher.js          tiny hotkey-side socket pinger
   renderer.js          contextBridge preload
   helpers/wait_for_socket_connections.js
-src/http/              Express server
-  index.js             entry point
-  create_app.js        app factory
-  routes/              landing, health, dashboard, api/collections
-  helpers/             als, bootstrap_database, express_routes, random_uid, …
-  models/user_create.js
-  services/            logger, sentry, notifications (websockets)
+src/cloudflare/        the Worker on navplace.com: build/www and /icon/
 designs/               one folder per design, each with index.html
-db/                    knex config, migrations
-www/                   static HTML for the web app (index, collections)
+www/                   the site: index, docs, playground
 demos/                 standalone HTML demos of each design
 bin/                   shell scripts (configure-gnome, build, watch, migrate, test, run)
 ubuntu/                .desktop file and icon for GNOME install
-knexfile.js
-docker-compose.yaml    local MySQL
 package.json           name: "navplace", main: "desktop-electron/main.js"
 ```
 
@@ -203,8 +174,6 @@ From `package.json`:
 
 - `npm start` — launches Electron (`electron .`).
 - `npm test` — runs `mocha 'lib/**/*.test.js'`.
-- `npm run watch` — runs `nodemon src/http/index.js` (web app dev).
-- `npm run migrate` / `migrate:make` / `migrate:rollback` — Knex migrations.
 - `npm run dist` — `electron-builder` (AppImage on Linux, appId `com.navplace`, productName `NavPlace`).
 
 Setup script: `bin/configure-gnome` — registers the GNOME hotkey and installs `navplace.desktop`. Run once.
@@ -214,22 +183,17 @@ Setup script: `bin/configure-gnome` — registers the GNOME hotkey and installs 
 - Desktop source: single file at `~/.navplace/README.md`. Plain text. User-owned.
 - Desktop image assets: any file under `~/.navplace/` (referenced via `@name` and served through the `private://` protocol).
 - Desktop favicon cache: `app.getPath('userData')/favicons/<domain>.png`.
-- Web app collections: MySQL, via the Knex schema in `db/migrations/`.
+- Playground: its text in the browser's localStorage.
 - Embed widget: no persistence; links are inline in the host page's HTML.
 
-A cross-surface sync layer is in active development (not yet in `main`). As of this writing, the three surfaces share the parser and DSL, not storage — collections move with the file, the URL, or the embed tag.
+There is no server: the surfaces share the parser and the format, not storage. `% include: <url>` pulls links into a collection from any url.
 
 ## Notable dependencies
 
 - `electron` — desktop shell.
-- `express` — web app.
-- `knex` + `mysql2` — database access. (`pg`, `better-sqlite3` are also pulled in.)
-- `@vbarbarosh/node-helpers`, `@vbarbarosh/express-helpers`, `@vbarbarosh/type-helpers` — author's utility packages.
-- `@sentry/node` — error reporting.
-- `bluebird` — promise utilities.
-- `ws` — websockets.
-- `@paralleldrive/cuid2` — id generation (see `random_uid_*`).
-- `sanitize-filename` — favicon cache path safety.
+- `@vbarbarosh/node-helpers`, `@vbarbarosh/type-helpers` — author's utility packages.
+- `sanitize-filename` — favicon cache path safety (desktop app).
+- `mocha` — the tests.
 
 ## Copy library
 
@@ -364,7 +328,7 @@ A design is a self-contained HTML folder under `designs/<name>/` that consumes t
 Yes. One `<script src="…/embed.js" data-links="…">` tag in any HTML page. The script creates an iframe pointing at the chosen design and pipes the `data-links` text into it via `postMessage`. The iframe sizes itself to its container.
 
 **Q: Where is my data stored?**
-It depends on the surface. The desktop app reads a single file from disk: `~/.navplace/README.md`. The web app stores collections server-side (MySQL via Knex). The embed widget keeps links inline in the host page's HTML. A cross-surface sync layer is in active development.
+It depends on the surface. The desktop app reads a single file from disk: `~/.navplace/README.md`. The embed widget keeps links inline in the host page's HTML. The Playground keeps its text in your browser. There is no server; `% include: <url>` pulls links from any url.
 
 **Q: Is there a global hotkey for the desktop app?**
 On GNOME/Linux, **Ctrl+Shift+Alt+N** is wired up by running `bin/configure-gnome` once. The hotkey runs `desktop-electron/launcher.js`, a tiny Node script that pings a Unix socket — summoning the app after first launch is essentially instant. Other desktop environments aren't wired up yet.
@@ -392,7 +356,7 @@ Use these terms consistently across UI; do not substitute synonyms.
 - **NavPlace** — product name. Not *NavPlase*, *Navplace*, or *Nav Place*.
 - **Collection** — a single NavPlace document (the plain-text source).
 - **Design** — a swappable visual renderer of a collection. Not *theme*, *skin*, or *template*.
-- **Surface** — one of the three places a collection renders: desktop app, web app, embed widget.
+- **Surface** — one of the three places a collection renders: desktop app, the Playground on navplace.com, embed widget.
 - **Embed widget** — the `<script>`-tag widget. Not *plugin* or *snippet*.
 - **Section** — a `# Heading` group inside a collection. Not *category* or *folder*.
 - **Directive** — a `% key: value` line. Not *front matter* or *config line*.
@@ -410,7 +374,7 @@ The following claims have appeared in AI-generated drafts of NavPlace pages and 
 - **"Free while in public beta"**, **"personal tier"**, **"team plan"**, **"shared collections"** — no pricing, accounts, tiers, or beta status exists in the codebase. Drop the pricing section unless given real facts.
 - **"Built quietly in San Francisco"** — invented location. No HQ claim should appear unless provided.
 - **"The widget updates when you edit it"** — the embed widget reads inline `data-links` on the host page; there is no remote-edit-pushes-to-widget feature.
-- **"Team dashboard"** — the web app has a `dashboard` route but no team/collaboration features. Use *hosted page* or *shared page* instead.
+- **"Team dashboard"** — there are no accounts or team features. Use *hosted page* or *shared page* instead.
 - **"Sign in to sync"** — there is no first-party login UI in this repo; auth is external (header `x-auth-user`). Don't promise sign-in flows that aren't built.
 
 When in doubt, prefer the smaller, true claim over the larger, evocative one. "Plain-text file, three renderers" is fine; "your second brain, synced everywhere" is not.
