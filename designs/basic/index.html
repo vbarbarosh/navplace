@@ -19,19 +19,24 @@ const app = Vue.createApp({
     template: `
 <div class="fix-f vsplit bg-page">
 <div class="p10">
-    <input ref="search" class="db ma ph10 pv5 h20 w400" />
+    <input ref="search" class="search db ma ph10 pv5 h20 w400" />
 </div>
 <div class="fluid flex-row-center p10 oa">
     <div class="ma flex-fluid container gap25">
-        <a v-for="item in items"
+        <a v-for="(item, i) in items"
            v-bind:href="item.href"
-           v-bind:class="{break: item.break}"
+           v-bind:class="{break: row_starts(i)}"
            target="_blank"
            class="rel flex-col w200 bs10 bg-bookmark"
            style="height:112px;">
-            <img v-if="(item.meta.padding === '1')" v-bind:src="(item.image_url ?? item.icon_url)" class="flex-fluid fit-contain" style="padding: 10px 0 35px;" />
-            <img v-else-if="(item.meta.padding === '2')" v-bind:src="(item.image_url ?? item.icon_url)" class="flex-fluid fit-contain" style="padding: 0 10px 15px;" />
-            <img v-else v-bind:src="item.image_url ?? item.icon_url" class="flex-fluid fit-cover" />
+            <template v-if="picture_shown(item)">
+                <img v-if="(item.meta.padding === '1')" v-bind:src="item.image_url" v-on:error="picture_failed(item)" class="flex-fluid fit-contain" style="padding: 10px 0 35px;" />
+                <img v-else-if="(item.meta.padding === '2')" v-bind:src="item.image_url" v-on:error="picture_failed(item)" class="flex-fluid fit-contain" style="padding: 0 10px 15px;" />
+                <img v-else v-bind:src="item.image_url" v-on:error="picture_failed(item)" class="flex-fluid fit-cover" />
+            </template>
+            <span v-else class="flex-fluid flex-row-center" style="padding-bottom: 28px;">
+                <img v-bind:src="item.icon_url" class="fit-contain" style="width: 48px; height: 48px;" />
+            </span>
             <span class="bookmark-label">{{ item.label }}</span>
         </a>
     </div>
@@ -41,9 +46,21 @@ const app = Vue.createApp({
     data: function () {
         return {
             items: [],
+            // Pictures that did not load: their links show the site's icon instead
+            failed: {},
         };
     },
-    computed: {
+    methods: {
+        // A link under another # section than the one before it starts a new row
+        row_starts: function (i) {
+            return (i > 0) && (this.items[i].namespaces.join('|') !== this.items[i - 1].namespaces.join('|'));
+        },
+        picture_shown: function (item) {
+            return !!item.image_url && !this.failed[item.image_url];
+        },
+        picture_failed: function (item) {
+            this.failed[item.image_url] = true;
+        },
     },
     mounted: function () {
         navplace({

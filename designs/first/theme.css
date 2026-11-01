@@ -1,0 +1,57 @@
+/* The font smcss 1's reset.css gave the page; smcss 2's reset leaves the browser's own */
+body {
+    font: 9pt/1.5em Arial, Helvetica, sans-serif;
+}
+
+a {
+    text-decoration: none;
+}
+
+.bg-page {
+    /*background: url("https://images.unsplash.com/photo-1554147090-e1221a04a025?q=80&w=3848&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");*/
+    background: url("photo-1554147090-e1221a04a025.jpg");
+    background-size: cover;
+}
+
+.bg-bookmark {
+    background-color: #DFDBE5;
+    background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.gap10 { gap: 10px; }
+.gap15 { gap: 15px; }
+.gap20 { gap: 20px; }
+.gap25 { gap: 25px; }
+.fit-cover { object-fit: cover; }
+.fit-contain { object-fit: contain; }
+
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 200px);
+    align-content: start;
+    justify-content: center;
+}
+
+/* 400 px, never wider than the screen */
+.search {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.container > .break {
+    grid-column: 1 / 1;
+}
+
+.bookmark-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    color: white;
+    text-align: center;
+    font-size: 14px;
+    padding: 5px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px); /* for Safari */
+}

@@ -32,6 +32,12 @@ a {
     justify-content: center;
 }
 
+/* 400 px, never wider than the screen */
+.search {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
 .container > .break {
     grid-column: 1 / 1;
 }
