@@ -769,16 +769,20 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 <p><code>@name</code> points at a file under <code>~/.navplace/</code> and must stand right before the url, after a space. The parser turns it into <code>private://name</code>, which only the desktop app serves. Designs that show artwork use <code>item.image_url</code> and fall back to <code>item.icon_url</code>.</p>
 
 <h3 id="what-a-link-becomes">What a link becomes</h3>
-<p>Each link line becomes one object. On the right, what <code>lib/parse.js</code> makes of the text on the left, run on this page as you read it:</p>
+<p>The <code>%</code> lines go into one <code>meta</code> object for the whole document; each link line becomes an object of <code>items</code>. On the right, what <code>lib/parse.js</code> makes of the text on the left, run on this page as you read it:</p>
 <div class="becomes">
     <div>
         <div class="becomes-name"><code>links.txt</code></div>
-<pre><code data-lang="links" id="becomes_text"># Work | Mail
+<pre><code data-lang="links" id="becomes_text">% design: showcase
+% title: Jane Doe
+% email: jane@example.com
+
+# Work | Mail
 Gmail #mail #padding=1 @gm.png https://gmail.com/
 Почта #mail https://ya.ru/</code></pre>
     </div>
     <div>
-        <div class="becomes-name"><code>parse(text).items</code></div>
+        <div class="becomes-name"><code>parse(text)</code></div>
 <pre><code data-lang="json" id="becomes_items"></code></pre>
     </div>
 </div>
@@ -1057,10 +1061,14 @@ function main()
 
     // What a link becomes: the items the parser makes of the text beside them, never typed by hand
     const becomes_text = document.getElementById('becomes_text').textContent;
-    // Short arrays and objects on one line each, so an item reads at a glance
-    document.getElementById('becomes_items').textContent = JSON.stringify(parse(becomes_text).items, null, 2)
-        .replace(/\[\s+([^[\]{}]*?)\s+\]/g, (all, inner) => `[${inner.replace(/\s*\n\s*/g, ' ')}]`)
-        .replace(/\{\s+([^[\]{}]*?)\s+\}/g, (all, inner) => `{${inner.replace(/\s*\n\s*/g, ' ')}}`);
+    // Short arrays and objects on one line each, so an item reads at a glance; a long one keeps its lines
+    const one_line = (all, open, inner, close) => {
+        const line = `${open}${inner.replace(/\s*\n\s*/g, ' ')}${close}`;
+        return line.length <= 40 ? line : all;
+    };
+    document.getElementById('becomes_items').textContent = JSON.stringify(parse(becomes_text), null, 2)
+        .replace(/(\[)\s+([^[\]{}]*?)\s+(\])/g, one_line)
+        .replace(/(\{)\s+([^[\]{}]*?)\s+(\})/g, one_line);
 
     // The examples in the Playground's colours: links.txt as its editor draws it
     for (const code of document.querySelectorAll('pre code[data-lang]')) {
