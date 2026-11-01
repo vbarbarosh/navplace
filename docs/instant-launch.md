@@ -4,7 +4,7 @@
 
 The app opens immediately. Nothing that loads links may run in front of the
 window: not the local file, not a `% include:` url, not the collection api.
-A summon is a keystroke, so it must feel like one.
+The window comes up on a keystroke, so it must feel like one.
 
 Links are always a redraw behind, never a delay in front.
 
@@ -30,10 +30,10 @@ An include url delayed by 3 seconds, the app driven under Xvfb:
 | What                                | Time    |
 |-------------------------------------|---------|
 | window up, showing the local links  | 569 ms  |
-| summon: socket ping → input cleared | 4 ms    |
+| hotkey: socket ping → input cleared | 4 ms    |
 | pulled links arrive in the window   | 3597 ms |
 
-The summon lands in 4 ms while a 3-second pull is in flight. That is the number
+The hotkey is answered in 4 ms while a 3-second pull is in flight. That is the number
 to keep.
 
 ## Measuring again

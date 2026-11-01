@@ -60,8 +60,8 @@ desktop entry back to the exact AppImage path.
 The setup registers **Ctrl+Shift+Alt+N** through `dconf`, extracts the
 dependency-free launcher to `${XDG_CONFIG_HOME:-~/.config}/navplace/launcher.js`,
 and writes `~/.local/share/applications/navplace.desktop`. The launcher pings the
-running NavPlace socket for instant summon; if NavPlace is not already running,
-it falls back to `gtk-launch navplace`, which starts the AppImage.
+running NavPlace socket, so the window shows at once; if NavPlace is not already
+running, it falls back to `gtk-launch navplace`, which starts the AppImage.
 
 `node` must be available on `PATH`, because the extracted launcher uses its
 `/usr/bin/env node` shebang. On success, the command prints the launcher path,

@@ -563,7 +563,7 @@
             <article class="docs">
 
 <h1>NavPlace documentation</h1>
-<p class="lead">NavPlace turns one plain-text list of links into a launcher you summon with a keystroke, a page, and a widget for any site. This page covers all of it: the goals, the desktop app, the format, the designs, the embed widget and how the code is laid out.</p>
+<p class="lead">NavPlace turns one plain-text list of links into a launcher you open with a keystroke, a page, and a widget for any site. This page covers all of it: the goals, the desktop app, the format, the designs, the embed widget and how the code is laid out.</p>
 
 <!-- ============================================================ -->
 <h2 id="goals">Goals</h2>
@@ -578,7 +578,7 @@
     <li><strong>Plain text is the source.</strong> A name and a url per line. No JSON, no YAML, no editor needed.</li>
     <li><strong>One parser.</strong> <code>lib/parse.js</code> reads the text in the desktop app and in every design, so a collection behaves the same everywhere.</li>
     <li><strong>A design is a folder.</strong> <code>designs/&lt;name&gt;/index.html</code>, switched by one line: <code>% design: &lt;name&gt;</code>.</li>
-    <li><strong>The window never waits.</strong> In the desktop app, every summon shows the window first and reloads the links behind it.</li>
+    <li><strong>The window never waits.</strong> In the desktop app, the hotkey shows the window first and reloads the links behind it.</li>
     <li><strong>No build step.</strong> Designs and <code>lib/</code> are plain files, served as they are.</li>
 </ul>
 
@@ -610,7 +610,7 @@
     <li>The app reads <code>~/.navplace/README.md</code>. When the file is missing it writes a starter one: <code>% design: github</code> and eight links (ChatGPT, GitHub, Gmail, Google Calendar, Google Drive, MDN, Node.js, Electron).</li>
     <li><code>% design:</code> picks the folder under <code>designs/</code>. Absent, or not one of them: <code>github</code>.</li>
     <li>The window is 1200 × 1000, centred, always on top, zoomed to 125%. Its title is the design's title and the app's version.</li>
-    <li>It hides when it loses focus and stays running, so the next summon is instant.</li>
+    <li>It hides when it loses focus and stays running, so the hotkey brings it back at once.</li>
     <li>Links open in your default browser.</li>
 </ul>
 
@@ -630,10 +630,10 @@
     <li>The hotkey runs <code>launcher.js</code>: Node built-ins only, no Electron, no AppImage to mount.</li>
     <li>It connects to <code>${XDG_CONFIG_HOME:-~/.config}/navplace/navplace.sock</code>.</li>
     <li>The running app shows its window, focuses it and clears the search box.</li>
-    <li>No socket: <code>gtk-launch navplace</code> starts the app once. Every summon after that is a socket ping.</li>
+    <li>No socket: <code>gtk-launch navplace</code> starts the app once. From then on the hotkey only pings the socket.</li>
 </ol>
 <p>A second start of the app shows the running window instead of opening another one.</p>
-<p><strong>The window never waits.</strong> Every summon reloads the links in the background: the window shows what it already has and the design redraws when the new links arrive. At startup the app reads the file once before the window opens, because its <code>% design:</code> decides what to load. <code>% include:</code> urls always come after the window is up. Measured with an include url delayed by 3 seconds, under Xvfb: window up in 569 ms, a summon in 4 ms, the pulled links in 3597 ms. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/instant-launch.md">docs/instant-launch.md</a>.</p>
+<p><strong>The window never waits.</strong> Each press of the hotkey reloads the links in the background: the window shows what it already has and the design redraws when the new links arrive. At startup the app reads the file once before the window opens, because its <code>% design:</code> decides what to load. <code>% include:</code> urls always come after the window is up. Measured with an include url delayed by 3 seconds, under Xvfb: window up in 569 ms, the hotkey answered in 4 ms, the pulled links in 3597 ms. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/instant-launch.md">docs/instant-launch.md</a>.</p>
 
 <h3 id="wayland-chrome">Chrome on Wayland</h3>
 <p>With several workspaces, Chrome on Wayland can open a link in a window on another workspace. When Google Chrome handles http and https links, the app first focuses a Chrome window on the current workspace (else the most recently raised one), then opens the link. It needs the optional GNOME extension <a href="https://extensions.gnome.org/extension/4724/window-calls/">Window Calls</a>; without it, or outside a Wayland session, links open as Chrome decides. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/wayland-chrome-window.md">docs/wayland-chrome-window.md</a>.</p>
