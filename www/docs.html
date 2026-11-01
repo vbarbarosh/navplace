@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="NavPlace documentation: goals, the desktop app, the format, filtering, designs, the embed widget, the HTTP API and how the code is laid out.">
+    <meta name="description" content="NavPlace documentation: goals, the desktop app, the format, filtering, designs, the embed widget and how the code is laid out.">
     <title>Docs — NavPlace</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 29 29'%3E%3Crect width='29' height='29' rx='8' fill='%23286445'/%3E%3Cg transform='translate(5 5) scale(0.79)' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 19 4-14 10 10-14 4Z'/%3E%3Cpath d='m9 5 3 7 7 3M12 12l-7 7'/%3E%3C/g%3E%3C/svg%3E">
     <script>
@@ -552,7 +552,6 @@
                 <li><a href="#filtering">Filtering</a></li>
                 <li><a href="#designs">Designs</a></li>
                 <li><a href="#embed">Embed widget</a></li>
-                <li><a href="#api">HTTP API</a></li>
                 <li><a href="#libraries">Libraries</a></li>
                 <li><a href="#architecture">How it's built</a></li>
                 <li><a href="#development">Development</a></li>
@@ -564,7 +563,7 @@
             <article class="docs">
 
 <h1>NavPlace documentation</h1>
-<p class="lead">NavPlace turns one plain-text list of links into a launcher you summon with a keystroke, a page, and a widget for any site. This page covers all of it: the goals, the desktop app, the format, the designs, the embed widget, the HTTP API and how the code is laid out.</p>
+<p class="lead">NavPlace turns one plain-text list of links into a launcher you summon with a keystroke, a page, and a widget for any site. This page covers all of it: the goals, the desktop app, the format, the designs, the embed widget and how the code is laid out.</p>
 
 <!-- ============================================================ -->
 <h2 id="goals">Goals</h2>
@@ -590,7 +589,7 @@
         <tr><th>Surface</th><th>Links come from</th><th>For</th></tr>
     </thead>
     <tbody>
-        <tr><td>Desktop app</td><td><code>~/.navplace/README.md</code>, or a stored collection through the <a href="#api">HTTP API</a></td><td>Daily navigation: hotkey, a few letters, Enter.</td></tr>
+        <tr><td>Desktop app</td><td><code>~/.navplace/README.md</code>, or a collection stored on the server</td><td>Daily navigation: hotkey, a few letters, Enter.</td></tr>
         <tr><td>Embed widget</td><td>The <code>data-links</code> attribute of its script tag</td><td>A page, or a part of one, on any site.</td></tr>
         <tr><td>Web</td><td>Collections stored on the server, in MySQL</td><td>Keeping a collection the desktop app loads and refreshes; the site itself, with the <a href="playground.html">Playground</a>.</td></tr>
     </tbody>
@@ -627,7 +626,7 @@
     <tbody>
         <tr><td><code>personal_access_token</code></td><td>Sent as <code>Authorization: Bearer &lt;token&gt;</code> with the two requests below.</td></tr>
         <tr><td><code>collection_url</code></td><td>The full url of one collection in the API, <code>…/api/v1/collections/&lt;uid&gt;</code>. When set, the app loads that collection's <code>contents</code> instead of <code>~/.navplace/README.md</code>. The answer must be JSON with a string field <code>contents</code>.</td></tr>
-        <tr><td><code>events_url</code></td><td>The <a href="#api-events">events</a> WebSocket, <code>…/api/v1/events</code>; <code>http://</code> and <code>https://</code> become <code>ws://</code> and <code>wss://</code>. Used only with <code>collection_url</code>. On <code>hello</code> or any <code>collection.*</code> event the app reloads the collection 250 ms later; after a drop it reconnects in 5 seconds.</td></tr>
+        <tr><td><code>events_url</code></td><td>The events WebSocket, <code>…/api/v1/events</code>; <code>http://</code> and <code>https://</code> become <code>ws://</code> and <code>wss://</code>. Used only with <code>collection_url</code>. On <code>hello</code> or any <code>collection.*</code> event the app reloads the collection 250 ms later; after a drop it reconnects in 5 seconds.</td></tr>
     </tbody>
 </table>
 <pre><code data-lang="settings">personal_access_token: pat_xxx
@@ -898,78 +897,6 @@ Gmail   https://mail.google.com/
     </tbody>
 </table>
 <p>Links open in the top window. The widget shows only its own <code>data-links</code>: editing a collection on the server does not change it, and <code>% include:</code> does nothing here.</p>
-
-<!-- ============================================================ -->
-<h2 id="api">HTTP API</h2>
-<p>The server in <code>src/http/</code> (Express) keeps collections per user in MySQL and tells clients when they change. Base url in the spec: <code>https://navplace.com</code>. The OpenAPI file: <a href="https://github.com/vbarbarosh/navplace/blob/master/src/http/routes/api/_spec.yaml">src/http/routes/api/_spec.yaml</a>.</p>
-
-<h3 id="api-auth">Authentication</h3>
-<ul>
-    <li>The server has no sign-in of its own. <a href="https://github.com/vbarbarosh/authwall">Authwall</a> runs in front of it, signs the user in and passes the user's id in the <code>X-Auth-User</code> header; the server creates the user on first sight.</li>
-    <li>API clients use a personal access token issued by Authwall. The desktop app sends it as <code>Authorization: Bearer &lt;token&gt;</code>.</li>
-    <li>No user: <code>401</code> with the text <code>Authentication is required</code>.</li>
-</ul>
-
-<h3 id="api-collections">Collections</h3>
-<table>
-    <thead>
-        <tr><th>Request</th><th>Does</th><th>Answers</th></tr>
-    </thead>
-    <tbody>
-        <tr><td><code>GET /api/v1/collections</code></td><td>Lists the user's collections, last updated first. <code>limit</code> 1–100 (default 50), <code>offset</code> (default 0).</td><td><code>200</code> <code>{items, total, limit, offset}</code>, items without <code>contents</code></td></tr>
-        <tr><td><code>POST /api/v1/collections</code></td><td>Creates one. Body <code>{label, contents}</code>, both optional: the label defaults to <code>Untitled collection</code>, the contents to a sample.</td><td><code>201</code> the collection</td></tr>
-        <tr><td><code>GET /api/v1/collections/:uid</code></td><td>Fetches one.</td><td><code>200</code> the collection, <code>404</code></td></tr>
-        <tr><td><code>PATCH /api/v1/collections/:uid</code></td><td>Changes <code>label</code>, <code>contents</code> or both.</td><td><code>200</code> the collection, <code>400</code>, <code>404</code></td></tr>
-        <tr><td><code>DELETE /api/v1/collections/:uid</code></td><td>Deletes one.</td><td><code>204</code>, <code>404</code></td></tr>
-    </tbody>
-</table>
-<pre><code data-lang="json">{
-    "uid": "col_mrybsue3nr4xbadrrhgmxwmi",
-    "label": "Work links",
-    "contents": "% design: basic\n\nGitHub https://github.com",
-    "created_at": "2026-05-25T10:30:00.000Z",
-    "updated_at": "2026-05-25T10:30:00.000Z"
-}</code></pre>
-<ul>
-    <li>A label is trimmed, its runs of spaces made one, and cut at 255 characters. An empty label in a PATCH is an error.</li>
-    <li>Errors come as plain text: <code>Label is required</code>, <code>Contents must be a string</code>, <code>Nothing to update</code> (<code>400</code>), <code>Collection not found</code> (<code>404</code>).</li>
-    <li>A collection is visible to its owner only; another user's uid answers <code>404</code>.</li>
-</ul>
-<pre><code data-lang="shell">curl -H 'Authorization: Bearer pat_xxx' https://navplace.com/api/v1/collections</code></pre>
-
-<h3 id="api-events">Events</h3>
-<p>A WebSocket at <code>/api/v1/events</code>, authenticated like the REST routes; without a user the upgrade answers <code>401</code> and closes. Every message has the same envelope:</p>
-<pre><code data-lang="json">{"type": "collection.updated", "value": {"uid": "…", "label": "…", "created_at": "…", "updated_at": "…"}, "time": "2026-05-25T10:30:00.000Z"}</code></pre>
-<table>
-    <thead>
-        <tr><th><code>type</code></th><th><code>value</code></th></tr>
-    </thead>
-    <tbody>
-        <tr><td><code>hello</code></td><td><code>null</code>, once on connect</td></tr>
-        <tr><td><code>collection.created</code></td><td><code>{uid, label, created_at, updated_at}</code></td></tr>
-        <tr><td><code>collection.updated</code></td><td><code>{uid, label, created_at, updated_at}</code></td></tr>
-        <tr><td><code>collection.deleted</code></td><td><code>{uid, label}</code></td></tr>
-    </tbody>
-</table>
-<ul>
-    <li>Events carry no <code>contents</code>: fetch the collection again for them.</li>
-    <li><code>hello</code> arrives JSON-encoded twice: when the first parse gives a string, parse that string again (the desktop app does).</li>
-    <li>The server pings every 30 seconds and drops a socket that has not answered the previous ping. Reconnect after a drop.</li>
-    <li>Events live in one process's memory: a client sees only the changes made through the process it is connected to.</li>
-</ul>
-
-<h3 id="api-other">Other routes</h3>
-<table>
-    <thead>
-        <tr><th>Request</th><th>Answers</th></tr>
-    </thead>
-    <tbody>
-        <tr><td><code>GET /health</code></td><td><code>OK</code> as text, the server's version in <code>x-navplace-version</code>.</td></tr>
-        <tr><td><code>GET /dashboard</code></td><td><code>{name: 'dashboard', user}</code>, the current user or <code>null</code>.</td></tr>
-        <tr><td><code>GET /</code>, <code>/index.html</code></td><td>The home page, <code>www/index.html</code>.</td></tr>
-        <tr><td><code>/lib/*</code>, <code>/designs/*</code></td><td>The files of <code>lib/</code> and <code>designs/</code>: what the embed widget loads.</td></tr>
-    </tbody>
-</table>
 
 <!-- ============================================================ -->
 <h2 id="libraries">Libraries</h2>
