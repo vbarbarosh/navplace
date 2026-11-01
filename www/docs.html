@@ -589,7 +589,7 @@
         <tr><th>Surface</th><th>Links come from</th><th>For</th></tr>
     </thead>
     <tbody>
-        <tr><td>Desktop app</td><td><code>~/.navplace/README.md</code>, or a collection stored on the server</td><td>Daily navigation: hotkey, a few letters, Enter.</td></tr>
+        <tr><td>Desktop app</td><td><code>~/.navplace/README.md</code></td><td>Daily navigation: hotkey, a few letters, Enter.</td></tr>
         <tr><td>Embed widget</td><td>The <code>data-links</code> attribute of its script tag</td><td>A page, or a part of one, on any site.</td></tr>
         <tr><td>Web</td><td>Collections stored on the server, in MySQL</td><td>Keeping a collection the desktop app loads and refreshes; the site itself, with the <a href="playground.html">Playground</a>.</td></tr>
     </tbody>
@@ -617,23 +617,6 @@
     <li>Links open in your default browser.</li>
 </ul>
 
-<h3 id="settings">Settings</h3>
-<p><code>~/.navplace/settings.yaml</code>, from the template <code>src/desktop-electron/config/settings.example.yaml</code>. Empty values keep the local file.</p>
-<table>
-    <thead>
-        <tr><th>Key</th><th>Effect</th></tr>
-    </thead>
-    <tbody>
-        <tr><td><code>personal_access_token</code></td><td>Sent as <code>Authorization: Bearer &lt;token&gt;</code> with the two requests below.</td></tr>
-        <tr><td><code>collection_url</code></td><td>The full url of one collection in the API, <code>…/api/v1/collections/&lt;uid&gt;</code>. When set, the app loads that collection's <code>contents</code> instead of <code>~/.navplace/README.md</code>. The answer must be JSON with a string field <code>contents</code>.</td></tr>
-        <tr><td><code>events_url</code></td><td>The events WebSocket, <code>…/api/v1/events</code>; <code>http://</code> and <code>https://</code> become <code>ws://</code> and <code>wss://</code>. Used only with <code>collection_url</code>. On <code>hello</code> or any <code>collection.*</code> event the app reloads the collection 250 ms later; after a drop it reconnects in 5 seconds.</td></tr>
-    </tbody>
-</table>
-<pre><code data-lang="settings">personal_access_token: pat_xxx
-collection_url: https://navplace.com/api/v1/collections/col_mrybsue3nr4xbadrrhgmxwmi
-events_url: https://navplace.com/api/v1/events</code></pre>
-<p>A <code>settings.yaml</code> that fails to parse is ignored without a message, and the app reads the local file.</p>
-
 <h3 id="hotkey">Global hotkey on GNOME</h3>
 <pre><code data-lang="shell">./NavPlace-*.AppImage --configure-gnome</code></pre>
 <p>Run it once, from the AppImage itself (it needs the <code>APPIMAGE</code> variable the AppImage runtime sets) with <code>node</code> on <code>PATH</code>. It:</p>
@@ -653,7 +636,7 @@ events_url: https://navplace.com/api/v1/events</code></pre>
     <li>No socket: <code>gtk-launch navplace</code> starts the app once. Every summon after that is a socket ping.</li>
 </ol>
 <p>A second start of the app shows the running window instead of opening another one.</p>
-<p><strong>The window never waits.</strong> Every summon reloads the links in the background: the window shows what it already has and the design redraws when the new links arrive. At startup the app reads its source once before the window opens, because <code>% design:</code> decides what to load: the local file, or the collection at <code>collection_url</code>. <code>% include:</code> urls always come after the window is up. Measured with an include url delayed by 3 seconds, under Xvfb: window up in 569 ms, a summon in 4 ms, the pulled links in 3597 ms. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/instant-launch.md">docs/instant-launch.md</a>.</p>
+<p><strong>The window never waits.</strong> Every summon reloads the links in the background: the window shows what it already has and the design redraws when the new links arrive. At startup the app reads the file once before the window opens, because its <code>% design:</code> decides what to load. <code>% include:</code> urls always come after the window is up. Measured with an include url delayed by 3 seconds, under Xvfb: window up in 569 ms, a summon in 4 ms, the pulled links in 3597 ms. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/instant-launch.md">docs/instant-launch.md</a>.</p>
 
 <h3 id="wayland-chrome">Chrome on Wayland</h3>
 <p>With several workspaces, Chrome on Wayland can open a link in a window on another workspace. When Google Chrome handles http and https links, the app first focuses a Chrome window on the current workspace (else the most recently raised one), then opens the link. It needs the optional GNOME extension <a href="https://extensions.gnome.org/extension/4724/window-calls/">Window Calls</a>; without it, or outside a Wayland session, links open as Chrome decides. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/wayland-chrome-window.md">docs/wayland-chrome-window.md</a>.</p>
@@ -747,7 +730,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
     <li>A pulled document gives links and sections only. Its own directives are dropped, so it cannot switch the design, apply <code>% ns:</code> or pull a third document.</li>
     <li>The <code>% ns:</code> of the pulling document filters local and pulled links alike.</li>
     <li>The prefix and the suffix are part of the label, so typing the prefix finds the pulled links.</li>
-    <li>The request carries no access token, unlike <code>collection_url</code>.</li>
+    <li>The request carries no access token.</li>
     <li>A url that fails is logged and skipped; the rest still loads. Each url gets 5 seconds.</li>
     <li>No pull runs in front of the window: it opens on the local links and redraws when the pulled ones arrive.</li>
 </ul>
@@ -993,7 +976,7 @@ bin/build-www</code></pre>
 <h3 id="faq-platforms">Which platforms does the desktop app run on?</h3>
 <p>Linux, as an AppImage. The global hotkey is set up for GNOME only.</p>
 <h3 id="faq-data">Where are my links?</h3>
-<p>Desktop app: <code>~/.navplace/README.md</code>, or the collection at <code>collection_url</code>. Embed widget: in its <code>data-links</code>. Server: in MySQL.</p>
+<p>Desktop app: <code>~/.navplace/README.md</code>. Embed widget: in its <code>data-links</code>. Server: in MySQL.</p>
 <h3 id="faq-collections">Can the desktop app show several collections?</h3>
 <p>It reads one source. <code>% include:</code> pulls other documents into it.</p>
 <h3 id="faq-case">Why does <code>Git</code> find nothing?</h3>
