@@ -32,6 +32,12 @@
             --accent-soft: #f0fdfa;
             --code-bg: #f5f5f4;
             --focus: 0 0 0 3px rgba(15, 118, 110, 0.18);
+            /* The Playground's colours for code, light */
+            --c-tag: #15803d;
+            --c-image: #c2410c;
+            --c-url: #0369a1;
+            --c-key: #7c3aed;
+            --danger: #b91c1c;
         }
 
         :root[data-theme="dark"] {
@@ -46,6 +52,12 @@
             --accent-soft: #0f2926;
             --code-bg: #111113;
             --focus: 0 0 0 3px rgba(45, 212, 191, 0.22);
+            /* The Playground's colours for code, dark */
+            --c-tag: #4ade80;
+            --c-image: #fb923c;
+            --c-url: #38bdf8;
+            --c-key: #c4b5fd;
+            --danger: #f87171;
         }
 
         * {
@@ -330,6 +342,80 @@
             overflow-wrap: normal;
         }
 
+        /* Code in colour: the classes playground-colours.js writes, in the Playground's colours */
+        .c-tag {
+            color: var(--c-tag);
+        }
+        .c-image {
+            color: var(--c-image);
+        }
+        .c-url {
+            color: var(--c-url);
+        }
+        .c-directive,
+        .c-key {
+            color: var(--c-key);
+        }
+        .c-value {
+            color: var(--c-image);
+        }
+        .c-section {
+            font-weight: 650;
+        }
+        .c-ignored,
+        .c-mark,
+        .c-comment {
+            color: var(--text-mute);
+        }
+        .c-word,
+        .c-number,
+        .c-tagname {
+            color: var(--c-url);
+        }
+        .c-error {
+            color: var(--danger);
+        }
+
+        /* The legend: sample lines, each part underlined in its colour and named under it */
+        .legend {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 12px 0;
+            padding: 16px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--code-bg);
+        }
+        .legend-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 10px 16px;
+        }
+        .legend-part {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .docs .legend-part code {
+            padding: 0;
+            background: none;
+            color: var(--text);
+            font-size: 13px;
+            white-space: pre;
+        }
+        .legend-bar {
+            height: 2px;
+            border-radius: 1px;
+            background: currentColor;
+        }
+        .legend-label {
+            color: var(--text-soft);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
         .docs table {
             width: 100%;
             margin: 12px 0;
@@ -520,7 +606,7 @@
     <li>Stable: <a href="https://github.com/vbarbarosh/navplace/releases/latest">releases/latest</a>.</li>
     <li>Every <code>master</code> push: an artifact of the <a href="https://github.com/vbarbarosh/navplace/actions/workflows/appimage-electron.yml?query=branch%3Amaster">appimage-electron</a> workflow, named like <code>NavPlace-Electron-master-&lt;time&gt;-&lt;sha&gt;-AppImage</code>.</li>
 </ul>
-<pre><code>chmod +x NavPlace-*.AppImage
+<pre><code data-lang="shell">chmod +x NavPlace-*.AppImage
 ./NavPlace-*.AppImage</code></pre>
 
 <h3 id="first-run">First run</h3>
@@ -544,13 +630,13 @@
         <tr><td><code>events_url</code></td><td>The <a href="#api-events">events</a> WebSocket, <code>…/api/v1/events</code>; <code>http://</code> and <code>https://</code> become <code>ws://</code> and <code>wss://</code>. Used only with <code>collection_url</code>. On <code>hello</code> or any <code>collection.*</code> event the app reloads the collection 250 ms later; after a drop it reconnects in 5 seconds.</td></tr>
     </tbody>
 </table>
-<pre><code>personal_access_token: pat_xxx
+<pre><code data-lang="settings">personal_access_token: pat_xxx
 collection_url: https://navplace.com/api/v1/collections/col_mrybsue3nr4xbadrrhgmxwmi
 events_url: https://navplace.com/api/v1/events</code></pre>
 <p>A <code>settings.yaml</code> that fails to parse is ignored without a message, and the app reads the local file.</p>
 
 <h3 id="hotkey">Global hotkey on GNOME</h3>
-<pre><code>./NavPlace-*.AppImage --configure-gnome</code></pre>
+<pre><code data-lang="shell">./NavPlace-*.AppImage --configure-gnome</code></pre>
 <p>Run it once, from the AppImage itself (it needs the <code>APPIMAGE</code> variable the AppImage runtime sets) with <code>node</code> on <code>PATH</code>. It:</p>
 <ol>
     <li>copies the launcher to <code>${XDG_CONFIG_HOME:-~/.config}/navplace/launcher.js</code>;</li>
@@ -585,24 +671,26 @@ events_url: https://navplace.com/api/v1/events</code></pre>
 <p>A NavPlace document is plain text. One line is one thing; the first character of a line decides what. Leading spaces are ignored. A one-page summary: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/format-cheatsheet.html">docs/format-cheatsheet.html</a>.</p>
 
 <h3 id="legend">Legend</h3>
-<table>
-    <thead>
-        <tr><th>Symbol</th><th>Where</th><th>Means</th></tr>
-    </thead>
-    <tbody>
-        <tr><td><code>% key: value</code></td><td>own line</td><td>A directive for the whole document.</td></tr>
-        <tr><td><code># Section</code></td><td>own line</td><td>A section for every link line below it.</td></tr>
-        <tr><td><code>|</code></td><td>in <code># Section</code>, in <code>% ns:</code></td><td>Separates names.</td></tr>
-        <tr><td><code>label  url</code></td><td>own line</td><td>One link. The url ends the line.</td></tr>
-        <tr><td><code>#tag</code></td><td>inside a link line</td><td>A tag. Searchable.</td></tr>
-        <tr><td><code>#key=value</code></td><td>inside a link line</td><td>A value for the design. Not searchable.</td></tr>
-        <tr><td><code>@name</code></td><td>right before the url</td><td>An image at <code>~/.navplace/name</code>.</td></tr>
-    </tbody>
-</table>
+<figure class="legend" aria-label="The parts of a NavPlace document">
+    <div class="legend-row">
+        <span class="legend-part"><code><span class="c-directive">% </span><span class="c-key">design</span>: <span class="c-value">showcase</span></code><span class="legend-bar c-key"></span><span class="legend-label">a directive for the whole document, own line</span></span>
+    </div>
+    <div class="legend-row">
+        <span class="legend-part"><code><span class="c-section"># GitHub</span></code><span class="legend-bar"></span><span class="legend-label">a section for the links below, own line</span></span>
+        <span class="legend-part"><code><span class="c-section">| Work</span></code><span class="legend-bar"></span><span class="legend-label"><code>|</code> one more name, also in <code>% ns:</code></span></span>
+    </div>
+    <div class="legend-row">
+        <span class="legend-part"><code>Gmail</code><span class="legend-bar"></span><span class="legend-label">the label</span></span>
+        <span class="legend-part"><code><span class="c-tag">#mail</span></code><span class="legend-bar c-tag"></span><span class="legend-label">a tag, searchable</span></span>
+        <span class="legend-part"><code><span class="c-tag">#padding=1</span></code><span class="legend-bar c-tag"></span><span class="legend-label">a value for the design</span></span>
+        <span class="legend-part"><code><span class="c-image">@img/gm.png</span></code><span class="legend-bar c-image"></span><span class="legend-label">a picture, <code>~/.navplace/img/gm.png</code></span></span>
+        <span class="legend-part"><code><span class="c-url">https://mail.google.com/</span></code><span class="legend-bar c-url"></span><span class="legend-label">the url, ends the line</span></span>
+    </div>
+</figure>
 <p>Anything else is skipped without a message.</p>
 
 <h3 id="example">Example</h3>
-<pre><code>% design: showcase
+<pre><code data-lang="links">% design: showcase
 % title: Vladimir Barbarosh
 
 # GitHub | Work
@@ -641,7 +729,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 
 <h3 id="include-pulling-other-documents"><code>% include:</code> — pulling other documents</h3>
 <p>Desktop app only. The embed widget and the designs on the web read the directive and do nothing with it.</p>
-<pre><code>% include: https://example.com/links.md #work #prefix=ACME</code></pre>
+<pre><code data-lang="links">% include: https://example.com/links.md #work #prefix=ACME</code></pre>
 <p>The url first, then optional decorations for every pulled link:</p>
 <table>
     <thead>
@@ -667,7 +755,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 
 <h3 id="section-sections"><code># Section</code> — sections</h3>
 <p>A section applies to every link line below it, until the next section. A blank line does not end it. Sections are metadata: no design in this repo draws them; <code>% ns:</code> filters on them, and a design can read <code>item.namespaces</code>.</p>
-<pre><code># Work | Internal</code></pre>
+<pre><code data-lang="links"># Work | Internal</code></pre>
 <p>One line, two names. Two heading lines in a row join into one, with a space between them: <code># Work</code> then <code># Fun</code> gives one section named <code>Work Fun</code>. To start a new section, put a link line or a blank line between them.</p>
 
 <h3 id="label-url-links"><code>label  url</code> — links</h3>
@@ -751,7 +839,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 </table>
 
 <h3 id="writing-a-design">Writing a design</h3>
-<pre><code>&lt;script src="../../lib/navplace.js"&gt;&lt;/script&gt;
+<pre><code data-lang="code">&lt;script src="../../lib/navplace.js"&gt;&lt;/script&gt;
 &lt;script&gt;
     navplace({
         input: 'input[type=search]',
@@ -775,7 +863,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 <!-- ============================================================ -->
 <h2 id="embed">Embed widget</h2>
 <p>One script tag puts a collection on any page.</p>
-<pre><code>&lt;div style="position: fixed; inset: 0;"&gt;
+<pre><code data-lang="code">&lt;div style="position: fixed; inset: 0;"&gt;
     &lt;script src="https://navplace.com/lib/embed.js" data-links="
 % design: showcase
 % title: My links
@@ -835,7 +923,7 @@ Gmail   https://mail.google.com/
         <tr><td><code>DELETE /api/v1/collections/:uid</code></td><td>Deletes one.</td><td><code>204</code>, <code>404</code></td></tr>
     </tbody>
 </table>
-<pre><code>{
+<pre><code data-lang="json">{
     "uid": "col_mrybsue3nr4xbadrrhgmxwmi",
     "label": "Work links",
     "contents": "% design: basic\n\nGitHub https://github.com",
@@ -847,11 +935,11 @@ Gmail   https://mail.google.com/
     <li>Errors come as plain text: <code>Label is required</code>, <code>Contents must be a string</code>, <code>Nothing to update</code> (<code>400</code>), <code>Collection not found</code> (<code>404</code>).</li>
     <li>A collection is visible to its owner only; another user's uid answers <code>404</code>.</li>
 </ul>
-<pre><code>curl -H 'Authorization: Bearer pat_xxx' https://navplace.com/api/v1/collections</code></pre>
+<pre><code data-lang="shell">curl -H 'Authorization: Bearer pat_xxx' https://navplace.com/api/v1/collections</code></pre>
 
 <h3 id="api-events">Events</h3>
 <p>A WebSocket at <code>/api/v1/events</code>, authenticated like the REST routes; without a user the upgrade answers <code>401</code> and closes. Every message has the same envelope:</p>
-<pre><code>{"type": "collection.updated", "value": {"uid": "…", "label": "…", "created_at": "…", "updated_at": "…"}, "time": "2026-05-25T10:30:00.000Z"}</code></pre>
+<pre><code data-lang="json">{"type": "collection.updated", "value": {"uid": "…", "label": "…", "created_at": "…", "updated_at": "…"}, "time": "2026-05-25T10:30:00.000Z"}</code></pre>
 <table>
     <thead>
         <tr><th><code>type</code></th><th><code>value</code></th></tr>
@@ -945,7 +1033,7 @@ Gmail   https://mail.google.com/
 
 <!-- ============================================================ -->
 <h2 id="development">Development</h2>
-<pre><code># the parser's tests
+<pre><code data-lang="shell"># the parser's tests
 npm ci
 npm test
 
@@ -1015,6 +1103,8 @@ bin/build-www</code></pre>
     </div>
 </footer>
 
+<script src="lib/parse.js"></script>
+<script src="playground-colours.js"></script>
 <script>
 main();
 
@@ -1025,6 +1115,12 @@ function main()
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
+
+
+    // The examples in the Playground's colours: links.txt as its editor draws it
+    for (const code of document.querySelectorAll('pre code[data-lang]')) {
+        code.innerHTML = render_example_html(code.textContent, code.dataset.lang);
+    }
 
 
     document.querySelector('.theme-switch').addEventListener('click', function () {
@@ -1097,6 +1193,55 @@ function save_theme(theme)
     }
     catch {
     }
+}
+
+// One example in colour; links, code and json come from playground-colours.js
+function render_example_html(text, lang)
+{
+    switch (lang) {
+    case 'links':
+        return render_links_html(text, 0).replace(/\n$/, '');
+    case 'code':
+        return render_code_html(text).replace(/\n$/, '');
+    case 'json':
+        return render_json_html(text).replace(/\n$/, '');
+    case 'shell':
+        return text.split('\n').map(render_shell_line_html).join('\n');
+    case 'settings':
+        return text.split('\n').map(render_settings_line_html).join('\n');
+    }
+    return html_escape(text);
+}
+
+// A command grey after its #, the program in colour, its flags and quoted strings too
+function render_shell_line_html(line)
+{
+    const comment_at = line.search(/(^|\s)#/);
+    const command = comment_at < 0 ? line : line.slice(0, comment_at);
+    const comment = comment_at < 0 ? '' : line.slice(comment_at);
+    const out = command.replace(/('[^']*'|"[^"]*")|(\s--?[\w-]+)|(^\s*[^\s=]+)|([^'"\s]+|\s+)/g, function (all, string, flag, program, other) {
+        if (string) {
+            return `<span class="c-value">${html_escape(string)}</span>`;
+        }
+        if (flag) {
+            return `<span class="c-key">${html_escape(flag)}</span>`;
+        }
+        if (program) {
+            return `<span class="c-word">${html_escape(program)}</span>`;
+        }
+        return html_escape(other);
+    });
+    return comment ? `${out}<span class="c-comment">${html_escape(comment)}</span>` : out;
+}
+
+// key: value
+function render_settings_line_html(line)
+{
+    const m = line.match(/^(\s*)([\w.-]+)(:\s*)(.*)$/);
+    if (!m) {
+        return html_escape(line);
+    }
+    return `${m[1]}<span class="c-key">${html_escape(m[2])}</span>${html_escape(m[3])}<span class="c-value">${html_escape(m[4])}</span>`;
 }
 </script>
 
