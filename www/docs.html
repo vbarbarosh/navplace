@@ -601,10 +601,7 @@
 <p>An Electron app that hosts one design full-window and feeds it your links. It has no interface of its own: what you see is the design. It is built as a Linux AppImage only.</p>
 
 <h3 id="install">Install</h3>
-<ul>
-    <li>Stable: <a href="https://github.com/vbarbarosh/navplace/releases/latest">releases/latest</a>.</li>
-    <li>Every <code>master</code> push: an artifact of the <a href="https://github.com/vbarbarosh/navplace/actions/workflows/appimage-electron.yml?query=branch%3Amaster">appimage-electron</a> workflow, named like <code>NavPlace-Electron-master-&lt;time&gt;-&lt;sha&gt;-AppImage</code>.</li>
-</ul>
+<p>Download the AppImage from <a href="https://github.com/vbarbarosh/navplace/releases/latest">releases/latest</a>.</p>
 <pre><code data-lang="shell">chmod +x NavPlace-*.AppImage
 ./NavPlace-*.AppImage</code></pre>
 
@@ -934,11 +931,9 @@ Gmail   https://mail.google.com/
     <li>MySQL through Knex. The server waits for the database (30 tries, a second apart) and applies pending migrations at start.</li>
 </ul>
 
-<h3 id="architecture-site">The site and the releases</h3>
+<h3 id="architecture-site">The site</h3>
 <ul>
     <li><code>bin/build-www</code> puts the site together in <code>build/www/</code>: <code>www/</code>, <code>lib/</code> without the tests and the CLI, <code>designs/</code> without the drafts, and <code>designs/index.json</code>, the Playground's list of designs with the files of each.</li>
-    <li>Every <code>master</code> push that touches the site runs <code>bin/deploy-www</code>: <code>bin/build-www</code>, then a Cloudflare Worker (<code>src/cloudflare/</code>) that answers the site's files from the edge, a missing one as a 404, and a link's icon at <code>/icon/&lt;domain&gt;</code> to navplace's own pages (403 to any other site), and passes everything else, <code>/api</code> and <code>/auth</code>, on to the server.</li>
-    <li>Every <code>master</code> push builds both AppImages as workflow artifacts. A tag <code>electron-v*</code> builds a GitHub release with the Electron AppImage; <code>src/desktop-electron/bin/release patch|minor|major</code>, run on <code>master</code>, bumps the version, commits, tags and pushes.</li>
 </ul>
 
 <!-- ============================================================ -->
