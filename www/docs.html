@@ -842,7 +842,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 <!-- ============================================================ -->
 <h2 id="embed">Embed widget</h2>
 <p>One script tag puts a collection on any page.</p>
-<pre><code data-lang="code">&lt;div style="position: fixed; inset: 0;"&gt;
+<pre><code data-lang="embed">&lt;div style="position: fixed; inset: 0;"&gt;
     &lt;script src="https://navplace.com/lib/embed.js" data-links="
 % design: showcase
 % title: My links
@@ -1100,54 +1100,6 @@ function save_theme(theme)
     }
 }
 
-// One example in colour; links, code and json come from playground-colours.js
-function render_example_html(text, lang)
-{
-    switch (lang) {
-    case 'links':
-        return render_links_html(text, 0).replace(/\n$/, '');
-    case 'code':
-        return render_code_html(text).replace(/\n$/, '');
-    case 'json':
-        return render_json_html(text).replace(/\n$/, '');
-    case 'shell':
-        return text.split('\n').map(render_shell_line_html).join('\n');
-    case 'settings':
-        return text.split('\n').map(render_settings_line_html).join('\n');
-    }
-    return html_escape(text);
-}
-
-// A command grey after its #, the program in colour, its flags and quoted strings too
-function render_shell_line_html(line)
-{
-    const comment_at = line.search(/(^|\s)#/);
-    const command = comment_at < 0 ? line : line.slice(0, comment_at);
-    const comment = comment_at < 0 ? '' : line.slice(comment_at);
-    const out = command.replace(/('[^']*'|"[^"]*")|(\s--?[\w-]+)|(^\s*[^\s=]+)|([^'"\s]+|\s+)/g, function (all, string, flag, program, other) {
-        if (string) {
-            return `<span class="c-value">${html_escape(string)}</span>`;
-        }
-        if (flag) {
-            return `<span class="c-key">${html_escape(flag)}</span>`;
-        }
-        if (program) {
-            return `<span class="c-word">${html_escape(program)}</span>`;
-        }
-        return html_escape(other);
-    });
-    return comment ? `${out}<span class="c-comment">${html_escape(comment)}</span>` : out;
-}
-
-// key: value
-function render_settings_line_html(line)
-{
-    const m = line.match(/^(\s*)([\w.-]+)(:\s*)(.*)$/);
-    if (!m) {
-        return html_escape(line);
-    }
-    return `${m[1]}<span class="c-key">${html_escape(m[2])}</span>${html_escape(m[3])}<span class="c-value">${html_escape(m[4])}</span>`;
-}
 </script>
 
 </body>

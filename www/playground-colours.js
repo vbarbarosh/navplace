@@ -1,5 +1,6 @@
 // The Playground's coloured layers: each returns HTML for a <pre> drawn under a
 // transparent textarea, line for line, so the caret and the colours stay aligned.
+// The docs and the main page colour their examples with the same functions.
 
 // The links text: label, #tag, #key=value, @picture, link, % and # lines; `current` is
 // the 1-based line the cursor is on
@@ -86,6 +87,67 @@ function render_code_html(text)
     }
     out.push(html_escape(text.slice(start)));
     return `${out.join('')}\n`;
+}
+
+// An example on the docs or the main page in colour, by its kind: the Playground's colours
+function render_example_html(text, lang)
+{
+    switch (lang) {
+    case 'links':
+        return render_links_html(text, 0).replace(/\n$/, '');
+    case 'code':
+        return render_code_html(text).replace(/\n$/, '');
+    case 'json':
+        return render_json_html(text).replace(/\n$/, '');
+    case 'embed':
+        return render_embed_html(text);
+    case 'shell':
+        return text.split('\n').map(render_shell_line_html).join('\n');
+    case 'settings':
+        return text.split('\n').map(render_settings_line_html).join('\n');
+    }
+    return html_escape(text);
+}
+
+// A command grey after its #, the program in colour, its flags and quoted strings too
+function render_shell_line_html(line)
+{
+    const comment_at = line.search(/(^|\s)#/);
+    const command = comment_at < 0 ? line : line.slice(0, comment_at);
+    const comment = comment_at < 0 ? '' : line.slice(comment_at);
+    const out = command.replace(/('[^']*'|"[^"]*")|(\s--?[\w-]+)|(^\s*[^\s=]+)|([^'"\s]+|\s+)/g, function (all, string, flag, program, other) {
+        if (string) {
+            return `<span class="c-value">${html_escape(string)}</span>`;
+        }
+        if (flag) {
+            return `<span class="c-key">${html_escape(flag)}</span>`;
+        }
+        if (program) {
+            return `<span class="c-word">${html_escape(program)}</span>`;
+        }
+        return html_escape(other);
+    });
+    return comment ? `${out}<span class="c-comment">${html_escape(comment)}</span>` : out;
+}
+
+// key: value
+function render_settings_line_html(line)
+{
+    const m = line.match(/^(\s*)([\w.-]+)(:\s*)(.*)$/);
+    if (!m) {
+        return html_escape(line);
+    }
+    return `${m[1]}<span class="c-key">${html_escape(m[2])}</span>${html_escape(m[3])}<span class="c-value">${html_escape(m[4])}</span>`;
+}
+
+// The embed snippet: its HTML as code, the links inside data-links="…" as links.txt
+function render_embed_html(text)
+{
+    const m = text.match(/^([\s\S]*?data-links=")([\s\S]*?)("[\s\S]*)$/);
+    if (!m) {
+        return render_code_html(text).replace(/\n$/, '');
+    }
+    return render_code_html(m[1]).replace(/\n$/, '') + render_links_html(m[2], 0).replace(/\n$/, '') + render_code_html(m[3]).replace(/\n$/, '');
 }
 
 // Wraps the [start, end) parts of a line in their spans, in the order they stand

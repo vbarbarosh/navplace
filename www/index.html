@@ -32,6 +32,12 @@
             --accent-soft: #f0fdfa;
             --accent-ink: #ffffff;
             --code-bg: #f5f5f4;
+            /* The Playground's colours for code, light */
+            --c-tag: #15803d;
+            --c-image: #c2410c;
+            --c-url: #0369a1;
+            --c-key: #7c3aed;
+            --danger: #b91c1c;
             --desk: linear-gradient(135deg, #cfe3dc 0%, #e4ddd0 55%, #d8d3e6 100%);
             --window-bar: #ebe9e6;
             --window-shadow: 0 30px 60px -20px rgba(28, 25, 23, 0.35), 0 0 0 1px rgba(28, 25, 23, 0.08);
@@ -50,6 +56,12 @@
             --accent-soft: #0f2926;
             --accent-ink: #042f2e;
             --code-bg: #111113;
+            /* The Playground's colours for code, dark */
+            --c-tag: #4ade80;
+            --c-image: #fb923c;
+            --c-url: #38bdf8;
+            --c-key: #c4b5fd;
+            --danger: #f87171;
             --desk: linear-gradient(135deg, #10302b 0%, #1c1a17 55%, #1d1a2b 100%);
             --window-bar: #232326;
             --window-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
@@ -620,8 +632,38 @@
             line-height: 1.7;
         }
 
-        .file .c {
-            color: var(--accent);
+        /* Code in colour: the classes playground-colours.js writes, in the Playground's colours */
+        .c-tag {
+            color: var(--c-tag);
+        }
+        .c-image {
+            color: var(--c-image);
+        }
+        .c-url {
+            color: var(--c-url);
+        }
+        .c-directive,
+        .c-key {
+            color: var(--c-key);
+        }
+        .c-value {
+            color: var(--c-image);
+        }
+        .c-section {
+            font-weight: 650;
+        }
+        .c-ignored,
+        .c-mark,
+        .c-comment {
+            color: var(--text-mute);
+        }
+        .c-word,
+        .c-number,
+        .c-tagname {
+            color: var(--c-url);
+        }
+        .c-error {
+            color: var(--danger);
         }
 
         .install {
@@ -901,7 +943,7 @@
         </div>
         <div class="file">
             <div class="file-name">~/.navplace/README.md</div>
-<pre><span class="c">% design: github</span>
+<pre data-lang="links">% design: github
 
 ChatGPT          https://chatgpt.com/
 GitHub           https://github.com/
@@ -928,13 +970,13 @@ Electron         https://www.electronjs.org/docs/latest/</pre>
             <li>
                 <h3>2. Run</h3>
                 <p>Make it executable and start it.</p>
-<pre>chmod +x NavPlace-*.AppImage
+<pre data-lang="shell">chmod +x NavPlace-*.AppImage
 ./NavPlace-*.AppImage</pre>
             </li>
             <li>
                 <h3>3. Add the hotkey</h3>
                 <p>Once, on GNOME: registers <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd><kbd>N</kbd>. Needs <code>node</code> on your PATH.</p>
-<pre>./NavPlace-*.AppImage --configure-gnome</pre>
+<pre data-lang="shell">./NavPlace-*.AppImage --configure-gnome</pre>
             </li>
         </ol>
     </section>
@@ -945,7 +987,7 @@ Electron         https://www.electronjs.org/docs/latest/</pre>
             <p>Every NavPlace design also works as a web page or a widget: one script tag on any page.</p>
         </div>
         <div class="web">
-<pre>&lt;script src="https://navplace.com/lib/embed.js" data-links="
+<pre data-lang="embed">&lt;script src="https://navplace.com/lib/embed.js" data-links="
 % design: showcase
 GitHub   https://github.com/
 "&gt;&lt;/script&gt;</pre>
@@ -970,6 +1012,8 @@ GitHub   https://github.com/
     </div>
 </footer>
 
+<script src="lib/parse.js"></script>
+<script src="playground-colours.js"></script>
 <script>
 // The collection the desktop app writes on its first start (src/desktop-electron/main.js)
 const DEFAULT_README = `% design: github
@@ -991,6 +1035,11 @@ main();
 
 function main()
 {
+    // The examples in the Playground's colours
+    for (const pre of document.querySelectorAll('pre[data-lang]')) {
+        pre.innerHTML = render_example_html(pre.textContent, pre.dataset.lang);
+    }
+
     const win = document.querySelector('.window');
     const view = document.querySelector('.window-view');
     const iframe = view.querySelector('iframe');
