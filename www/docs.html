@@ -614,7 +614,7 @@
         <tr><td>Web</td><td>Collections stored on the server, in MySQL</td><td>Keeping a collection the desktop app loads and refreshes; the site itself, with the <a href="playground.html">Playground</a>.</td></tr>
     </tbody>
 </table>
-<p>The <a href="playground.html">Playground</a> is the quickest way to try it: pick a design, edit the links, see the preview, then copy the embed code or open it in CodePen. It has three tabs over the same work: <strong>Basic</strong> is the text and the preview; <strong>Advanced</strong> colours the links and shows the JSON of the line the cursor is on, editable both ways; <strong>Design</strong> edits the design's own files beside the preview. Under Advanced and Design, an errors panel names the line each error came from. Drag the lines between the panes to resize them; each tab keeps its sizes.</p>
+<p>The <a href="playground.html">Playground</a> is the quickest way to try it: pick a design, edit the links, see the preview, then copy the embed code or open it in CodePen. It has three tabs over the same work: <strong>Basic</strong> is the text and the preview; <strong>Advanced</strong> colours the links and shows the JSON of the line the cursor is on, editable both ways; <strong>Design</strong> edits the design's own files beside the preview. Under Advanced and Design, an errors panel names the line each error came from, and in orange each line that was skipped with a warning. Drag the lines between the panes to resize them; each tab keeps its sizes.</p>
 
 <!-- ============================================================ -->
 <h2 id="desktop-app">Desktop app</h2>
@@ -722,7 +722,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 </table>
 <ul>
     <li>A directive is valid anywhere in the file, not only at the top.</li>
-    <li>The value is required. <code>% oops</code> stops the parse with an error.</li>
+    <li>The value is required. <code>% oops</code> is skipped with a warning; the rest of the file still parses.</li>
     <li>The same key twice: the last one wins (<code>% include:</code> adds up instead).</li>
     <li>Keys keep their case. <code>% Design:</code> and <code>% design:</code> are two keys.</li>
 </ul>
@@ -775,11 +775,11 @@ Grafana @board  https://grafana.com/
 % picture board: https://example.com/img/board.jpg</code></pre>
 <ul>
     <li>The desktop app shows <code>data:</code> pictures; it blocks every web url, <code>https://</code> pictures too.</li>
-    <li>The same name twice: the last one wins. A value that is not one of the three kinds of url stops the parse with an error.</li>
+    <li>The same name twice: the last one wins. A value that is not one of the three kinds of url is skipped with a warning, and <code>@name</code> stays a file under <code>~/.navplace/</code>.</li>
 </ul>
 
 <h3 id="what-a-link-becomes">What a link becomes</h3>
-<p>The <code>%</code> lines go into one <code>meta</code> object for the whole document; each link line becomes an object of <code>items</code>. On the right, what <code>lib/parse.js</code> makes of the text on the left, run on this page as you read it:</p>
+<p>The <code>%</code> lines go into one <code>meta</code> object for the whole document; each link line becomes an object of <code>items</code>. A line that does not parse is skipped and named in <code>warnings</code>, <code>{line, text, message}</code>, which is there only when there are any. On the right, what <code>lib/parse.js</code> makes of the text on the left, run on this page as you read it:</p>
 <div class="becomes">
     <div>
         <div class="becomes-name"><code>links.txt</code></div>

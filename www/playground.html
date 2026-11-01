@@ -33,6 +33,7 @@
             --accent-soft: #f0fdfa;
             --code-bg: #f5f5f4;
             --danger: #b91c1c;
+            --warn: #b45309;
             --focus: 0 0 0 3px rgba(15, 118, 110, 0.18);
             --c-tag: #15803d;
             --c-image: #c2410c;
@@ -53,6 +54,7 @@
             --accent-soft: #0f2926;
             --code-bg: #111113;
             --danger: #f87171;
+            --warn: #fbbf24;
             --focus: 0 0 0 3px rgba(45, 212, 191, 0.22);
             --c-tag: #4ade80;
             --c-image: #fb923c;
@@ -243,6 +245,9 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        .status[data-warn] {
+            color: var(--warn);
+        }
         .status[data-error] {
             color: var(--danger);
         }
@@ -380,6 +385,9 @@
         .errors-title[data-count] {
             color: var(--danger);
         }
+        .errors-title[data-count="warnings"] {
+            color: var(--warn);
+        }
         .pane-errors:not([data-count]) {
             display: none;
         }
@@ -400,6 +408,11 @@
         .errors-list li::before {
             content: "✗";
             color: var(--danger);
+        }
+        /* A line parse() skipped: the rest of the text still shows */
+        .errors-list li[data-warning]::before {
+            content: "⚠";
+            color: var(--warn);
         }
         .errors-where {
             flex: none;
@@ -616,6 +629,10 @@
             border-top: 1px solid var(--danger);
             color: var(--danger);
             font-size: 12px;
+        }
+        .json-error[data-warn] {
+            color: var(--warn);
+            border-top-color: var(--warn);
         }
         .json-error:empty {
             display: none;
@@ -918,6 +935,8 @@ async function main()
     const fetched_designs = {};
     // {where: {file, line} | null, what, count}; the parser's error and the preview's own
     let parse_error = null;
+    // The lines parse() skipped, as entries of the errors panel
+    let parse_warnings = [];
     let preview_errors = [];
     let blob_files = {};
 
@@ -1177,6 +1196,7 @@ async function main()
         json_colours.innerHTML = view.html;
         json_locked.textContent = view.locked;
         json_error.textContent = view.error ?? '';
+        json_error.toggleAttribute('data-warn', !!view.warning);
         const lit = view.lit ? view.lit.join('-') : null;
         if (view.lit && lit !== json_file_lit) {
             const style = getComputedStyle(json_editor);
@@ -1200,6 +1220,7 @@ async function main()
         json_colours.innerHTML = render_json_html(view.json);
         json_locked.textContent = view.locked;
         json_error.textContent = view.error ?? '';
+        json_error.toggleAttribute('data-warn', !!view.warning);
         code_scroll_sync(json_editor, json_colours);
     }
 
@@ -1213,14 +1234,17 @@ async function main()
         }
         catch (error) {
             json_error.textContent = `${error.message}. The text keeps its last good version.`;
+            json_error.removeAttribute('data-warn');
             return;
         }
         const result = line_from_json(raw, edited, pictures_of_text(editor.value));
         if (result.error) {
             json_error.textContent = result.error;
+            json_error.removeAttribute('data-warn');
             return;
         }
         json_error.textContent = '';
+        json_error.removeAttribute('data-warn');
         if (result.line === raw) {
             return;
         }
@@ -1300,10 +1324,12 @@ async function main()
             status.textContent = `${error.message}. The preview shows the last text that parsed.`;
             status.dataset.error = '';
             parse_error = {where: {file: 'links.txt', line: line_of_parse_error(editor.value)}, what: error.message, count: 1};
+            parse_warnings = [];
             render_errors();
             return;
         }
         parse_error = null;
+        parse_warnings = (parsed.warnings ?? []).map(v => ({where: {file: 'links.txt', line: v.line}, what: v.message, count: 1, warning: true}));
         render_errors();
         let name = parsed.meta.design || 'basic';
         design_select.value = name;
@@ -1397,7 +1423,9 @@ async function main()
         const count = links_count;
         const edited = !!design && design_is_edited(design) && (tab === 'design' || design.name === text_design);
         const left_out = left_out_count ? ` · ${left_out_count} left out by % ns` : '';
-        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${left_out}${edited ? ` · ${design.name}, edited in Design` : ''}`;
+        const skipped = parse_warnings.length ? ` · ${parse_warnings.length} ${parse_warnings.length === 1 ? 'line' : 'lines'} skipped, see Warnings` : '';
+        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${left_out}${skipped}${edited ? ` · ${design.name}, edited in Design` : ''}`;
+        status.toggleAttribute('data-warn', parse_warnings.length > 0);
     }
 
     function preview_errors_set(message) {
@@ -1457,14 +1485,24 @@ async function main()
     }
 
     function render_errors() {
-        const errors = parse_error ? [parse_error, ...preview_errors] : preview_errors;
+        const errors = [...(parse_error ? [parse_error] : []), ...preview_errors, ...parse_warnings];
+        const error_count = errors.length - parse_warnings.length;
         const title = document.querySelector('.errors-title');
-        title.textContent = errors.length ? `Errors: ${errors.length}` : 'No errors';
-        title.toggleAttribute('data-count', errors.length > 0);
+        title.textContent = [
+            error_count ? `Errors: ${error_count}` : '',
+            parse_warnings.length ? `Warnings: ${parse_warnings.length}` : '',
+        ].filter(Boolean).join(' · ') || 'No errors';
+        if (errors.length) {
+            title.setAttribute('data-count', error_count ? 'errors' : 'warnings');
+        }
+        else {
+            title.removeAttribute('data-count');
+        }
         document.querySelector('.pane-errors').toggleAttribute('data-count', errors.length > 0);
         work.toggleAttribute('data-errors', errors.length > 0);
         document.querySelector('.errors-list').replaceChildren(...errors.map(function (error) {
             const li = document.createElement('li');
+            li.toggleAttribute('data-warning', !!error.warning);
             const reachable = !!error.where?.line && (error.where.file === 'links.txt' || (!!design && error.where.file in design.files));
             const where = document.createElement(reachable ? 'button' : 'span');
             where.className = 'errors-where';
@@ -1669,7 +1707,9 @@ function json_view_of_line(text, n)
         if (!m) {
             return {json: `// line ${n}: a directive is % key: value`, editable: false, locked: '', error: `Invalid meta line: ${line}`};
         }
-        return {json: json_format({[m[1]]: m[2]}), editable: true, locked: ''};
+        // A % picture that is not a web or data url: shown and editable, named as skipped
+        const warning = parse(line).warnings?.[0];
+        return {json: json_format({[m[1]]: m[2]}), editable: true, locked: '', error: warning && `${warning.message}. Skipped; the rest of the text still shows.`, warning: !!warning};
     }
     if (line[0] === '#') {
         const names = line.replace(/^#+/, '').split('|').map(v => v.trim()).filter(Boolean);
@@ -1685,6 +1725,10 @@ function json_view_of_line(text, n)
     const left_out = left_out_of_text(text);
     const item = left_out?.items.get(n) ?? item_of_line(text, n);
     if (!item) {
+        const warning = parse(line).warnings?.[0];
+        if (warning) {
+            return {json: `// line ${n}: skipped, its url does not parse`, editable: false, locked: '', error: warning.message, warning: true};
+        }
         return {json: `// line ${n}: no link here; a link line ends with its URL`, editable: false, locked: ''};
     }
     const editable = {label: item.label, href: item.href, tags: item.tags, image_url: item.image_url, meta: item.meta};
