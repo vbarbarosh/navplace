@@ -1215,7 +1215,7 @@ async function main()
             json_error.textContent = `${error.message}. The text keeps its last good version.`;
             return;
         }
-        const result = line_from_json(raw, edited);
+        const result = line_from_json(raw, edited, pictures_of_text(editor.value));
         if (result.error) {
             json_error.textContent = result.error;
             return;
@@ -1756,6 +1756,17 @@ function json_view_of_file(text, n)
     return {json, html: `${html.join('\n')}\n`, lit, locked, error: null};
 }
 
+// The text's % picture names and their urls; {} when it has none or does not parse
+function pictures_of_text(text)
+{
+    try {
+        return parse(text).meta.picture ?? {};
+    }
+    catch {
+        return {};
+    }
+}
+
 // What % ns leaves out of items: {lines, items, count, sections}, or null when nothing is.
 // lines: a Map of the 1-based lines to their note, '' on a link, a note on a # line ns does not
 // name; items: the left-out items by line; sections: the namespaces of the left-out links
@@ -1832,8 +1843,9 @@ function href_of_line(text, n)
     return (m && !/^[%#]/.test(text.slice(range[0], range[1]).trim())) ? m[1] : null;
 }
 
-// {line} the raw line with the JSON written into it, or {error} saying what is wrong
-function line_from_json(raw, edited)
+// {line} the raw line with the JSON written into it, or {error} saying what is wrong; `pictures`
+// is the text's % picture names and urls, so a url of one of them goes back as its @name
+function line_from_json(raw, edited, pictures = {})
 {
     const lead = raw.slice(0, raw.length - raw.trimStart().length);
     const line = raw.trim();
@@ -1871,7 +1883,15 @@ function line_from_json(raw, edited)
         || Object.entries(edited.meta).some(([key, value]) => !/^[a-zA-Z0-9_-]+$/.test(key) || typeof value !== 'string' || !/^[^\s#]+$/.test(value))) {
         return {error: '"meta" holds words and their values, as {"w": "2"}.'};
     }
-    return {line: line_from_item(raw, item, {...edited, image_url: edited.image_url || null})};
+    let image_url = edited.image_url || null;
+    const name = item.image_url?.slice('private://'.length);
+    if (image_url && pictures[name] === image_url) {
+        image_url = item.image_url;
+    }
+    else if (image_url && Object.values(pictures).includes(image_url)) {
+        image_url = `private://${Object.keys(pictures).find(v => pictures[v] === image_url)}`;
+    }
+    return {line: line_from_item(raw, item, {...edited, image_url})};
 }
 
 // Two-space JSON, a list or an object of plain values kept on one line

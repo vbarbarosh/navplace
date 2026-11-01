@@ -715,6 +715,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
         <tr><td><code>% title: x</code></td><td>Text for the design's title element.</td></tr>
         <tr><td><code>% email: x</code></td><td>Text for the design's email element; when that element is a link, its <code>href</code> too.</td></tr>
         <tr><td><code>% ns: a | b</code></td><td>Keeps only the links that sit under a section named <code>a</code> or <code>b</code>.</td></tr>
+        <tr><td><code>% picture name: u</code></td><td>Names a picture for <code>@name</code>: <code>u</code> is an <code>https://</code>, <code>http://</code> or <code>data:image/</code> url. Repeatable, one name per line.</td></tr>
         <tr><td><code>% include: u</code></td><td>Desktop app only. Pulls the document at url <code>u</code> and appends its links.</td></tr>
         <tr><td><code>% other: x</code></td><td>Free. A design can map any key to an element of its own.</td></tr>
     </tbody>
@@ -766,7 +767,16 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 <p>Names accept <code>a..z</code>, <code>A..Z</code>, <code>0..9</code>, <code>_</code> and <code>-</code>. A value runs to the next space or <code>#</code>.</p>
 
 <h3 id="name-images"><code>@name</code> — images</h3>
-<p><code>@name</code> points at a file under <code>~/.navplace/</code> and must stand right before the url, after a space. The parser turns it into <code>private://name</code>, which only the desktop app serves. Designs that show artwork use <code>item.image_url</code> and fall back to <code>item.icon_url</code>.</p>
+<p><code>@name</code> must stand right before the url, after a space. When the file names it with <code>% picture name:</code>, the link gets that url; anywhere in the file will do, the end too. Otherwise it points at a file under <code>~/.navplace/</code>: the parser turns it into <code>private://name</code>, which only the desktop app serves. Designs that show artwork use <code>item.image_url</code> and fall back to <code>item.icon_url</code>.</p>
+<pre><code data-lang="links">Kimi    @kimi   https://kimi.com/
+Grafana @board  https://grafana.com/
+
+% picture kimi: data:image/png;base64,iVBORw0KGgo…
+% picture board: https://example.com/img/board.jpg</code></pre>
+<ul>
+    <li>The desktop app shows <code>data:</code> pictures; it blocks every web url, <code>https://</code> pictures too.</li>
+    <li>The same name twice: the last one wins. A value that is not one of the three kinds of url stops the parse with an error.</li>
+</ul>
 
 <h3 id="what-a-link-becomes">What a link becomes</h3>
 <p>The <code>%</code> lines go into one <code>meta</code> object for the whole document; each link line becomes an object of <code>items</code>. On the right, what <code>lib/parse.js</code> makes of the text on the left, run on this page as you read it:</p>
@@ -794,7 +804,7 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
         <tr><td><code>label</code></td><td>What is left of the line after the url, tags and image are removed.</td></tr>
         <tr><td><code>href</code></td><td>The url.</td></tr>
         <tr><td><code>icon_url</code></td><td><code>app://favicon/&lt;host&gt;</code> in the desktop app, <code>/icon/&lt;host&gt;</code> on navplace.com (its own icons, for its own pages only), <code>https://icon.horse/icon/&lt;host&gt;</code> elsewhere.</td></tr>
-        <tr><td><code>image_url</code></td><td><code>private://&lt;name&gt;</code> from <code>@name</code>, else <code>null</code>.</td></tr>
+        <tr><td><code>image_url</code></td><td>From <code>@name</code>: the url of <code>% picture name:</code> when the file has one, else <code>private://&lt;name&gt;</code>; <code>null</code> without <code>@name</code>.</td></tr>
         <tr><td><code>tags</code></td><td>Every <code>#tag</code> on the line.</td></tr>
         <tr><td><code>meta</code></td><td>Every <code>#key=value</code> on the line.</td></tr>
         <tr><td><code>search1</code></td><td>Label and tags, lower case, Cyrillic transliterated to Latin.</td></tr>
