@@ -955,6 +955,9 @@ async function main()
     let parse_warnings = [];
     let preview_errors = [];
     let blob_files = {};
+    // What the last pasted picture became, shown in the status line for a while
+    let paste_note = '';
+    let paste_timer;
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
@@ -968,6 +971,14 @@ async function main()
         clearTimeout(render_timer);
         render_timer = setTimeout(render, 300);
         render_cursor_line();
+    });
+    // Ctrl+V with a picture and no text of its own: a `% picture` line at the end of the file, as a data url
+    editor.addEventListener('paste', function (event) {
+        const file = picture_file_from_clipboard(event.clipboardData);
+        if (file) {
+            event.preventDefault();
+            picture_paste(file);
+        }
     });
     editor.addEventListener('scroll', () => code_scroll_sync(editor, editor_colours));
     json_editor.addEventListener('scroll', () => code_scroll_sync(json_editor, json_colours));
@@ -1482,7 +1493,8 @@ async function main()
         const edited = !!design && design_is_edited(design) && (tab === 'design' || design.name === text_design);
         const left_out = left_out_count ? ` · ${left_out_count} left out by % ns` : '';
         const skipped = parse_warnings.length ? ` · ${parse_warnings.length} ${parse_warnings.length === 1 ? 'line' : 'lines'} skipped, see Warnings` : '';
-        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${left_out}${skipped}${edited ? ` · ${design.name}, edited in Design` : ''}`;
+        const pasted = paste_note ? ` · ${paste_note}` : '';
+        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${left_out}${skipped}${edited ? ` · ${design.name}, edited in Design` : ''}${pasted}`;
         status.toggleAttribute('data-warn', parse_warnings.length > 0);
     }
 
@@ -1671,6 +1683,45 @@ async function main()
         catch {
             return null;
         }
+    }
+
+    // The picture goes in as `% picture <name>: data:…` on a line of its own at the end, through the
+    // editing commands so Ctrl+Z takes it out; the cursor follows it there, its name selected to rename
+    async function picture_paste(file) {
+        let picture;
+        try {
+            picture = await picture_from_file(file);
+        }
+        catch (error) {
+            picture = {url: null, note: error.message};
+        }
+        if (picture.url) {
+            const name = picture_name_from_file_name(file.name, picture_names_of_text(editor.value));
+            const end = editor.value.length;
+            const glue = (end && !editor.value.endsWith('\n')) ? '\n' : '';
+            const line = `% picture ${name}: ${picture.url}`;
+            editor.focus();
+            editor.setSelectionRange(end, end);
+            if (!document.execCommand('insertText', false, glue + line)) {
+                editor.setRangeText(glue + line, end, end, 'end');
+                editor.dispatchEvent(new Event('input'));
+            }
+            const name_start = end + glue.length + '% picture '.length;
+            editor.setSelectionRange(name_start, name_start + name.length);
+            editor.scrollTop = editor.scrollHeight;
+            editor.scrollLeft = 0;
+            code_scroll_sync(editor, editor_colours);
+            paste_note = `pasted @${name}${picture.note ? `, ${picture.note}` : ''}`;
+        }
+        else {
+            paste_note = `picture not pasted: ${picture.note}`;
+        }
+        status_render();
+        clearTimeout(paste_timer);
+        paste_timer = setTimeout(function () {
+            paste_note = '';
+            status_render();
+        }, 8000);
     }
 
     // Through the editing commands, so Ctrl+Z brings the previous text back
@@ -1969,6 +2020,102 @@ function json_view_of_file(text, n)
         }
     }
     return {json, html: `${html.join('\n')}\n`, lit, locked, error: null};
+}
+
+// The longest data url a pasted picture keeps, in characters; a bigger one is drawn smaller to fit
+const PICTURE_URL_MAX = 100000;
+// The longest side a picture drawn smaller starts from, in pixels
+const PICTURE_SIDE_MAX = 1024;
+
+// The picture on the clipboard, or null when it holds none or text of its own: a copied spreadsheet
+// brings a picture of its cells and their text, and the text is what is meant. A copied file may
+// bring its own name or path as text; that is still the picture
+function picture_file_from_clipboard(data)
+{
+    if (!data) {
+        return null;
+    }
+    const item = [...data.items].find(v => v.kind === 'file' && v.type.startsWith('image/'));
+    const file = item?.getAsFile();
+    if (!file) {
+        return null;
+    }
+    const text = data.getData('text/plain').trim();
+    if (text && !text.split(/[\\/]/).pop().startsWith(file.name)) {
+        return null;
+    }
+    return file;
+}
+
+// A name for `% picture` from the file's name, lowercase, or image1 when it has none worth keeping
+// (Chrome names every pasted screenshot image.png); a name the text has already takes 2, 3, 4…
+function picture_name_from_file_name(file_name, names)
+{
+    const base = (file_name ?? '').replace(/\.[^.]*$/, '').toLowerCase().replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '');
+    const generic = !base || /^(image|img|picture|clipboard|unknown|blob)$/.test(base);
+    const stem = generic ? 'image' : base;
+    for (let i = 1; ; ++i) {
+        const name = (i === 1 && !generic) ? stem : `${stem}${i}`;
+        if (!names.has(name)) {
+            return name;
+        }
+    }
+}
+
+// Every name a `% picture <name>:` line gives, the lines parse() skips too
+function picture_names_of_text(text)
+{
+    const out = new Set();
+    for (const m of text.matchAll(/^\s*%\s*picture\s+(\S+?)\s*:/gm)) {
+        out.add(m[1]);
+    }
+    return out;
+}
+
+// {url, note}: the file as a data url, as it is when it fits PICTURE_URL_MAX; otherwise drawn smaller
+// as WebP until it fits, the note saying so; url null and the note why when it cannot be read or fit
+async function picture_from_file(file)
+{
+    const url = await data_url_from_blob(file);
+    if (url.length <= PICTURE_URL_MAX) {
+        return {url, note: ''};
+    }
+    let bitmap;
+    try {
+        bitmap = await createImageBitmap(file);
+    }
+    catch {
+        return {url: null, note: `${format_kb(url.length)}, over ${format_kb(PICTURE_URL_MAX)}, and not a picture the browser can draw smaller`};
+    }
+    const canvas = document.createElement('canvas');
+    let side = Math.min(PICTURE_SIDE_MAX, Math.max(bitmap.width, bitmap.height));
+    while (side >= 32) {
+        const scale = side / Math.max(bitmap.width, bitmap.height);
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const smaller = canvas.toDataURL('image/webp', 0.85);
+        if (smaller.length <= PICTURE_URL_MAX) {
+            return {url: smaller, note: `drawn smaller: ${bitmap.width}×${bitmap.height} → ${canvas.width}×${canvas.height}, ${format_kb(url.length)} → ${format_kb(smaller.length)}`};
+        }
+        side = Math.floor(side * 0.75);
+    }
+    return {url: null, note: `${format_kb(url.length)}, and no smaller copy fits ${format_kb(PICTURE_URL_MAX)}`};
+}
+
+function data_url_from_blob(blob)
+{
+    return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('the clipboard\'s picture could not be read'));
+        reader.readAsDataURL(blob);
+    });
+}
+
+function format_kb(chars)
+{
+    return `${Math.round(chars / 1000)} KB`;
 }
 
 // The text's % picture names and their urls; {} when it has none or does not parse
