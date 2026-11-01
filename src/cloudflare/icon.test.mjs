@@ -33,6 +33,12 @@ describe('serve_icon', function () {
         const response = await serve_icon(make_request('a.com'), {fetch_fn});
         assert.equal(response.headers.get('Content-Type'), 'image/png');
     });
+    it('takes an apple-touch-icon first, the unlinked /apple-touch-icon.png too', async function () {
+        const linked = make_fetch({'https://a.com/': html('<link rel="icon" href="/i.svg"><link rel="apple-touch-icon" href="/t.png">'), 'https://a.com/i.svg': png('image/svg+xml'), 'https://a.com/t.png': png()});
+        assert.equal((await serve_icon(make_request('a.com'), {fetch_fn: linked})).headers.get('Content-Type'), 'image/png');
+        const usual = make_fetch({'https://a.com/': html('<link rel="icon" href="/i.svg">'), 'https://a.com/i.svg': png('image/svg+xml'), 'https://a.com/apple-touch-icon.png': png()});
+        assert.equal((await serve_icon(make_request('a.com'), {fetch_fn: usual})).headers.get('Content-Type'), 'image/png');
+    });
     it('falls back to /favicon.ico, then Google', async function () {
         const ico = await serve_icon(make_request('a.com'), {fetch_fn: make_fetch({'https://a.com/favicon.ico': png('image/x-icon')})});
         assert.equal(ico.headers.get('Content-Type'), 'image/x-icon');

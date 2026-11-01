@@ -7,7 +7,7 @@ const DAY = 86400;
 const MAX_BYTES = 200 * 1024;
 const TIMEOUT_MS = 4000;
 // A new value drops every icon kept at the edge: what it keeps under the old one is never asked again
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 // What any icon answer carries: same-origin only, and an SVG opened as a page runs nothing
 const ICON_HEADERS = {
@@ -73,11 +73,14 @@ function is_public_domain(domain)
 async function find_icon(domain, fetch_fn)
 {
     return await find_page_icon(domain, fetch_fn)
+        ?? await fetch_image(`https://${domain}/apple-touch-icon.png`, fetch_fn)
         ?? await fetch_image(`https://${domain}/favicon.ico`, fetch_fn)
         ?? await fetch_image(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`, fetch_fn);
 }
 
-// The best <link rel="…icon…"> of the home page, a data: one too
+// The best <link rel="…icon…"> of the home page, a data: one too. An
+// apple-touch-icon, linked or at its usual /apple-touch-icon.png, comes before
+// the rest: a square with its own background, it reads on a light and a dark tile
 async function find_page_icon(domain, fetch_fn)
 {
     const page = await fetch_ok(`https://${domain}/`, fetch_fn);
@@ -89,6 +92,9 @@ async function find_page_icon(domain, fetch_fn)
         .map(m => ({rel: read_attr(m[0], 'rel'), href: read_attr(m[0], 'href'), type: read_attr(m[0], 'type'), sizes: read_attr(m[0], 'sizes')}))
         .filter(v => is_icon_rel(v.rel) && v.href);
     links.sort((a, b) => rank_icon_link(b) - rank_icon_link(a));
+    if (!links.some(is_apple_link)) {
+        links.unshift({rel: 'apple-touch-icon', href: '/apple-touch-icon.png'});
+    }
     for (const link of links) {
         const icon = link.href.startsWith('data:')
             ? decode_data_url(link.href)
@@ -106,14 +112,21 @@ function is_icon_rel(rel)
     return String(rel ?? '').toLowerCase().split(/\s+/).some(v => v === 'icon' || v.startsWith('apple-touch-icon'));
 }
 
-// An SVG first, then the largest; apple-touch-icon as a big plain one
+function is_apple_link(link)
+{
+    return /apple-touch-icon/i.test(link.rel);
+}
+
+// An apple-touch-icon first, then an SVG, then the largest
 function rank_icon_link(link)
 {
+    if (is_apple_link(link)) {
+        return 2000;
+    }
     if (/svg/i.test(link.type ?? '') || /\.svg(\?|$)|^data:image\/svg/i.test(link.href)) {
         return 1000;
     }
-    const size = Math.max(0, ...String(link.sizes ?? '').split(/\s+/).map(v => parseInt(v, 10) || 0));
-    return size || (/apple-touch-icon/i.test(link.rel) ? 180 : 32);
+    return Math.max(0, ...String(link.sizes ?? '').split(/\s+/).map(v => parseInt(v, 10) || 0)) || 32;
 }
 
 function read_attr(tag, name)
