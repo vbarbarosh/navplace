@@ -7,7 +7,7 @@ Correct English Grammar and Simplify Text @image1  https://chatgpt.com/g/g-6820c
 Emoji Text Enhancer @image2  https://chatgpt.com/g/g-6820bf86ea98819197bf230d66984d48-emoji-text-enhancer
 
 # Chats
-deepseek @deepseek  https://chat.deepseek.com/
+deepseek #padding=1 @deepseek  https://chat.deepseek.com/
 kimi #padding=1 @kimi  https://www.kimi.com/
 grok #padding=1 @grok  https://grok.com/
 manus @manus  https://manus.im/
