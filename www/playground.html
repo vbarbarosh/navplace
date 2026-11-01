@@ -612,6 +612,27 @@
         .json-error:empty {
             display: none;
         }
+        /* Line: the cursor's line, editable; File: the whole parse(text), meta and items */
+        .json-modes {
+            display: flex;
+            gap: 12px;
+        }
+        .json-modes button {
+            padding: 0;
+            border: 0;
+            background: none;
+            color: var(--text-mute);
+            font: inherit;
+            letter-spacing: inherit;
+            text-transform: inherit;
+            cursor: pointer;
+        }
+        .json-modes button:hover {
+            color: var(--text);
+        }
+        .json-modes button[aria-pressed="true"] {
+            color: var(--accent);
+        }
         .pane {
             display: flex;
             flex-direction: column;
@@ -789,7 +810,7 @@
         </section>
         <div class="divider" data-divider="1" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize the panes" aria-valuemin="0" aria-valuemax="100" title="Drag to resize, double-click to reset"></div>
         <section class="pane pane-json" aria-label="JSON of the line">
-            <div class="pane-heading"><span>JSON</span><code class="json-where"></code></div>
+            <div class="pane-heading"><span>JSON</span><span class="json-modes"><button type="button" data-json-mode="line" title="The line the cursor is on, editable">Line <span class="json-where"></span></button><button type="button" data-json-mode="file" title="The whole text as parse() returns it: meta and items">File</button></span></div>
             <div class="code">
                 <pre aria-hidden="true"></pre>
                 <textarea aria-label="JSON of the line the cursor is on" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
@@ -864,6 +885,10 @@ async function main()
     let tab = load_tab();
     let current_line = 1;
     let json_line = null;
+    // 'line' or 'file'
+    let json_mode = load_json_mode();
+    // The lines of the file's JSON lit last, so it scrolls only when the cursor moves to another part
+    let json_file_lit = null;
     let preview_observer = null;
     const design_editor = document.querySelector('.pane-design textarea');
     const design_colours = document.querySelector('.pane-design .code > pre:not(.gutter)');
@@ -905,6 +930,15 @@ async function main()
         json_colours.innerHTML = render_json_html(json_editor.value);
         json_apply();
     });
+    for (const button of document.querySelectorAll('[data-json-mode]')) {
+        button.addEventListener('click', function () {
+            json_mode = button.dataset.jsonMode;
+            save_json_mode(json_mode);
+            json_line = null;
+            json_file_lit = null;
+            render_cursor_line();
+        });
+    }
     // The JSON follows the cursor through the links, whatever line it is on
     document.addEventListener('selectionchange', function () {
         if (document.activeElement === editor && line_at(editor.value, editor.selectionStart) !== current_line) {
@@ -1106,16 +1140,51 @@ async function main()
         editor_colours.innerHTML = render_links_html(editor.value, (tab === 'advanced') ? current_line : 0);
         code_scroll_sync(editor, editor_colours);
         // What is typed in the JSON is not taken from under the person typing it
-        if (tab === 'advanced' && (document.activeElement !== json_editor || json_line !== current_line)) {
+        if (tab === 'advanced' && json_mode === 'file') {
+            json_file_render();
+        }
+        else if (tab === 'advanced' && (document.activeElement !== json_editor || json_line !== current_line)) {
             json_render();
         }
         preview_mark();
     }
 
+    function json_modes_render() {
+        json_where.textContent = String(current_line);
+        for (const button of document.querySelectorAll('[data-json-mode]')) {
+            button.setAttribute('aria-pressed', String(button.dataset.jsonMode === json_mode));
+        }
+        json_editor.setAttribute('aria-label', (json_mode === 'file') ? 'JSON of the whole text' : 'JSON of the line the cursor is on');
+    }
+
+    // The whole text as parse() returns it; the part of the cursor's line lit and scrolled into view
+    function json_file_render() {
+        const view = json_view_of_file(editor.value, current_line);
+        json_line = null;
+        json_modes_render();
+        json_editor.value = view.json;
+        json_editor.readOnly = true;
+        json_colours.innerHTML = view.html;
+        json_locked.textContent = '';
+        json_error.textContent = view.error ?? '';
+        const lit = view.lit ? view.lit.join('-') : null;
+        if (view.lit && lit !== json_file_lit) {
+            const style = getComputedStyle(json_editor);
+            const line_height = parseFloat(style.lineHeight);
+            const top = parseFloat(style.paddingTop) + view.lit[0] * line_height;
+            const bottom = parseFloat(style.paddingTop) + (view.lit[1] + 1) * line_height;
+            if (top < json_editor.scrollTop || bottom > json_editor.scrollTop + json_editor.clientHeight) {
+                json_editor.scrollTop = top - 2 * line_height;
+            }
+        }
+        json_file_lit = lit;
+        code_scroll_sync(json_editor, json_colours);
+    }
+
     function json_render() {
         const view = json_view_of_line(editor.value, current_line);
         json_line = current_line;
-        json_where.textContent = `line ${current_line}`;
+        json_modes_render();
         json_editor.value = view.json;
         json_editor.readOnly = !view.editable;
         json_colours.innerHTML = render_json_html(view.json);
@@ -1614,6 +1683,52 @@ function json_view_of_line(text, n)
     };
 }
 
+// The JSON pane's view of the whole text: {json, html, lit, error}; lit is [first, last], the 0-based
+// lines of the JSON that line n became (its item, or meta for a % line), or null
+function json_view_of_file(text, n)
+{
+    let parsed;
+    let items_with_lines;
+    try {
+        parsed = parse(text);
+        items_with_lines = parse(text, {spans: true}).items;
+    }
+    catch (error) {
+        const json = '// the text does not parse; the line it stops at is in Errors below';
+        return {json, html: render_json_html(json), lit: null, error: error.message};
+    }
+    const json = json_format(parsed);
+    const lines = json.split('\n');
+    const line = text.slice(...line_range(text, n)).trim();
+    let lit = null;
+    if (line[0] === '%') {
+        const first = lines.findIndex(v => v.startsWith('  "meta":'));
+        const last = lines[first].endsWith('{') ? lines.indexOf('  },', first) : first;
+        lit = [first, last];
+    }
+    else {
+        const index = items_with_lines.findIndex(v => v.line === n);
+        if (index !== -1) {
+            let first = -1;
+            for (let i = 0, k = -1; i < lines.length; ++i) {
+                if (lines[i].startsWith('    {')) {
+                    ++k;
+                }
+                if (k === index) {
+                    first = i;
+                    break;
+                }
+            }
+            lit = [first, lines.findIndex((v, i) => i > first && /^    \}/.test(v))];
+        }
+    }
+    const html = lines.map(function (v, i) {
+        const line_html = render_json_html(v).slice(0, -1);
+        return (lit && i >= lit[0] && i <= lit[1]) ? `<span class="c-current">${line_html || ' '}</span>` : line_html;
+    });
+    return {json, html: `${html.join('\n')}\n`, lit, error: null};
+}
+
 // The item of line n, with its spans; from the whole text when it parses, so its groups are right
 function item_of_line(text, n)
 {
@@ -1871,6 +1986,25 @@ function load_tab()
     }
     catch {
         return 'basic';
+    }
+}
+
+function load_json_mode()
+{
+    try {
+        return (localStorage.getItem('navplace.playground.json') === 'file') ? 'file' : 'line';
+    }
+    catch {
+        return 'line';
+    }
+}
+
+function save_json_mode(value)
+{
+    try {
+        localStorage.setItem('navplace.playground.json', value);
+    }
+    catch {
     }
 }
 
