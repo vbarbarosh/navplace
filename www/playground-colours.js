@@ -3,13 +3,18 @@
 // The docs and the main page colour their examples with the same functions.
 
 // The links text: label, #tag, #key=value, @picture, link, % and # lines; `current` is
-// the 1-based line the cursor is on
-function render_links_html(text, current)
+// the 1-based line the cursor is on; `left_out`, when given, a Map of the lines % ns leaves
+// out of items to the note drawn after each ('' for none)
+function render_links_html(text, current, left_out)
 {
     const lines = text.split('\n');
     const out = [];
     for (let i = 0, end = lines.length; i < end; ++i) {
-        const html = render_links_line_html(lines[i]);
+        let html = render_links_line_html(lines[i]);
+        const note = left_out?.get(i + 1);
+        if (note !== undefined) {
+            html = `<span class="c-left-out">${html}</span>${note ? `<span class="c-note">${html_escape(note)}</span>` : ''}`;
+        }
         out.push((i + 1 === current) ? `<span class="c-current">${html || ' '}</span>` : html);
     }
     return `${out.join('\n')}\n`;

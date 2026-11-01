@@ -552,6 +552,14 @@
             padding: 0 16px;
             background: var(--c-current);
         }
+        /* Links % ns leaves out of items, and the note on their section's # line */
+        .c-left-out {
+            opacity: 0.45;
+        }
+        .c-note {
+            color: var(--text-mute);
+            font-style: italic;
+        }
         .c-tag {
             color: var(--c-tag);
         }
@@ -904,6 +912,8 @@ async function main()
     let text_design = 'basic';
     let preview_key = null;
     let links_count = 0;
+    // Links % ns leaves out of items
+    let left_out_count = 0;
     // Unedited code of designs the text names while the Design tab holds another's edits
     const fetched_designs = {};
     // {where: {file, line} | null, what, count}; the parser's error and the preview's own
@@ -1137,7 +1147,7 @@ async function main()
             return;
         }
         // Basic has the colours too; the line and its JSON are Advanced's
-        editor_colours.innerHTML = render_links_html(editor.value, (tab === 'advanced') ? current_line : 0);
+        editor_colours.innerHTML = render_links_html(editor.value, (tab === 'advanced') ? current_line : 0, left_out_of_text(editor.value)?.lines);
         code_scroll_sync(editor, editor_colours);
         // What is typed in the JSON is not taken from under the person typing it
         if (tab === 'advanced' && json_mode === 'file') {
@@ -1165,7 +1175,7 @@ async function main()
         json_editor.value = view.json;
         json_editor.readOnly = true;
         json_colours.innerHTML = view.html;
-        json_locked.textContent = '';
+        json_locked.textContent = view.locked;
         json_error.textContent = view.error ?? '';
         const lit = view.lit ? view.lit.join('-') : null;
         if (view.lit && lit !== json_file_lit) {
@@ -1218,7 +1228,7 @@ async function main()
         save_draft(editor.value);
         clearTimeout(render_timer);
         render_timer = setTimeout(render, 300);
-        editor_colours.innerHTML = render_links_html(editor.value, current_line);
+        editor_colours.innerHTML = render_links_html(editor.value, current_line, left_out_of_text(editor.value)?.lines);
         json_locked.textContent = json_view_of_line(editor.value, json_line).locked;
         preview_mark();
     }
@@ -1314,6 +1324,7 @@ async function main()
             delete status.dataset.error;
         }
         links_count = parsed.items.length;
+        left_out_count = left_out_of_text(editor.value)?.count ?? 0;
         text_design = name;
         // The code follows the text's design until it is edited; then only Load replaces it
         if (!design_is_edited(design) && design?.name !== name) {
@@ -1385,7 +1396,8 @@ async function main()
         }
         const count = links_count;
         const edited = !!design && design_is_edited(design) && (tab === 'design' || design.name === text_design);
-        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${edited ? ` · ${design.name}, edited in Design` : ''}`;
+        const left_out = left_out_count ? ` · ${left_out_count} left out by % ns` : '';
+        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${left_out}${edited ? ` · ${design.name}, edited in Design` : ''}`;
     }
 
     function preview_errors_set(message) {
@@ -1670,16 +1682,22 @@ function json_view_of_line(text, n)
         }
         return {json: json_format({namespaces: names}), editable: true, locked: (count === null) ? '' : `"links under it": ${count}`};
     }
-    const item = item_of_line(text, n);
+    const left_out = left_out_of_text(text);
+    const item = left_out?.items.get(n) ?? item_of_line(text, n);
     if (!item) {
         return {json: `// line ${n}: no link here; a link line ends with its URL`, editable: false, locked: ''};
     }
     const editable = {label: item.label, href: item.href, tags: item.tags, image_url: item.image_url, meta: item.meta};
     const locked = {namespaces: item.namespaces, icon_url: item.icon_url, search1: item.search1, search2: item.search2};
+    const locked_lines = Object.entries(locked).map(([key, value]) => `"${key}": ${JSON.stringify(value)}`);
+    if (left_out?.items.has(n)) {
+        const section = item.namespaces.length ? item.namespaces.join(' | ') : 'no section';
+        locked_lines.unshift(`// left out of items: % ns does not name its section (${section})`);
+    }
     return {
         json: json_format(editable),
         editable: true,
-        locked: Object.entries(locked).map(([key, value]) => `"${key}": ${JSON.stringify(value)}`).join('\n'),
+        locked: locked_lines.join('\n'),
     };
 }
 
@@ -1695,8 +1713,9 @@ function json_view_of_file(text, n)
     }
     catch (error) {
         const json = '// the text does not parse; the line it stops at is in Errors below';
-        return {json, html: render_json_html(json), lit: null, error: error.message};
+        return {json, html: render_json_html(json), lit: null, locked: '', error: error.message};
     }
+    const left_out = left_out_of_text(text);
     const json = json_format(parsed);
     const lines = json.split('\n');
     const line = text.slice(...line_range(text, n)).trim();
@@ -1726,7 +1745,64 @@ function json_view_of_file(text, n)
         const line_html = render_json_html(v).slice(0, -1);
         return (lit && i >= lit[0] && i <= lit[1]) ? `<span class="c-current">${line_html || ' '}</span>` : line_html;
     });
-    return {json, html: `${html.join('\n')}\n`, lit, error: null};
+    let locked = '';
+    if (left_out?.count) {
+        const sections = left_out.sections.map(v => v.length ? v.join(' | ') : 'no section').join(', ');
+        locked = `// ${left_out.count} ${left_out.count === 1 ? 'link is' : 'links are'} left out of items: % ns does not name their section (${sections})`;
+        if (left_out.lines.has(n) && left_out.lines.get(n) === '') {
+            locked += `\n// line ${n} is one of them`;
+        }
+    }
+    return {json, html: `${html.join('\n')}\n`, lit, locked, error: null};
+}
+
+// What % ns leaves out of items: {lines, items, count, sections}, or null when nothing is.
+// lines: a Map of the 1-based lines to their note, '' on a link, a note on a # line ns does not
+// name; items: the left-out items by line; sections: the namespaces of the left-out links
+function left_out_of_text(text)
+{
+    let kept;
+    let all;
+    try {
+        kept = parse(text, {spans: true});
+        if (!kept.meta.ns) {
+            return null;
+        }
+        // The same text with its % ns lines blank: every link, on the same lines
+        const without_ns = text.split('\n').map(v => /^\s*%\s*ns\s*:/.test(v) ? '' : v).join('\n');
+        all = parse(without_ns, {spans: true});
+    }
+    catch {
+        return null;
+    }
+    const ns = kept.meta.ns;
+    const kept_lines = new Set(kept.items.map(v => v.line));
+    const lines = new Map();
+    const items = new Map();
+    const sections = [];
+    for (const item of all.items) {
+        if (!kept_lines.has(item.line)) {
+            lines.set(item.line, '');
+            items.set(item.line, item);
+            if (!sections.some(v => v.join('|') === item.namespaces.join('|'))) {
+                sections.push(item.namespaces);
+            }
+        }
+    }
+    if (!items.size) {
+        return null;
+    }
+    const text_lines = text.split('\n');
+    for (let i = 0, end = text_lines.length; i < end; ++i) {
+        const line = text_lines[i].trim();
+        if (line[0] === '#') {
+            const names = line.replace(/^#+/, '').split('|').map(v => v.trim().replace(/\s+/g, ' ')).filter(Boolean);
+            if (names.length && !names.some(name => ns.includes(name))) {
+                lines.set(i + 1, '   ← not in % ns: left out');
+            }
+        }
+    }
+    return {lines, items, count: items.size, sections};
 }
 
 // The item of line n, with its spans; from the whole text when it parses, so its groups are right
