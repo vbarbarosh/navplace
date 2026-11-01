@@ -416,6 +416,22 @@
             line-height: 1.35;
         }
 
+        /* What a link becomes: the text on one side, the items lib/parse.js makes of it on the other */
+        .becomes {
+            display: grid;
+            grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .becomes-name {
+            margin-bottom: 6px;
+            color: var(--text-soft);
+            font-size: 13px;
+        }
+        .docs .becomes pre {
+            margin: 0;
+        }
+
         .docs table {
             width: 100%;
             margin: 12px 0;
@@ -496,6 +512,10 @@
             .docs table {
                 display: block;
                 overflow-x: auto;
+            }
+
+            .becomes {
+                grid-template-columns: minmax(0, 1fr);
             }
         }
 
@@ -749,6 +769,19 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 <p><code>@name</code> points at a file under <code>~/.navplace/</code> and must stand right before the url, after a space. The parser turns it into <code>private://name</code>, which only the desktop app serves. Designs that show artwork use <code>item.image_url</code> and fall back to <code>item.icon_url</code>.</p>
 
 <h3 id="what-a-link-becomes">What a link becomes</h3>
+<p>Each link line becomes one object. On the right, what <code>lib/parse.js</code> makes of the text on the left, run on this page as you read it:</p>
+<div class="becomes">
+    <div>
+        <div class="becomes-name"><code>links.txt</code></div>
+<pre><code data-lang="links" id="becomes_text"># Work | Mail
+Gmail #mail #padding=1 @gm.png https://gmail.com/
+Почта #mail https://ya.ru/</code></pre>
+    </div>
+    <div>
+        <div class="becomes-name"><code>parse(text).items</code></div>
+<pre><code data-lang="json" id="becomes_items"></code></pre>
+    </div>
+</div>
 <table>
     <thead>
         <tr><th>Field</th><th>From</th></tr>
@@ -1021,6 +1054,13 @@ function main()
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
 
+
+    // What a link becomes: the items the parser makes of the text beside them, never typed by hand
+    const becomes_text = document.getElementById('becomes_text').textContent;
+    // Short arrays and objects on one line each, so an item reads at a glance
+    document.getElementById('becomes_items').textContent = JSON.stringify(parse(becomes_text).items, null, 2)
+        .replace(/\[\s+([^[\]{}]*?)\s+\]/g, (all, inner) => `[${inner.replace(/\s*\n\s*/g, ' ')}]`)
+        .replace(/\{\s+([^[\]{}]*?)\s+\}/g, (all, inner) => `{${inner.replace(/\s*\n\s*/g, ' ')}}`);
 
     // The examples in the Playground's colours: links.txt as its editor draws it
     for (const code of document.querySelectorAll('pre code[data-lang]')) {
