@@ -1069,13 +1069,15 @@ async function main()
         code_scroll_sync(design_editor, design_colours);
         design_gutter.scrollTop = design_editor.scrollTop;
     });
-    // Tab indents in the code; Ctrl+Z takes it back like any typing
-    design_editor.addEventListener('keydown', function (event) {
-        if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
-            event.preventDefault();
-            document.execCommand('insertText', false, '    ');
-        }
-    });
+    // Tab indents and Shift+Tab outdents by 4 spaces, every selected line alike; Ctrl+Z takes it back like any typing
+    for (const textarea of [editor, design_editor]) {
+        textarea.addEventListener('keydown', function (event) {
+            if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey) {
+                event.preventDefault();
+                textarea_tab(textarea, event.shiftKey);
+            }
+        });
+    }
     // Load swaps a design in on purpose; Undo brings back what it replaced
     design_load_button.addEventListener('click', async function () {
         const previous = design;
@@ -1863,10 +1865,55 @@ async function main()
 
     // Through the editing commands, so Ctrl+Z takes it back
     function editor_text_replace(start, end, text) {
-        editor.setSelectionRange(start, end);
+        textarea_text_replace(editor, start, end, text);
+    }
+
+    // Tab: 4 spaces at the cursor, or before every selected line; Shift+Tab: up to 4 spaces (or a tab) off
+    // each line the selection touches. A selection ending at the start of a line leaves that line alone.
+    function textarea_tab(textarea, outdent) {
+        const text = textarea.value;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const end_in = (end > start && text[end - 1] === '\n') ? end - 1 : end;
+        if (!outdent && !text.slice(start, end_in).includes('\n')) {
+            textarea_text_replace(textarea, start, end, '    ');
+            return;
+        }
+        const first = text.lastIndexOf('\n', start - 1) + 1;
+        const last = (text.indexOf('\n', end_in) === -1) ? text.length : text.indexOf('\n', end_in);
+        const lines = text.slice(first, last).split('\n');
+        // How far each line moves: + right, - left; an empty line stays empty
+        const shifts = lines.map(v => outdent ? -(v.match(/^( {1,4}|\t)/)?.[0].length ?? 0) : (v ? 4 : 0));
+        if (shifts.every(v => v === 0)) {
+            return;
+        }
+        const out = lines.map((v, i) => (shifts[i] < 0) ? v.slice(-shifts[i]) : ' '.repeat(shifts[i]) + v).join('\n');
+        // Where a position lands once its line has moved; one at the very start of a line stays there
+        const moved = function (pos) {
+            if (pos > last) {
+                return pos + shifts.reduce((a, b) => a + b, 0);
+            }
+            let line_start = first;
+            let i = 0;
+            while (i < lines.length - 1 && pos > line_start + lines[i].length) {
+                line_start += lines[i].length + 1;
+                i++;
+            }
+            const before = shifts.slice(0, i).reduce((a, b) => a + b, 0);
+            const column = pos - line_start;
+            return line_start + before + ((column === 0) ? 0 : Math.max(0, column + shifts[i]));
+        };
+        const selection = [moved(start), moved(end)];
+        textarea_text_replace(textarea, first, last, out);
+        textarea.setSelectionRange(selection[0], selection[1]);
+    }
+
+    // Through the editing commands, so Ctrl+Z takes it back
+    function textarea_text_replace(textarea, start, end, text) {
+        textarea.setSelectionRange(start, end);
         if (!document.execCommand('insertText', false, text)) {
-            editor.setRangeText(text, start, end, 'end');
-            editor.dispatchEvent(new Event('input'));
+            textarea.setRangeText(text, start, end, 'end');
+            textarea.dispatchEvent(new Event('input'));
         }
     }
 
