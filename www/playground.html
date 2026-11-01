@@ -607,6 +607,20 @@
             text-decoration: underline wavy var(--danger);
             text-underline-offset: 4px;
         }
+        /* A line parse() skips, with a warning: the rest of the text still shows */
+        .c-warn {
+            text-decoration: underline wavy var(--warn);
+            text-decoration-skip-ink: none;
+            text-underline-offset: 4px;
+        }
+        .c-warn .c-error {
+            color: inherit;
+            text-decoration: none;
+        }
+        .c-warn-note {
+            color: var(--warn);
+            font-style: italic;
+        }
 
         /* ---------- The JSON of the line the cursor is on ---------- */
         .json-locked {

@@ -4,13 +4,18 @@
 
 // The links text: label, #tag, #key=value, @picture, link, % and # lines; `current` is
 // the 1-based line the cursor is on; `left_out`, when given, a Map of the lines % ns leaves
-// out of items to the note drawn after each ('' for none)
+// out of items to the note drawn after each ('' for none). A line parse() skips is
+// underlined in orange, why after it
 function render_links_html(text, current, left_out)
 {
     const lines = text.split('\n');
     const out = [];
     for (let i = 0, end = lines.length; i < end; ++i) {
         let html = render_links_line_html(lines[i]);
+        const skipped = skipped_line_note(lines[i]);
+        if (skipped) {
+            html = `<span class="c-warn">${html}</span><span class="c-warn-note">  ⚠ ${html_escape(skipped)}</span>`;
+        }
         const note = left_out?.get(i + 1);
         if (note !== undefined) {
             html = `<span class="c-left-out">${html}</span>${note ? `<span class="c-note">${html_escape(note)}</span>` : ''}`;
@@ -18,6 +23,22 @@ function render_links_html(text, current, left_out)
         out.push((i + 1 === current) ? `<span class="c-current">${html || ' '}</span>` : html);
     }
     return `${out.join('\n')}\n`;
+}
+
+// Why parse() skips this line, in a few words; '' when it does not
+function skipped_line_note(raw)
+{
+    const message = parse(raw).warnings?.[0]?.message;
+    if (!message) {
+        return '';
+    }
+    if (message.startsWith('Invalid picture line')) {
+        return 'skipped: not an https or data url';
+    }
+    if (message.startsWith('Invalid meta line')) {
+        return 'skipped: no key: value';
+    }
+    return 'skipped: bad url';
 }
 
 function render_links_line_html(raw)
