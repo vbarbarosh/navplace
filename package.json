@@ -2,33 +2,15 @@
   "name": "navplace",
   "author": "Vladimir Barbarosh <vladimir.barbarosh@gmail.com>",
   "version": "0.0.0",
-  "description": "NavPlace web server and shared link-parsing library",
+  "description": "NavPlace: the link-parsing library, the designs and the site",
   "license": "MIT",
   "scripts": {
-    "test": "mocha 'lib/**/*.test.js' 'src/cloudflare/**/*.test.mjs'",
-    "migrate": "knex migrate:latest",
-    "migrate:make": "knex migrate:make",
-    "migrate:rollback": "knex migrate:rollback",
-    "watch": "nodemon src/http/index.js"
+    "test": "mocha 'lib/**/*.test.js' 'src/cloudflare/**/*.test.mjs'"
   },
   "dependencies": {
-    "@paralleldrive/cuid2": "^3.3.0",
-    "@sentry/node": "^11.6.0",
-    "@vbarbarosh/express-helpers": "^2.2.1",
-    "@vbarbarosh/node-helpers": "^3.75.0",
-    "@vbarbarosh/type-helpers": "^0.4.0",
-    "better-sqlite3": "^13.0.3",
-    "bluebird": "^3.7.2",
-    "express": "^5.2.1",
-    "knex": "^3.2.10",
-    "mysql2": "^3.22.3",
-    "pg": "^8.21.0",
-    "sanitize-filename": "^1.6.3",
-    "ws": "^8.21.0"
+    "@vbarbarosh/node-helpers": "^3.75.0"
   },
   "devDependencies": {
-    "dotenv": "^18.0.6",
-    "mocha": "^12.0.3",
-    "nodemon": "^3.1.14"
+    "mocha": "^12.0.3"
   }
 }
