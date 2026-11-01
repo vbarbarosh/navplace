@@ -51,7 +51,7 @@ Parser output shape per item:
 
 - `search1` = transliterated `label + tags` (lowercased, Cyrillic→Latin).
 - `search2` = transliterated `href`.
-- `icon_url` = `app://favicon/<host>` inside Electron, `https://icon.horse/icon/<host>` elsewhere.
+- `icon_url` = `app://favicon/<host>` inside Electron, `/icon/<host>` on navplace.com (its Worker, `src/cloudflare/icon.mjs`), `https://icon.horse/icon/<host>` elsewhere.
 
 ## Filter language
 

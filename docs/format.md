@@ -145,7 +145,7 @@ space or `#`.
 |--------------|----------------------------------------------------------------------------------|
 | `label`      | What is left of the line after the url, tags and image are removed.              |
 | `href`       | The url.                                                                         |
-| `icon_url`   | `app://favicon/<host>` in Electron, `https://icon.horse/icon/<host>` on the web. |
+| `icon_url`   | `app://favicon/<host>` in Electron, `/icon/<host>` on navplace.com, `https://icon.horse/icon/<host>` elsewhere. |
 | `image_url`  | `private://<name>` from `@name`, else `null`.                                    |
 | `tags`       | Every `#tag` on the line.                                                        |
 | `meta`       | Every `#key=value` on the line.                                                  |

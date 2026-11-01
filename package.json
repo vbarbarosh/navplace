@@ -5,7 +5,7 @@
   "description": "NavPlace web server and shared link-parsing library",
   "license": "MIT",
   "scripts": {
-    "test": "mocha 'lib/**/*.test.js'",
+    "test": "mocha 'lib/**/*.test.js' 'src/cloudflare/**/*.test.mjs'",
     "migrate": "knex migrate:latest",
     "migrate:make": "knex migrate:make",
     "migrate:rollback": "knex migrate:rollback",

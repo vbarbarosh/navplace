@@ -777,7 +777,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
     <tbody>
         <tr><td><code>label</code></td><td>What is left of the line after the url, tags and image are removed.</td></tr>
         <tr><td><code>href</code></td><td>The url.</td></tr>
-        <tr><td><code>icon_url</code></td><td><code>app://favicon/&lt;host&gt;</code> in the desktop app, <code>https://icon.horse/icon/&lt;host&gt;</code> on the web.</td></tr>
+        <tr><td><code>icon_url</code></td><td><code>app://favicon/&lt;host&gt;</code> in the desktop app, <code>/icon/&lt;host&gt;</code> on navplace.com (its own icons, for its own pages only), <code>https://icon.horse/icon/&lt;host&gt;</code> elsewhere.</td></tr>
         <tr><td><code>image_url</code></td><td><code>private://&lt;name&gt;</code> from <code>@name</code>, else <code>null</code>.</td></tr>
         <tr><td><code>tags</code></td><td>Every <code>#tag</code> on the line.</td></tr>
         <tr><td><code>meta</code></td><td>Every <code>#key=value</code> on the line.</td></tr>
@@ -1027,7 +1027,7 @@ Gmail   https://mail.google.com/
 <h3 id="architecture-site">The site and the releases</h3>
 <ul>
     <li><code>bin/build-www</code> puts the site together in <code>build/www/</code>: <code>www/</code>, <code>lib/</code> without the tests and the CLI, <code>designs/</code> without the drafts, and <code>designs/index.json</code>, the Playground's list of designs with the files of each.</li>
-    <li>Every <code>master</code> push that touches the site runs <code>bin/deploy-www</code>: <code>bin/build-www</code>, then a Cloudflare Worker (<code>src/cloudflare/</code>) that answers the site's files from the edge, a missing one as a 404, and passes everything else, <code>/api</code> and <code>/auth</code>, on to the server.</li>
+    <li>Every <code>master</code> push that touches the site runs <code>bin/deploy-www</code>: <code>bin/build-www</code>, then a Cloudflare Worker (<code>src/cloudflare/</code>) that answers the site's files from the edge, a missing one as a 404, and a link's icon at <code>/icon/&lt;domain&gt;</code> to navplace's own pages (403 to any other site), and passes everything else, <code>/api</code> and <code>/auth</code>, on to the server.</li>
     <li>Every <code>master</code> push builds both AppImages as workflow artifacts. A tag <code>electron-v*</code> builds a GitHub release with the Electron AppImage; <code>src/desktop-electron/bin/release patch|minor|major</code>, run on <code>master</code>, bumps the version, commits, tags and pushes.</li>
 </ul>
 
