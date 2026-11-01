@@ -23,6 +23,16 @@ describe('serve_icon', function () {
         assert.equal(response.headers.get('Content-Type'), 'image/svg+xml');
         assert.equal(await response.text(), "<svg xmlns='http://www.w3.org/2000/svg'></svg>");
     });
+    it("skips Safari's mask-icon and fluid-icon for the real icon", async function () {
+        const fetch_fn = make_fetch({
+            'https://a.com/': html('<link rel="fluid-icon" href="/fluid.png"><link rel="mask-icon" href="/mask.svg"><link rel="alternate icon" type="image/png" href="/i.png">'),
+            'https://a.com/mask.svg': png('image/svg+xml'),
+            'https://a.com/fluid.png': png('image/jpeg'),
+            'https://a.com/i.png': png(),
+        });
+        const response = await serve_icon(make_request('a.com'), {fetch_fn});
+        assert.equal(response.headers.get('Content-Type'), 'image/png');
+    });
     it('falls back to /favicon.ico, then Google', async function () {
         const ico = await serve_icon(make_request('a.com'), {fetch_fn: make_fetch({'https://a.com/favicon.ico': png('image/x-icon')})});
         assert.equal(ico.headers.get('Content-Type'), 'image/x-icon');
@@ -34,7 +44,7 @@ describe('serve_icon', function () {
         const response = await serve_icon(make_request('www.a.com'), {fetch_fn});
         assert.equal(response.headers.get('Content-Type'), 'image/svg+xml');
         assert.match(await response.text(), />A<\/text>/);
-        assert.equal(response.headers.get('Cache-Control'), 'public, max-age=86400');
+        assert.equal(response.headers.get('Cache-Control'), 'public, max-age=86400, s-maxage=86400');
     });
     it('looks nothing up for localhost or an address', async function () {
         for (const domain of ['localhost:3000', '127.0.0.1', '192.168.1.1']) {

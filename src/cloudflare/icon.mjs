@@ -6,6 +6,8 @@
 const DAY = 86400;
 const MAX_BYTES = 200 * 1024;
 const TIMEOUT_MS = 4000;
+// A new value drops every icon kept at the edge: what it keeps under the old one is never asked again
+const CACHE_VERSION = 2;
 
 // What any icon answer carries: same-origin only, and an SVG opened as a page runs nothing
 const ICON_HEADERS = {
@@ -28,7 +30,7 @@ export async function serve_icon(request, {cache = null, fetch_fn = fetch} = {})
         return make_icon_response(render_tile_svg(domain), 'image/svg+xml', DAY);
     }
 
-    const key = new Request(`${url.origin}/icon/${domain}`);
+    const key = new Request(`${url.origin}/icon/${domain}?v=${CACHE_VERSION}`);
     const kept = cache ? await cache.match(key) : null;
     if (kept) {
         return kept;
@@ -85,7 +87,7 @@ async function find_page_icon(domain, fetch_fn)
     const html = (await page.text()).slice(0, 512 * 1024);
     const links = [...html.matchAll(/<link\b[^>]*>/gi)]
         .map(m => ({rel: read_attr(m[0], 'rel'), href: read_attr(m[0], 'href'), type: read_attr(m[0], 'type'), sizes: read_attr(m[0], 'sizes')}))
-        .filter(v => /\bicon\b/i.test(v.rel ?? '') && v.href);
+        .filter(v => is_icon_rel(v.rel) && v.href);
     links.sort((a, b) => rank_icon_link(b) - rank_icon_link(a));
     for (const link of links) {
         const icon = link.href.startsWith('data:')
@@ -96,6 +98,12 @@ async function find_page_icon(domain, fetch_fn)
         }
     }
     return null;
+}
+
+// icon, shortcut icon, alternate icon, apple-touch-icon; never Safari's one-colour mask-icon or fluid-icon
+function is_icon_rel(rel)
+{
+    return String(rel ?? '').toLowerCase().split(/\s+/).some(v => v === 'icon' || v.startsWith('apple-touch-icon'));
 }
 
 // An SVG first, then the largest; apple-touch-icon as a big plain one
@@ -164,7 +172,8 @@ function make_icon_response(body, type, max_age)
         headers: {
             ...ICON_HEADERS,
             'Content-Type': type,
-            'Cache-Control': `public, max-age=${max_age}`,
+            // A browser asks again after a day; the edge keeps it for max_age
+            'Cache-Control': `public, max-age=${Math.min(max_age, DAY)}, s-maxage=${max_age}`,
         },
     });
 }
