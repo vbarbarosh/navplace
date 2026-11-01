@@ -918,6 +918,8 @@ async function main()
     let designs = null;
     let frame_design = null;
     let frame_ready = false;
+    // The preview page has had the links since it loaded
+    let frame_has_text = false;
     let refocus = false;
     let render_timer;
     const sizes = load_sizes();
@@ -963,8 +965,12 @@ async function main()
     // The text before the edit an input event reports; null for an edit made by code, which has no
     // beforeinput, Reset and a paste among them
     let picture_text = null;
-    // {line, from}: a picture's name on that line waits, empty or another's, so its links still say `from`
+    // A rename under way on one line: {line, kind: 'picture' | 'link', current, origin}; `current` is
+    // the name the rest of the text says now, `origin` the one it said when the rename began
     let picture_rename = null;
+    // {line, name}: the `@name` the line had when the cursor came to it; only that one renames a picture,
+    // so typing a new `@name` on a link never renames the picture whose name it passes through
+    let picture_line_entry = null;
     // Hashes of the texts a rename followed, a keystroke in and its links not yet renamed: an undo or
     // redo that lands on one takes one step more, so one Ctrl+Z takes back the keystroke and the links
     const picture_rename_marks = new Set();
@@ -1010,7 +1016,17 @@ async function main()
             }
             return;
         }
-        picture_links_rename(before, editor.value);
+        picture_rename_follow(before, editor.value);
+    });
+    document.addEventListener('selectionchange', function () {
+        if (document.activeElement !== editor) {
+            return;
+        }
+        const n = line_at(editor.value, editor.selectionStart);
+        if (picture_line_entry?.line !== n) {
+            const [start, end] = line_range(editor.value, n);
+            picture_line_entry = {line: n, name: picture_ref_of_line(editor.value.slice(start, end))};
+        }
     });
     editor.addEventListener('scroll', () => code_scroll_sync(editor, editor_colours));
     json_editor.addEventListener('scroll', () => code_scroll_sync(json_editor, json_colours));
@@ -1498,6 +1514,7 @@ async function main()
         }
         preview_key = key;
         frame_ready = false;
+        frame_has_text = false;
         preview_errors = [];
         render_errors();
         refocus = [editor, json_editor, design_editor].includes(document.activeElement) ? document.activeElement : null;
@@ -1583,7 +1600,8 @@ async function main()
             same.count += 1;
         }
         else if (preview_errors.length < 50) {
-            preview_errors.push({where, what, count: 1});
+            // A load that failed after the links came in is a picture or icon of theirs
+            preview_errors.push({where, what, count: 1, url: (data.load && frame_has_text) ? data.source : null});
         }
         render_errors();
     }
@@ -1750,6 +1768,7 @@ async function main()
             const ref = spans.image ? `@${name}` : `@${name} `;
             editor_text_replace(start, text.length, ref + text.slice(end) + glue + line);
             editor.setSelectionRange(start + name.length + 1, start + name.length + 1);
+            picture_line_entry = {line: n, name};
             editor.scrollTop = scroll[0];
             editor.scrollLeft = scroll[1];
             editor_note_show(`pasted @${name} on line ${n}, the picture at the end${shrunk}`);
@@ -1765,46 +1784,61 @@ async function main()
         code_scroll_sync(editor, editor_colours);
     }
 
-    // `before` is the text before a keystroke, the editor's the text after it. When the keystroke
-    // changed the name on a `% picture` line, the links with the old `@name` take the new one, in one
-    // edit after it. Links of a name another `% picture` line also gives are that line's: they stay
-    function picture_links_rename(before, now) {
+    // `before` is the text before a keystroke, the editor's the text after it. A keystroke that changed a
+    // picture's name, on its `% picture` line or in a link's `@name`, renames it everywhere else too, in
+    // one edit after it. While the name is empty, or another picture's, the rest keeps the last name; a
+    // link given another picture's name shows that picture, and its own picture gets its name back
+    function picture_rename_follow(before, now) {
         const lines = now.split('\n');
         const lines_before = before.split('\n');
         const n = line_at(now, editor.selectionStart);
-        if (lines.length !== lines_before.length || (picture_rename && picture_rename.line !== n)) {
+        if (lines.length !== lines_before.length || picture_rename?.line !== n) {
             picture_rename = null;
         }
         if (lines.length !== lines_before.length) {
             return;
         }
-        const from = picture_rename?.from ?? picture_name_of_line(lines_before[n - 1]);
-        const name = picture_name_of_line(lines[n - 1]);
-        if (!from || from === name || lines.some((v, i) => i !== n - 1 && picture_name_of_line(v) === from)) {
+        const name_of = v => (kind === 'picture') ? picture_name_of_line(v) : picture_ref_of_line(v);
+        const kind = picture_rename?.kind ?? (picture_name_of_line(lines_before[n - 1]) ? 'picture' : (picture_ref_of_line(lines_before[n - 1]) ? 'link' : null));
+        if (!kind) {
+            return;
+        }
+        const from = picture_rename?.current ?? name_of(lines_before[n - 1]);
+        const origin = picture_rename?.origin ?? from;
+        const name = name_of(lines[n - 1]);
+        const pictures = lines.filter((v, i) => i !== n - 1 && picture_name_of_line(v) === from).length;
+        // On its own line the picture is the only one of its name; a link's picture is one other line
+        if (pictures !== (kind === 'picture' ? 0 : 1) || (kind === 'link' && picture_line_entry?.name !== origin)) {
             picture_rename = null;
             return;
         }
-        if (!name || lines.some((v, i) => i !== n - 1 && picture_name_of_line(v) === name)) {
-            picture_rename = {line: n, from};
-            if (name) {
+        picture_rename = {line: n, kind, current: from, origin};
+        if (!name || name === from) {
+            return;
+        }
+        let to = name;
+        if (lines.some((v, i) => i !== n - 1 && picture_name_of_line(v) === name)) {
+            if (kind === 'picture') {
                 editor_note_show(`@${name} is another picture's: the links keep @${from}`);
+                return;
             }
+            editor_note_show(`@${name} is another picture: this link shows it, @${origin} keeps its name`);
+            to = origin;
+        }
+        const spots = picture_spots_of_text(now, from, n);
+        if (to === from || !spots.length) {
+            picture_rename.current = to;
             return;
         }
-        picture_rename = null;
-        const refs = picture_refs_of_text(now, from);
-        if (!refs.length) {
-            return;
-        }
-        const span = [refs[0], refs[refs.length - 1] + from.length];
         let middle = '';
-        let last = span[0];
-        for (const ref of refs) {
-            middle += now.slice(last, ref) + name;
-            last = ref + from.length;
+        let last = spots[0];
+        for (const spot of spots) {
+            middle += now.slice(last, spot) + to;
+            last = spot + from.length;
         }
+        const span = [spots[0], last];
         middle += now.slice(last, span[1]);
-        const shift = refs.filter(v => v < editor.selectionStart).length * (name.length - from.length);
+        const shift = spots.filter(v => v < editor.selectionStart).length * (to.length - from.length);
         const selection = [editor.selectionStart + shift, editor.selectionEnd + shift];
         const scroll = [editor.scrollTop, editor.scrollLeft];
         if (picture_rename_marks.size > 1000) {
@@ -1818,7 +1852,13 @@ async function main()
         editor.scrollTop = scroll[0];
         editor.scrollLeft = scroll[1];
         code_scroll_sync(editor, editor_colours);
-        editor_note_show(`@${name} on ${refs.length} ${refs.length === 1 ? 'link' : 'links'} too`);
+        picture_rename.current = to;
+        if (to === name) {
+            const links = spots.length - (kind === 'link' ? 1 : 0);
+            const where = (kind === 'link') ? `% picture ${name}` : '';
+            const also = links ? `${links} ${links === 1 ? 'link' : 'links'}` : '';
+            editor_note_show(`renamed: ${[where, also].filter(Boolean).join(' and ')} too`);
+        }
     }
 
     // Through the editing commands, so Ctrl+Z takes it back
@@ -1854,8 +1894,19 @@ async function main()
         render();
     }
 
+    // A failed load of the links' stays while the text still has that picture or icon: a preview
+    // does not always load it again to say so, and a name typed half-way must not stay behind
     function post_text() {
+        if (preview_errors.some(v => v.url)) {
+            const urls = urls_of_items(editor.value, frame.contentDocument?.baseURI ?? location.href);
+            const kept = preview_errors.filter(v => !v.url || urls.has(v.url));
+            if (kept.length !== preview_errors.length) {
+                preview_errors = kept;
+                render_errors();
+            }
+        }
         frame.contentWindow.postMessage({type: 'navplace:items-text', text: editor.value}, '*');
+        frame_has_text = true;
     }
 
     // Divider `index` of the current tab to the place `at` (a part of the width): the panes on
@@ -2230,24 +2281,59 @@ function format_kb(chars)
     return `${Math.round(chars / 1000)} KB`;
 }
 
+// The pictures and icons of the text's links, as the page at `base` asks for them
+function urls_of_items(text, base)
+{
+    const out = new Set();
+    let items = [];
+    try {
+        items = parse(text).items;
+    }
+    catch {
+    }
+    for (const item of items) {
+        for (const url of [item.image_url, item.icon_url]) {
+            try {
+                out.add(new URL(url, base).href);
+            }
+            catch {
+            }
+        }
+    }
+    return out;
+}
+
 // The name a `% picture <name>:` line gives, or null on any other line; `% picture https://…` has none
 function picture_name_of_line(line)
 {
     return line.match(/^\s*%\s*picture\s+([^\s:]+)\s*:(?!\/\/)/)?.[1] ?? null;
 }
 
-// Where `@name` stands on the links, the offsets of the name after each `@`
-function picture_refs_of_text(text, name)
+// The `@name` of a link line, or null on any other line
+function picture_ref_of_line(line)
+{
+    return /^[%#]/.test(line.trim()) ? null : (line.match(/(?:^|\s)@(\S+)\s+(?:file|https?):\/\/\S+\s*$/)?.[1] ?? null);
+}
+
+// Where the name stands, in order: on `% picture <name>:` lines and in links' `@name`, the offsets of
+// the name itself; the 1-based line `skip` left out
+function picture_spots_of_text(text, name, skip)
 {
     const out = [];
     let start = 0;
-    for (const line of text.split('\n')) {
-        const m = /^[%#]/.test(line.trim()) ? null : line.match(/(^|\s)@(\S+)\s+(?:file|https?):\/\/\S+\s*$/);
-        if (m && m[2] === name) {
-            out.push(start + m.index + m[1].length + 1);
+    text.split('\n').forEach(function (line, i) {
+        if (i + 1 !== skip) {
+            const picture = line.match(/^(\s*%\s*picture\s+)([^\s:]+)\s*:(?!\/\/)/);
+            const link = picture ? null : line.match(/(^|\s)@(\S+)\s+(?:file|https?):\/\/\S+\s*$/);
+            if (picture?.[2] === name) {
+                out.push(start + picture[1].length);
+            }
+            else if (link?.[2] === name && !/^[%#]/.test(line.trim())) {
+                out.push(start + link.index + link[1].length + 1);
+            }
         }
         start += line.length + 1;
-    }
+    });
     return out;
 }
 
@@ -2447,8 +2533,8 @@ function code_scroll_sync(textarea, pre)
 
 // Runs first in the preview: its errors, failed loads and console.error go to the Playground
 const PREVIEW_ERRORS_HOOK = `(function () {
-    function send(message, source, line) {
-        parent.postMessage({type: 'navplace:error', message: String(message), source: source || '', line: line || 0}, '*');
+    function send(message, source, line, load) {
+        parent.postMessage({type: 'navplace:error', message: String(message), source: source || '', line: line || 0, load: !!load}, '*');
     }
     function where_of(error) {
         const m = String(error && error.stack || '').match(/(about:srcdoc|blob:[^\\s)]+?|https?:[^\\s)]+?):(\\d+):\\d+/);
@@ -2457,7 +2543,7 @@ const PREVIEW_ERRORS_HOOK = `(function () {
     window.addEventListener('error', function (event) {
         const target = event.target;
         if (target && target !== window && (target.src || target.href)) {
-            send('Could not load ' + (target.src || target.href), target.src || target.href, 0);
+            send('Could not load ' + (target.src || target.href), target.src || target.href, 0, true);
             return;
         }
         send(event.message, event.filename, event.lineno);
