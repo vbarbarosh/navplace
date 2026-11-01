@@ -1868,22 +1868,33 @@ async function main()
         textarea_text_replace(editor, start, end, text);
     }
 
-    // Tab: 4 spaces at the cursor, or before every selected line; Shift+Tab: up to 4 spaces (or a tab) off
-    // each line the selection touches. A selection ending at the start of a line leaves that line alone.
+    // Within one line, Tab fills spaces up to the next tab stop (every 4 columns) and Shift+Tab takes the
+    // line's indent back to the stop before. Several lines selected: each moves 4 spaces, all alike;
+    // Shift+Tab takes up to 4 spaces (or a tab) off each. A selection ending at the start of a line leaves that line alone.
     function textarea_tab(textarea, outdent) {
         const text = textarea.value;
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const end_in = (end > start && text[end - 1] === '\n') ? end - 1 : end;
-        if (!outdent && !text.slice(start, end_in).includes('\n')) {
-            textarea_text_replace(textarea, start, end, '    ');
+        const one_line = !text.slice(start, end_in).includes('\n');
+        const first = text.lastIndexOf('\n', start - 1) + 1;
+        if (!outdent && one_line) {
+            textarea_text_replace(textarea, start, end, ' '.repeat(4 - (start - first) % 4));
             return;
         }
-        const first = text.lastIndexOf('\n', start - 1) + 1;
         const last = (text.indexOf('\n', end_in) === -1) ? text.length : text.indexOf('\n', end_in);
         const lines = text.slice(first, last).split('\n');
         // How far each line moves: + right, - left; an empty line stays empty
-        const shifts = lines.map(v => outdent ? -(v.match(/^( {1,4}|\t)/)?.[0].length ?? 0) : (v ? 4 : 0));
+        const shifts = lines.map(function (v) {
+            if (!outdent) {
+                return v ? 4 : 0;
+            }
+            if (v.startsWith('\t')) {
+                return -1;
+            }
+            const spaces = v.match(/^ */)[0].length;
+            return -(one_line ? (spaces % 4 || Math.min(4, spaces)) : Math.min(4, spaces));
+        });
         if (shifts.every(v => v === 0)) {
             return;
         }
