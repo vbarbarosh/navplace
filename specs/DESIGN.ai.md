@@ -40,7 +40,7 @@ designs/<your-design-name>/
 - Folder name = design name (referenced as `% design: <your-design-name>`).
 - All file references inside `index.html` must be **relative to the design folder**.
 - The shared runtime lives at `../../lib/navplace.js` (two levels up).
-- Optional shared vendor libs (Vue, smcss) live under `../../lib/vendor/`: Vue at `vue-3/` (an upgrade replaces its files; a new major gets a folder of its own), smcss at `smcss-1.2.0/` — two existing designs use these, but a design can equally well be vanilla JS with no deps.
+- Optional shared vendor libs (Vue, smcss) live under `../../lib/vendor/`, a folder per major: Vue at `vue-3/`, smcss at `smcss-2/` (an upgrade replaces the files; a new major gets a folder of its own) — two existing designs use these, but a design can equally well be vanilla JS with no deps.
 
 ## Runtime API
 

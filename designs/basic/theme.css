@@ -1,3 +1,8 @@
+/* The font smcss 1's reset.css gave the page; smcss 2's reset leaves the browser's own */
+body {
+    font: 9pt/1.5em Arial, Helvetica, sans-serif;
+}
+
 a {
     text-decoration: none;
 }
