@@ -66,8 +66,7 @@ jobs:
 
       - name: Test
         if: steps.plan.outputs.build == 'true'
-        working-directory: src/desktop-electron
-        run: npm test
+        run: src/desktop-electron/bin/test
 
       - name: Build AppImage
         if: steps.plan.outputs.build == 'true'

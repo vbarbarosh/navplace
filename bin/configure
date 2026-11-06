@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+RED="\e[31m" GREEN="\e[32m" RESET="\e[0m"
+
+EXIT_MESSAGE="${RED}bin/configure failed${RESET}"
+
+# http://redsymbol.net/articles/bash-exit-traps/
+trap 'echo -e "$EXIT_MESSAGE"' EXIT
+cd $scriptdir/..
+
+# npm ci puts a new chrome-sandbox in place, and Electron starts only when it
+# is root:4755: the password is asked here, before any work
+sudo -v
+
+npm ci
+(cd src/desktop-electron && npm ci)
+
+sandbox=src/desktop-electron/node_modules/electron/dist/chrome-sandbox
+sudo -n chown root:root $sandbox
+sudo -n chmod 4755 $sandbox
+
+EXIT_MESSAGE="${GREEN}bin/configure succeeded${RESET}"

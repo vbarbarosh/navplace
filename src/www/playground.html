@@ -20,8 +20,7 @@
         })();
     </script>
     <style>
-        :root,
-        [data-theme="light"] {
+        :root {
             --bg: #fafaf9;
             --panel: #ffffff;
             --border: #e7e5e4;
@@ -42,7 +41,7 @@
             --c-current: rgba(15, 118, 110, 0.09);
         }
 
-        [data-theme="dark"] {
+        :root[data-theme="dark"] {
             --bg: #0c0c0e;
             --panel: #161618;
             --border: #27272a;
@@ -67,7 +66,8 @@
             box-sizing: border-box;
         }
 
-        html, body {
+        html,
+        body {
             margin: 0;
             padding: 0;
         }
@@ -96,23 +96,31 @@
             color: var(--text-soft);
             text-decoration: none;
         }
+
         a:hover {
             color: var(--text);
         }
 
-        code, pre, textarea {
+        code,
+        pre,
+        textarea {
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         }
 
-        button, select {
+        button,
+        select {
             font: inherit;
             color: inherit;
         }
+
         button {
             cursor: pointer;
             user-select: none;
         }
-        button:focus-visible, a:focus-visible, select:focus-visible {
+
+        button:focus-visible,
+        a:focus-visible,
+        select:focus-visible {
             outline: none;
             box-shadow: var(--focus);
         }
@@ -218,6 +226,7 @@
             gap: 8px;
             padding: 4px 0 10px;
         }
+
         .toolbar label {
             display: flex;
             align-items: center;
@@ -225,6 +234,7 @@
             color: var(--text-soft);
             font-size: 12px;
         }
+
         .toolbar select {
             transition: border-color 120ms ease;
             height: 26px;
@@ -234,9 +244,11 @@
             background: var(--panel);
             font-size: 12px;
         }
+
         .toolbar select:hover {
             border-color: var(--text-mute);
         }
+
         .status {
             flex: 1;
             min-width: 0;
@@ -247,9 +259,11 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
         .status[data-warn] {
             color: var(--warn);
         }
+
         .status[data-error] {
             color: var(--danger);
         }
@@ -269,23 +283,28 @@
             font-weight: 500;
             white-space: nowrap;
         }
+
         .btn:hover {
             color: var(--text);
             border-color: var(--text-mute);
         }
+
         .btn[hidden] {
             display: none;
         }
+
         .btn[aria-pressed="true"] {
             border-color: var(--accent);
             background: var(--accent-soft);
             color: var(--accent);
         }
+
         .btn-primary {
             border-color: var(--accent);
             background: var(--accent);
             color: var(--bg);
         }
+
         .btn-primary:hover {
             color: var(--bg);
             border-color: var(--text);
@@ -301,6 +320,7 @@
             border-radius: 8px;
             background: var(--code-bg);
         }
+
         .tabs button {
             transition: background-color 120ms ease, color 120ms ease;
             height: 20px;
@@ -312,14 +332,17 @@
             font-size: 12px;
             font-weight: 500;
         }
+
         .tabs button:hover {
             color: var(--text);
         }
+
         .tabs button[aria-selected="true"] {
             background: var(--panel);
             color: var(--text);
             box-shadow: 0 0 0 1px var(--border-strong);
         }
+
         /* The design comes from the text there, not from a picker */
         .app:not([data-tab="basic"]) .toolbar label {
             display: none;
@@ -338,38 +361,49 @@
             background: var(--panel);
             overflow: hidden;
         }
+
         .app[data-tab="advanced"] .work {
             grid-template-columns: minmax(0, var(--a, 33.33%)) 1px minmax(0, var(--b, 33.33%)) 1px minmax(0, 1fr);
             grid-template-areas: "links d1 json d2 preview" "dh dh dh dh dh" "errors errors errors errors errors";
         }
+
         .app[data-tab="design"] .work {
             grid-template-columns: minmax(0, var(--a, 66.67%)) 1px minmax(0, 1fr);
             grid-template-areas: "design d1 preview" "dh dh dh" "errors errors errors";
         }
+
         .pane-editor {
             grid-area: links;
         }
+
         .pane-design {
             grid-area: design;
         }
+
         .pane-errors {
             grid-area: errors;
         }
+
         .pane-json {
             grid-area: json;
         }
+
         .pane-preview {
             grid-area: preview;
         }
+
         .divider[data-divider="1"] {
             grid-area: d1;
         }
+
         .divider[data-divider="2"] {
             grid-area: d2;
         }
+
         .divider-errors {
             grid-area: dh;
         }
+
         .app:not([data-tab="advanced"]) .pane-json,
         .app:not([data-tab="design"]) .pane-design,
         .app[data-tab="basic"] .pane-errors,
@@ -379,6 +413,7 @@
         .work:not([data-errors]) .divider-errors {
             display: none;
         }
+
         .app:not([data-tab="basic"]) .pane {
             background: var(--panel);
         }
@@ -387,12 +422,15 @@
         .errors-title[data-count] {
             color: var(--danger);
         }
+
         .errors-title[data-count="warnings"] {
             color: var(--warn);
         }
+
         .pane-errors:not([data-count]) {
             display: none;
         }
+
         .errors-list {
             height: var(--errors-height, 76px);
             margin: 0;
@@ -401,21 +439,25 @@
             list-style: none;
             font-size: 12px;
         }
+
         .errors-list li {
             display: flex;
             gap: 10px;
             align-items: baseline;
             padding: 2px 16px;
         }
+
         .errors-list li::before {
             content: "✗";
             color: var(--danger);
         }
+
         /* A line parse() skipped: the rest of the text still shows */
         .errors-list li[data-warning]::before {
             content: "⚠";
             color: var(--warn);
         }
+
         .errors-where {
             flex: none;
             min-width: 130px;
@@ -427,18 +469,22 @@
             font-size: 12px;
             text-align: left;
         }
+
         button.errors-where {
             text-decoration: underline;
             text-underline-offset: 2px;
         }
+
         span.errors-where {
             color: var(--text-mute);
         }
+
         .errors-what {
             min-width: 0;
             overflow-wrap: anywhere;
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         }
+
         .errors-count {
             color: var(--text-mute);
         }
@@ -451,12 +497,14 @@
             padding-top: 4px;
             padding-bottom: 4px;
         }
+
         .design-files {
             display: flex;
             gap: 4px;
             min-width: 0;
             overflow-x: auto;
         }
+
         .design-files button,
         .design-actions .btn {
             height: 22px;
@@ -466,6 +514,7 @@
             letter-spacing: 0;
             text-transform: none;
         }
+
         .design-files button {
             border: 1px solid var(--border);
             background: transparent;
@@ -473,15 +522,18 @@
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
             white-space: nowrap;
         }
+
         .design-files button[aria-selected="true"] {
             border-color: var(--accent);
             background: var(--accent-soft);
             color: var(--text);
         }
+
         .design-files button[data-edited]::after {
             content: " •";
             color: var(--accent);
         }
+
         .design-files span {
             align-self: center;
             color: var(--text-mute);
@@ -491,12 +543,14 @@
             text-transform: none;
             white-space: nowrap;
         }
+
         .design-state {
             letter-spacing: 0;
             text-transform: none;
             font-weight: 500;
             white-space: nowrap;
         }
+
         .design-actions {
             display: flex;
             gap: 4px;
@@ -510,6 +564,7 @@
             min-height: 0;
             background: var(--code-bg);
         }
+
         .code > pre,
         .code > textarea {
             position: absolute;
@@ -526,6 +581,7 @@
             white-space: pre;
             overflow: auto;
         }
+
         /* Room past the end, so it scrolls as far as the textarea with its scrollbars */
         .code > pre {
             padding-right: 48px;
@@ -534,6 +590,7 @@
             color: var(--text);
             pointer-events: none;
         }
+
         .code > pre.gutter {
             inset: 0 auto 0 0;
             width: 48px;
@@ -541,24 +598,29 @@
             color: var(--text-mute);
             text-align: right;
         }
+
         .with-gutter > pre:not(.gutter),
         .with-gutter > textarea {
             padding-left: 60px;
         }
+
         .code > textarea {
             resize: none;
             color: transparent;
             background: transparent;
             caret-color: var(--text);
         }
+
         .code > textarea::selection {
             color: transparent;
             background: var(--c-current);
             background: color-mix(in srgb, var(--accent) 28%, transparent);
         }
+
         .code > textarea:focus {
             outline: none;
         }
+
         /* Across the whole pane: its 16px left and 48px right padding too */
         .c-current {
             display: inline-block;
@@ -567,58 +629,72 @@
             padding: 0 16px;
             background: var(--c-current);
         }
+
         /* Links % ns leaves out of items, and the note on their section's # line */
         .c-left-out {
             opacity: 0.45;
         }
+
         .c-note {
             color: var(--text-mute);
             font-style: italic;
         }
+
         .c-tag {
             color: var(--c-tag);
         }
+
         .c-image {
             color: var(--c-image);
         }
+
         .c-url {
             color: var(--c-url);
         }
+
         .c-directive,
         .c-key {
             color: var(--c-key);
         }
+
         .c-value {
             color: var(--c-image);
         }
+
         .c-section {
             font-weight: 650;
         }
+
         .c-ignored,
         .c-mark,
         .c-comment {
             color: var(--text-mute);
         }
+
         .c-word,
         .c-number,
         .c-tagname {
             color: var(--c-url);
         }
+
         .c-error {
             color: var(--danger);
             text-decoration: underline wavy var(--danger);
             text-underline-offset: 4px;
         }
+
         /* A line parse() skips, with a warning: the rest of the text still shows */
         .c-warn {
             text-decoration: underline wavy var(--warn);
             text-decoration-skip-ink: none;
             text-underline-offset: 4px;
         }
+
         .c-warn .c-error {
             color: inherit;
             text-decoration: none;
         }
+
         .c-warn-note {
             color: var(--warn);
             font-style: italic;
@@ -636,9 +712,11 @@
             white-space: pre-wrap;
             overflow-wrap: anywhere;
         }
+
         .json-locked:empty {
             display: none;
         }
+
         .json-error {
             margin: 0;
             padding: 6px 16px;
@@ -646,18 +724,22 @@
             color: var(--danger);
             font-size: 12px;
         }
+
         .json-error[data-warn] {
             color: var(--warn);
             border-top-color: var(--warn);
         }
+
         .json-error:empty {
             display: none;
         }
+
         /* Line: the cursor's line; File: the whole parse(text), meta and items; both editable */
         .json-modes {
             display: flex;
             gap: 12px;
         }
+
         .json-modes button {
             padding: 0;
             border: 0;
@@ -668,18 +750,22 @@
             text-transform: inherit;
             cursor: pointer;
         }
+
         .json-modes button:hover {
             color: var(--text);
         }
+
         .json-modes button[aria-pressed="true"] {
             color: var(--accent);
         }
+
         .pane {
             display: flex;
             flex-direction: column;
             min-width: 0;
             min-height: 0;
         }
+
         .pane-heading {
             display: flex;
             justify-content: space-between;
@@ -692,19 +778,23 @@
             letter-spacing: 0.06em;
             text-transform: uppercase;
         }
+
         .pane-heading code {
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
             font-weight: 400;
             letter-spacing: 0;
             text-transform: none;
         }
+
         .pane-heading a {
             color: var(--accent);
             text-decoration: none;
         }
+
         .pane-heading a:hover {
             text-decoration: underline;
         }
+
         /* What shows before a design paints, or when it paints nothing. A design keeps its
            own scheme: one that differs from the frame's would get an opaque canvas over this */
         .pane iframe {
@@ -724,34 +814,42 @@
             cursor: col-resize;
             touch-action: none;
         }
+
         .divider::before {
             content: "";
             position: absolute;
             inset: 0 -5px;
         }
+
         .divider-errors {
             height: 1px;
             cursor: row-resize;
         }
+
         .divider-errors::before {
             inset: -5px 0;
         }
+
         .divider:hover,
         .divider[data-dragging] {
             background: var(--accent);
         }
+
         .divider:focus-visible {
             outline: none;
             background: var(--accent);
             box-shadow: var(--focus);
         }
+
         .work[data-dragging] {
             cursor: col-resize;
             user-select: none;
         }
+
         .work[data-dragging="errors"] {
             cursor: row-resize;
         }
+
         .work[data-dragging] iframe {
             pointer-events: none;
         }
@@ -761,39 +859,48 @@
                 display: block;
                 height: auto;
             }
+
             .topbar nav .wide {
                 display: none;
             }
+
             .toolbar {
                 flex-wrap: wrap;
             }
+
             .status {
                 flex-basis: 100%;
                 order: 1;
                 margin: 0;
             }
+
             .work,
             .app[data-tab] .work {
                 grid-template-columns: minmax(0, 1fr);
                 grid-template-rows: 45vh 70vh;
                 grid-template-areas: "links" "preview";
             }
+
             .app[data-tab="advanced"] .work {
                 grid-template-rows: 45vh 40vh 70vh auto;
                 grid-template-areas: "links" "json" "preview" "errors";
             }
+
             .app[data-tab="design"] .work {
                 grid-template-rows: 70vh 70vh auto;
                 grid-template-areas: "design" "preview" "errors";
             }
+
             .divider {
                 display: none;
             }
+
             .pane-preview,
             .pane-json,
             .pane-errors {
                 border-top: 1px solid var(--border);
             }
+
             .code > pre,
             .code > textarea {
                 padding: 12px 14px;
@@ -851,7 +958,7 @@
         </section>
         <div class="divider" data-divider="1" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize the panes" aria-valuemin="0" aria-valuemax="100" title="Drag to resize, double-click to reset"></div>
         <section class="pane pane-json" aria-label="JSON of the line">
-            <div class="pane-heading"><span>JSON</span><span class="json-modes"><button type="button" data-json-mode="line" title="The line the cursor is on, editable">Line <span class="json-where"></span></button><button type="button" data-json-mode="file" title="The whole text as parse() returns it: meta and items, editable">File</button></span></div>
+            <div class="pane-heading"><span>JSON</span><span class="json-modes"><button type="button" data-json-mode="line" title="The line the cursor is on, editable">Line <span data-json-where></span></button><button type="button" data-json-mode="file" title="The whole text as parse() returns it: meta and items, editable">File</button></span></div>
             <div class="code">
                 <pre aria-hidden="true"></pre>
                 <textarea aria-label="JSON of the line the cursor is on" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
@@ -861,7 +968,7 @@
         </section>
         <section class="pane pane-design" aria-label="Design">
             <div class="pane-heading design-heading">
-                <code class="design-name"></code>
+                <code data-design-name></code>
                 <span class="design-files" role="tablist" aria-label="Files of the design"></span>
                 <span class="design-state"></span>
                 <span class="design-actions">
@@ -890,59 +997,73 @@
 </div>
 
 <script src="lib/parse.js"></script>
+<script src="lib/plural.js"></script>
 <script src="lib/line_from_item.js"></script>
 <script src="playground-colours.js"></script>
 <script>
 // Each tab's pane widths, as parts of the whole width; the errors panel's height in px
-const SIZES_DEFAULT = {basic: [1 / 3], advanced: [1 / 3, 1 / 3], design: [2 / 3], errors: 76};
+const SIZES_DEFAULT = {basic: [1/3], advanced: [1/3, 1/3], design: [2/3], errors: 76};
+// The longest data url a pasted picture keeps, in characters; a bigger one is drawn smaller to fit
+const PICTURE_URL_MAX = 100000;
+// The longest side a picture drawn smaller starts from, in pixels
+const PICTURE_SIDE_MAX = 1024;
+// Runs first in the preview: its errors, failed loads and console.error go to the Playground
+const PREVIEW_ERRORS_HOOK = `(function () {
+    function send(message, source, line, load) {
+        parent.postMessage({type: 'navplace:error', message: String(message), source: source || '', line: line || 0, load: !!load}, '*');
+    }
+    function where_of(error) {
+        const stack_match = String((error && error.stack) || '').match(/(about:srcdoc|blob:[^\\s)]+?|https?:[^\\s)]+?):(\\d+):\\d+/);
+        return stack_match ? [stack_match[1], Number(stack_match[2])] : ['', 0];
+    }
+    function error_event_send(event) {
+        const target = event.target;
+        if (target && (target !== window) && (target.src || target.href)) {
+            send(\`Could not load \${target.src || target.href}\`, target.src || target.href, 0, true);
+            return;
+        }
+        send(event.message, event.filename, event.lineno);
+    }
+    window.addEventListener('error', error_event_send, true);
+    window.addEventListener('unhandledrejection', function (event) {
+        const where = where_of(event.reason);
+        send(\`Unhandled: \${(event.reason && event.reason.message) || event.reason}\`, where[0], where[1]);
+    });
+    const console_error = console.error;
+    console.error = function () {
+        const error = Array.from(arguments).find(v => v instanceof Error);
+        const where = where_of(error);
+        send(Array.from(arguments).map(v => (v instanceof Error) ? v.message : String(v)).join(' '), where[0], where[1]);
+        return console_error.apply(console, arguments);
+    };
+})();`.replace(/\n\s*/g, ' ');
 
 main();
 
 async function main()
 {
-    const work = document.querySelector('.work');
-    const app = document.querySelector('.app');
-    const editor = document.querySelector('.pane-editor textarea');
-    const editor_colours = document.querySelector('.pane-editor pre');
-    const json_editor = document.querySelector('.pane-json textarea');
-    const json_colours = document.querySelector('.pane-json .code > pre');
-    const json_locked = document.querySelector('.json-locked');
-    const json_error = document.querySelector('.json-error');
-    const json_where = document.querySelector('.json-where');
-    const frame = document.querySelector('.pane-preview iframe');
-    const design_select = document.querySelector('.toolbar select');
-    const status = document.querySelector('.status');
-    const dividers = document.querySelectorAll('.divider[data-divider]');
-    const divider_errors = document.querySelector('.divider-errors');
-    const copy_button = document.querySelector('[data-action="copy"]');
     let designs = null;
     let frame_design = null;
     let frame_ready = false;
     // The preview page has had the links since it loaded
     let frame_has_text = false;
-    let refocus = false;
-    let render_timer;
-    const sizes = load_sizes();
+    let refocus_element = null;
+    let text_refresh_timer;
     let sample_request = null;
     let copy_timer;
-    let tab = load_tab();
+    let tab = tab_load();
     let current_line = 1;
     let json_line = null;
     // 'line' or 'file'
-    let json_mode = load_json_mode();
+    let json_mode = json_mode_load();
     // The lines of the file's JSON lit last, so it scrolls only when the cursor moves to another part
     let json_file_lit = null;
     // The file's JSON as the pane last showed it
     let json_file_shown = null;
     let preview_observer = null;
-    const design_editor = document.querySelector('.pane-design textarea');
-    const design_colours = document.querySelector('.pane-design .code > pre:not(.gutter)');
-    const design_gutter = document.querySelector('.pane-design .gutter');
-    const design_load_button = document.querySelector('[data-action="design-load"]');
-    const design_undo_button = document.querySelector('[data-action="design-undo"]');
     let files_by_design = {};
     // The design's code, the same under every tab: {name, all, files, originals, current}
-    let design = load_design_draft();
+    let design = design_draft_load();
     let design_undo = null;
     let design_request = null;
     let design_timer;
@@ -951,14 +1072,12 @@ async function main()
     let links_count = 0;
     // Links % ns leaves out of items
     let left_out_count = 0;
-    // Unedited code of designs the text names while the Design tab holds another's edits
-    const fetched_designs = {};
     // {where: {file, line} | null, what, count}; the parser's error and the preview's own
     let parse_error = null;
     // The lines parse() skipped, as entries of the errors panel
     let parse_warnings = [];
     let preview_errors = [];
-    let blob_files = {};
+    let file_by_blob_url = {};
     // What the last pasted or renamed picture did, shown in the status line for a while
     let editor_note = '';
     let editor_note_timer;
@@ -971,23 +1090,47 @@ async function main()
     // {line, name}: the `@name` the line had when the cursor came to it; only that one renames a picture,
     // so typing a new `@name` on a link never renames the picture whose name it passes through
     let picture_line_entry = null;
+    let picture_renaming = false;
+
+    const work = document.querySelector('.work');
+    const app = document.querySelector('.app');
+    const editor = document.querySelector('.pane-editor textarea');
+    const editor_colours = document.querySelector('.pane-editor pre');
+    const json_editor = document.querySelector('.pane-json textarea');
+    const json_colours = document.querySelector('.pane-json .code > pre');
+    const json_locked = document.querySelector('.json-locked');
+    const json_error = document.querySelector('.json-error');
+    const json_where = document.querySelector('[data-json-where]');
+    const frame = document.querySelector('.pane-preview iframe');
+    const design_select = document.querySelector('.toolbar select');
+    const status = document.querySelector('.status');
+    const dividers = document.querySelectorAll('.divider[data-divider]');
+    const divider_errors = document.querySelector('.divider-errors');
+    const copy_button = document.querySelector('[data-action="copy"]');
+    const sizes = sizes_load();
+    const design_editor = document.querySelector('.pane-design textarea');
+    const design_colours = document.querySelector('.pane-design .code > pre:not(.gutter)');
+    const design_gutter = document.querySelector('.pane-design .gutter');
+    const design_load_button = document.querySelector('[data-action="design-load"]');
+    const design_undo_button = document.querySelector('[data-action="design-undo"]');
+    // Unedited code of designs the text names while the Design tab holds another's edits
+    const design_by_name = {};
     // Hashes of the texts a rename followed, a keystroke in and its links not yet renamed: an undo or
     // redo that lands on one takes one step more, so one Ctrl+Z takes back the keystroke and the links
     const picture_rename_marks = new Set();
-    let picture_renaming = false;
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
 
     document.querySelector('.theme-switch').addEventListener('click', function () {
-        save_theme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+        theme_save((document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark');
     });
 
     editor.addEventListener('input', function () {
-        save_draft(editor.value);
-        clearTimeout(render_timer);
-        render_timer = setTimeout(render, 300);
-        render_cursor_line();
+        draft_save(editor.value);
+        clearTimeout(text_refresh_timer);
+        text_refresh_timer = setTimeout(refresh_text, 300);
+        refresh_cursor_line();
     });
     // Ctrl+V with a picture and no text of its own: a `% picture` line at the end of the file, as a data url
     editor.addEventListener('paste', function (event) {
@@ -1004,14 +1147,14 @@ async function main()
     editor.addEventListener('input', function (event) {
         const before = picture_text;
         picture_text = null;
-        if (picture_renaming || before === null) {
+        if (picture_renaming || (before === null)) {
             return;
         }
-        if (event.inputType === 'historyUndo' || event.inputType === 'historyRedo') {
+        if ((event.inputType === 'historyUndo') || (event.inputType === 'historyRedo')) {
             picture_rename = null;
-            if (picture_rename_marks.has(hash_of_text(editor.value))) {
+            if (picture_rename_marks.has(hash_from_text(editor.value))) {
                 picture_renaming = true;
-                document.execCommand(event.inputType === 'historyUndo' ? 'undo' : 'redo');
+                document.execCommand((event.inputType === 'historyUndo') ? 'undo' : 'redo');
                 picture_renaming = false;
             }
             return;
@@ -1022,10 +1165,10 @@ async function main()
         if (document.activeElement !== editor) {
             return;
         }
-        const n = line_at(editor.value, editor.selectionStart);
+        const n = line_from_offset(editor.value, editor.selectionStart);
         if (picture_line_entry?.line !== n) {
-            const [start, end] = line_range(editor.value, n);
-            picture_line_entry = {line: n, name: picture_ref_of_line(editor.value.slice(start, end))};
+            const [begin, end] = range_from_line(editor.value, n);
+            picture_line_entry = {line: n, name: picture_ref_of_line(editor.value.slice(begin, end))};
         }
     });
     editor.addEventListener('scroll', () => code_scroll_sync(editor, editor_colours));
@@ -1037,33 +1180,33 @@ async function main()
     for (const button of document.querySelectorAll('[data-json-mode]')) {
         button.addEventListener('click', function () {
             json_mode = button.dataset.jsonMode;
-            save_json_mode(json_mode);
+            json_mode_save(json_mode);
             json_line = null;
             json_file_lit = null;
-            render_cursor_line();
+            refresh_cursor_line();
         });
     }
     // The JSON follows the cursor through the links, whatever line it is on
     document.addEventListener('selectionchange', function () {
-        if (document.activeElement === editor && line_at(editor.value, editor.selectionStart) !== current_line) {
-            render_cursor_line();
+        if ((document.activeElement === editor) && (line_from_offset(editor.value, editor.selectionStart) !== current_line)) {
+            refresh_cursor_line();
         }
     });
     for (const button of document.querySelectorAll('.tabs [data-tab]')) {
         button.addEventListener('click', function () {
             tab = button.dataset.tab;
-            save_tab(tab);
-            render_tab();
-            render();
+            tab_save(tab);
+            refresh_tab();
+            refresh_text();
         });
     }
     design_editor.addEventListener('input', function () {
         design.files[design.current] = design_editor.value;
         design_undo = null;
-        save_design_draft(design);
-        render_design_pane(false);
+        design_draft_save(design);
+        refresh_design_pane(false);
         clearTimeout(design_timer);
-        design_timer = setTimeout(preview_update, 400);
+        design_timer = setTimeout(refresh_preview, 400);
     });
     design_editor.addEventListener('scroll', function () {
         code_scroll_sync(design_editor, design_colours);
@@ -1072,23 +1215,25 @@ async function main()
     // Chrome's insertText fires two input events per line it inserts: while textarea_text_replace runs, the first
     // beforeinput goes through and the rest wait; one input follows the whole edit
     let text_replacing = null;
-    document.addEventListener('beforeinput', function (event) {
+    function text_replacing_beforeinput(event) {
         if (text_replacing?.textarea === event.target) {
             if (text_replacing.before_sent) {
                 event.stopImmediatePropagation();
             }
             text_replacing.before_sent = true;
         }
-    }, true);
-    document.addEventListener('input', function (event) {
+    }
+    function text_replacing_input(event) {
         if (text_replacing?.textarea === event.target) {
             event.stopImmediatePropagation();
         }
-    }, true);
+    }
+    document.addEventListener('beforeinput', text_replacing_beforeinput, true);
+    document.addEventListener('input', text_replacing_input, true);
     // Tab indents and Shift+Tab outdents by 4 spaces, every selected line alike; Ctrl+Z takes it back like any typing
     for (const textarea of [editor, design_editor]) {
         textarea.addEventListener('keydown', function (event) {
-            if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey) {
+            if ((event.key === 'Tab') && !event.ctrlKey && !event.altKey && !event.metaKey) {
                 event.preventDefault();
                 textarea_tab(textarea, event.shiftKey);
             }
@@ -1099,50 +1244,50 @@ async function main()
         const previous = design;
         if (await design_load(text_design)) {
             design_undo = previous;
-            render_design_pane(true);
+            refresh_design_pane(true);
         }
     });
     design_undo_button.addEventListener('click', function () {
         design = design_undo;
         design_undo = null;
-        save_design_draft(design);
-        render_design_pane(true);
-        preview_update();
+        design_draft_save(design);
+        refresh_design_pane(true);
+        refresh_preview();
     });
     // Picking a design loads its sample; without one, only the design line changes
     design_select.addEventListener('change', async function () {
-        const design = design_select.value;
-        const sample = await load_sample(design);
+        const design_name = design_select.value;
+        const sample = await sample_load(design_name);
         if (sample !== undefined) {
-            replace_text(sample ?? format_design(editor.value, design));
+            text_replace(sample ?? text_design_set(editor.value, design_name));
         }
     });
     document.querySelector('[data-action="reset"]').addEventListener('click', async function () {
-        const sample = await load_sample(frame_design ?? 'showcase');
+        const sample = await sample_load(frame_design ?? 'showcase');
         if (typeof sample === 'string') {
-            replace_text(sample);
+            text_replace(sample);
         }
     });
-    copy_button.addEventListener('click', copy);
-    document.querySelector('[data-action="codepen"]').addEventListener('click', () => open_codepen(format_snippet(editor.value.trim())));
+    copy_button.addEventListener('click', embed_copy);
+    document.querySelector('[data-action="codepen"]').addEventListener('click', () => codepen_open(render_embed_snippet(editor.value.trim())));
 
     // A design says it is ready on every load; it gets the text in reply
     window.addEventListener('message', function (event) {
-        if (event.source === frame.contentWindow && event.data?.type === 'navplace:error') {
+        if ((event.source === frame.contentWindow) && (event.data?.type === 'navplace:error')) {
             preview_error_add(event.data);
             return;
         }
-        if (event.source !== frame.contentWindow || event.data?.type !== 'navplace:ready') {
+        if ((event.source !== frame.contentWindow) || (event.data?.type !== 'navplace:ready')) {
             return;
         }
         frame_ready = true;
-        post_text();
+        text_post();
     });
     // A design focuses its own search box on load; typing keeps going in the editor
     frame.addEventListener('load', function () {
-        if (refocus) {
-            refocus.focus();
-            refocus = null;
+        if (refocus_element) {
+            refocus_element.focus();
+            refocus_element = null;
         }
         preview_observe();
     });
@@ -1161,13 +1306,13 @@ async function main()
         divider.addEventListener('pointermove', function (event) {
             if (divider.hasPointerCapture(event.pointerId)) {
                 const rect = work.getBoundingClientRect();
-                sizes_move(index, (event.clientX - rect.left) / rect.width);
+                sizes_move(index, (event.clientX - rect.left)/rect.width);
             }
         });
         divider.addEventListener('lostpointercapture', function () {
             divider.toggleAttribute('data-dragging', false);
             work.removeAttribute('data-dragging');
-            save_sizes(sizes);
+            sizes_save(sizes);
         });
         divider.addEventListener('keydown', function (event) {
             const step = event.shiftKey ? 0.1 : 0.02;
@@ -1182,12 +1327,12 @@ async function main()
                 return;
             }
             event.preventDefault();
-            save_sizes(sizes);
+            sizes_save(sizes);
         });
         divider.addEventListener('dblclick', function () {
             sizes[tab] = SIZES_DEFAULT[tab].slice();
-            render_sizes();
-            save_sizes(sizes);
+            refresh_sizes();
+            sizes_save(sizes);
         });
     }
     divider_errors.addEventListener('pointerdown', function (event) {
@@ -1203,13 +1348,13 @@ async function main()
         if (divider_errors.hasPointerCapture(event.pointerId)) {
             const list = document.querySelector('.errors-list');
             sizes.errors = list.getBoundingClientRect().bottom - event.clientY - (list.offsetTop - divider_errors.offsetTop);
-            render_sizes();
+            refresh_sizes();
         }
     });
     divider_errors.addEventListener('lostpointercapture', function () {
         divider_errors.toggleAttribute('data-dragging', false);
         work.removeAttribute('data-dragging');
-        save_sizes(sizes);
+        sizes_save(sizes);
     });
     divider_errors.addEventListener('keydown', function (event) {
         const step = event.shiftKey ? 60 : 12;
@@ -1223,57 +1368,57 @@ async function main()
             return;
         }
         event.preventDefault();
-        render_sizes();
-        save_sizes(sizes);
+        refresh_sizes();
+        sizes_save(sizes);
     });
     divider_errors.addEventListener('dblclick', function () {
         sizes.errors = SIZES_DEFAULT.errors;
-        render_sizes();
-        save_sizes(sizes);
+        refresh_sizes();
+        sizes_save(sizes);
     });
-    window.addEventListener('resize', render_sizes);
+    window.addEventListener('resize', refresh_sizes);
 
-    render_sizes();
+    refresh_sizes();
     // The first preview waits for the list: a saved draft may name a design that is gone
-    const designs_loaded = load_designs();
-    editor.value = load_draft() ?? await load_sample('showcase') ?? '';
-    render_tab();
+    const designs_loaded = refresh_designs();
+    editor.value = draft_load() ?? await sample_load('showcase') ?? '';
+    refresh_tab();
     await designs_loaded;
-    render();
+    refresh_text();
 
-    function render_tab() {
+    function refresh_tab() {
         app.dataset.tab = tab;
-        render_sizes();
+        refresh_sizes();
         for (const button of document.querySelectorAll('.tabs [data-tab]')) {
             button.setAttribute('aria-selected', String(button.dataset.tab === tab));
         }
-        render_cursor_line();
-        render_design_pane(true);
+        refresh_cursor_line();
+        refresh_design_pane(true);
     }
 
     // The colours, the JSON and the lit tile follow the line the cursor is on
-    function render_cursor_line() {
-        current_line = line_at(editor.value, editor.selectionStart);
+    function refresh_cursor_line() {
+        current_line = line_from_offset(editor.value, editor.selectionStart);
         if (tab === 'design') {
             preview_mark();
             return;
         }
         // Basic has the colours too; the line and its JSON are Advanced's
-        editor_colours.innerHTML = render_links_html(editor.value, (tab === 'advanced') ? current_line : 0, left_out_of_text(editor.value)?.lines);
+        editor_colours.innerHTML = render_links_html(editor.value, (tab === 'advanced') ? current_line : 0, left_out_from_text(editor.value)?.note_by_line);
         code_scroll_sync(editor, editor_colours);
         // What is typed in the JSON is not taken from under the person typing it
-        if (tab === 'advanced' && json_mode === 'file') {
+        if ((tab === 'advanced') && (json_mode === 'file')) {
             if (document.activeElement !== json_editor) {
-                json_file_render();
+                refresh_json_file();
             }
         }
-        else if (tab === 'advanced' && (document.activeElement !== json_editor || json_line !== current_line)) {
-            json_render();
+        else if ((tab === 'advanced') && ((document.activeElement !== json_editor) || (json_line !== current_line))) {
+            refresh_json();
         }
         preview_mark();
     }
 
-    function json_modes_render() {
+    function refresh_json_modes() {
         json_where.textContent = String(current_line);
         for (const button of document.querySelectorAll('[data-json-mode]')) {
             button.setAttribute('aria-pressed', String(button.dataset.jsonMode === json_mode));
@@ -1282,6 +1427,290 @@ async function main()
     }
 
     // The whole text as parse() returns it; the part of the cursor's line lit and scrolled into view
+    function refresh_json_file() {
+        const view = json_view_from_file(editor.value, current_line);
+        json_line = null;
+        refresh_json_modes();
+        json_editor.value = view.json;
+        json_editor.readOnly = !!view.error;
+        try {
+            json_file_shown = JSON.parse(view.json);
+        }
+        catch {
+            json_file_shown = null;
+        }
+        json_colours.innerHTML = view.html;
+        json_locked.textContent = view.locked;
+        json_error.textContent = view.error ?? '';
+        json_error.toggleAttribute('data-warn', !!view.warning);
+        const lit = view.lit ? view.lit.join('-') : null;
+        if (view.lit && (lit !== json_file_lit)) {
+            const style = getComputedStyle(json_editor);
+            const line_height = parseFloat(style.lineHeight);
+            const top = parseFloat(style.paddingTop) + view.lit[0]*line_height;
+            const bottom = parseFloat(style.paddingTop) + (view.lit[1] + 1)*line_height;
+            if ((top < json_editor.scrollTop) || (bottom > json_editor.scrollTop + json_editor.clientHeight)) {
+                json_editor.scrollTop = top - 2*line_height;
+            }
+        }
+        json_file_lit = lit;
+        code_scroll_sync(json_editor, json_colours);
+    }
+
+    function refresh_json() {
+        const view = json_view_from_line(editor.value, current_line);
+        json_line = current_line;
+        refresh_json_modes();
+        json_editor.value = view.json;
+        json_editor.readOnly = !view.editable;
+        json_colours.innerHTML = render_json_html(view.json);
+        json_locked.textContent = view.locked;
+        json_error.textContent = view.error ?? '';
+        json_error.toggleAttribute('data-warn', !!view.warning);
+        code_scroll_sync(json_editor, json_colours);
+    }
+
+    function refresh_text() {
+        let parsed;
+        try {
+            parsed = parse(editor.value);
+        }
+        catch (error) {
+            status.textContent = `${error.message}. The preview shows the last text that parsed.`;
+            status.dataset.error = '';
+            parse_error = {where: {file: 'links.txt', line: line_of_parse_error(editor.value)}, what: error.message, count: 1};
+            parse_warnings = [];
+            refresh_errors();
+            return;
+        }
+        parse_error = null;
+        parse_warnings = (parsed.warnings ?? []).map(v => ({where: {file: 'links.txt', line: v.line}, what: v.message, count: 1, warning: true}));
+        refresh_errors();
+        let name = parsed.meta.design || 'basic';
+        design_select.value = name;
+        // A half-typed name would load a missing page: the design shown stays,
+        // or basic when none is shown yet
+        if (designs && !designs.includes(name)) {
+            status.textContent = `No design named "${name}". The preview shows "${frame_design ?? 'basic'}".`;
+            status.dataset.error = '';
+            if (frame_design) {
+                if (frame_ready) {
+                    text_post();
+                }
+                return;
+            }
+            name = 'basic';
+        }
+        else {
+            delete status.dataset.error;
+        }
+        links_count = parsed.items.length;
+        left_out_count = left_out_from_text(editor.value)?.count ?? 0;
+        text_design = name;
+        // The code follows the text's design until it is edited; then only Load replaces it
+        if (!design_is_edited(design) && (design?.name !== name)) {
+            design_load(name);
+        }
+        refresh_design_pane(false);
+        refresh_preview();
+    }
+
+    // The preview shows the text's design. Its edited code shows only while the text names
+    // that design; the Design tab shows its code whatever the text names. Basic shows a
+    // design's own page while its code is untouched; the other tabs draw the code, which
+    // lets the errors panel see the page's errors.
+    function refresh_preview() {
+        let shown = null;
+        let key;
+
+        const own = !!design && ((tab === 'design') || (design.name === text_design));
+        if (own && ((tab !== 'basic') || design_is_edited(design))) {
+            shown = design;
+        }
+        else if (tab === 'basic') {
+            key = `src:${text_design}`;
+        }
+        else if (design_by_name[text_design]) {
+            shown = design_by_name[text_design];
+        }
+        else {
+            const name = text_design;
+            function design_keep(value) {
+                design_by_name[name] = value;
+                refresh_preview();
+            }
+            design_fetch(name).then(design_keep, e => preview_errors_set(`The code of "${name}" did not load: ${e.message}.`));
+            return;
+        }
+        if (shown) {
+            key = `doc:${shown.name}:${JSON.stringify(shown.files)}`;
+        }
+        refresh_status();
+        if (key === preview_key) {
+            if (frame_ready) {
+                text_post();
+            }
+            return;
+        }
+        preview_key = key;
+        frame_ready = false;
+        frame_has_text = false;
+        preview_errors = [];
+        refresh_errors();
+        refocus_element = [editor, json_editor, design_editor].includes(document.activeElement) ? document.activeElement : null;
+        if (!shown) {
+            frame_design = text_design;
+            frame.removeAttribute('srcdoc');
+            frame.src = `designs/${encodeURIComponent(text_design)}/index.html`;
+        }
+        else {
+            const base = new URL(`designs/${encodeURIComponent(shown.name)}/`, location.href).href;
+            frame_design = shown.name;
+            for (const url of Object.keys(file_by_blob_url)) {
+                URL.revokeObjectURL(url);
+            }
+            file_by_blob_url = design_blobs_create(shown, base);
+            frame.srcdoc = render_design_doc(shown, base, file_by_blob_url);
+        }
+    }
+
+    // Says when the preview is code edited in the Design tab, not the design's own page
+    function refresh_status() {
+        if (status.dataset.error !== undefined) {
+            return;
+        }
+        const edited = !!design && design_is_edited(design) && ((tab === 'design') || (design.name === text_design));
+        const links_part = plural(links_count, '# link', '# links');
+        const left_out_part = left_out_count ? `${left_out_count} left out by % ns` : '';
+        const skipped_part = parse_warnings.length ? plural(parse_warnings.length, '# line skipped, see Warnings', '# lines skipped, see Warnings') : '';
+        const edited_part = edited ? `${design.name}, edited in Design` : '';
+        status.textContent = [links_part, left_out_part, skipped_part, edited_part, editor_note].filter(Boolean).join(' · ');
+        // Cut short when the toolbar is narrow; the whole line on hover
+        status.title = status.textContent;
+        status.toggleAttribute('data-warn', parse_warnings.length > 0);
+    }
+
+    function refresh_errors() {
+        const errors = [...(parse_error ? [parse_error] : []), ...preview_errors, ...parse_warnings];
+        const error_count = errors.length - parse_warnings.length;
+        const title = document.querySelector('.errors-title');
+        const errors_part = error_count ? `Errors: ${error_count}` : '';
+        const warnings_part = parse_warnings.length ? `Warnings: ${parse_warnings.length}` : '';
+        const counts = [errors_part, warnings_part].filter(Boolean).join(' · ');
+        title.textContent = counts || 'No errors';
+        if (errors.length) {
+            title.setAttribute('data-count', error_count ? 'errors' : 'warnings');
+        }
+        else {
+            title.removeAttribute('data-count');
+        }
+        document.querySelector('.pane-errors').toggleAttribute('data-count', errors.length > 0);
+        work.toggleAttribute('data-errors', errors.length > 0);
+        document.querySelector('.errors-list').replaceChildren(...errors.map(function (entry) {
+            const li = document.createElement('li');
+            li.toggleAttribute('data-warning', !!entry.warning);
+            const reachable = !!entry.where?.line && ((entry.where.file === 'links.txt') || (!!design && (entry.where.file in design.files)));
+            const where = document.createElement(reachable ? 'button' : 'span');
+            const line_part = entry.where?.line ? ` : ${entry.where.line}` : '';
+            where.className = 'errors-where';
+            where.textContent = entry.where ? `${entry.where.file}${line_part}` : 'preview';
+            if (reachable) {
+                where.type = 'button';
+                where.title = 'Go to this line';
+                where.addEventListener('click', () => error_go(entry.where));
+            }
+            const what = document.createElement('span');
+            what.className = 'errors-what';
+            what.textContent = entry.what;
+            li.append(where, what);
+            if (entry.count > 1) {
+                const count = document.createElement('span');
+                count.className = 'errors-count';
+                count.textContent = `×${entry.count}`;
+                li.append(count);
+            }
+            return li;
+        }));
+    }
+
+    // `whole` puts the current file into the editor; otherwise only the marks around it change
+    function refresh_design_pane(whole) {
+        if (!design) {
+            return;
+        }
+        const edited = design_is_edited(design);
+        document.querySelector('[data-design-name]').textContent = `designs/${design.name}/`;
+        const files_element = document.querySelector('.design-files');
+        files_element.replaceChildren(...design.all.map(function (file) {
+            if (!(file in design.files)) {
+                const span = document.createElement('span');
+                span.textContent = file;
+                return span;
+            }
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.role = 'tab';
+            button.textContent = file;
+            button.setAttribute('aria-selected', String(file === design.current));
+            button.toggleAttribute('data-edited', design.files[file] !== design.originals[file]);
+            button.addEventListener('click', function () {
+                design.current = file;
+                design_draft_save(design);
+                refresh_design_pane(true);
+            });
+            return button;
+        }));
+        document.querySelector('.design-state').textContent = edited ? 'edited' : '';
+        design_load_button.textContent = `Load ${text_design}`;
+        design_load_button.title = `Replace this code with the files of designs/${text_design}/`;
+        design_load_button.hidden = !edited && (design.name === text_design);
+        design_undo_button.hidden = !design_undo;
+        if (whole && (design_editor.value !== design.files[design.current])) {
+            design_editor.value = design.files[design.current];
+            design_editor.scrollTop = 0;
+        }
+        if (tab === 'design') {
+            design_colours.innerHTML = render_code_html(design_editor.value);
+            design_gutter.textContent = design_editor.value.split('\n').map((v, i) => i + 1).join('\n');
+            code_scroll_sync(design_editor, design_colours);
+            design_gutter.scrollTop = design_editor.scrollTop;
+        }
+    }
+
+    // A narrow window squeezes the panes without forgetting their sizes
+    function refresh_sizes() {
+        const parts = sizes[tab];
+        const min = Math.min(200/work.clientWidth, 0.3);
+        const shown = parts.map(v => Math.max(min, v));
+        work.style.setProperty('--a', `${(shown[0]*100).toFixed(2)}%`);
+        work.style.setProperty('--b', `${((shown[1] ?? 0)*100).toFixed(2)}%`);
+        let at = 0;
+        for (const divider of dividers) {
+            at += shown[Number(divider.dataset.divider) - 1] ?? 0;
+            divider.setAttribute('aria-valuenow', String(Math.round(at*100)));
+        }
+        sizes.errors = Math.min(Math.max(40, sizes.errors), Math.max(40, work.clientHeight*0.6));
+        work.style.setProperty('--errors-height', `${Math.round(sizes.errors)}px`);
+    }
+
+    async function refresh_designs() {
+        try {
+            const response = await fetch('designs/index.json');
+            const options = await response.json();
+            design_select.replaceChildren(...options.map(v => new Option(v.label, v.value)));
+            design_select.removeAttribute('title');
+            design_select.disabled = false;
+            designs = options.map(v => v.value);
+            files_by_design = Object.fromEntries(options.map(v => [v.value, v.files ?? ['index.html']]));
+        }
+        catch {
+            // The reason is written on the select itself
+            design_select.replaceChildren(new Option('Designs did not load', ''));
+            design_select.title = 'designs/index.json did not load';
+            design_select.disabled = true;
+        }
+    }
+
     // The whole file's JSON, edited: each changed link and % value goes into its own line;
     // broken JSON waits, marked, the text untouched
     function json_file_apply() {
@@ -1297,62 +1726,19 @@ async function main()
         const result = text_from_file_json(editor.value, edited, json_file_shown);
         json_error.textContent = result.error ?? result.note ?? '';
         json_error.toggleAttribute('data-warn', !result.error && !!result.note);
-        if (result.error || result.text === editor.value) {
+        if (result.error || (result.text === editor.value)) {
             return;
         }
-        const start = editor.selectionStart;
+        const begin = editor.selectionStart;
         const end = editor.selectionEnd;
         editor.value = result.text;
-        editor.setSelectionRange(Math.min(start, result.text.length), Math.min(end, result.text.length));
-        save_draft(editor.value);
-        clearTimeout(render_timer);
-        render_timer = setTimeout(render, 300);
-        editor_colours.innerHTML = render_links_html(editor.value, current_line, left_out_of_text(editor.value)?.lines);
+        editor.setSelectionRange(Math.min(begin, result.text.length), Math.min(end, result.text.length));
+        draft_save(editor.value);
+        clearTimeout(text_refresh_timer);
+        text_refresh_timer = setTimeout(refresh_text, 300);
+        editor_colours.innerHTML = render_links_html(editor.value, current_line, left_out_from_text(editor.value)?.note_by_line);
         code_scroll_sync(editor, editor_colours);
         preview_mark();
-    }
-
-    function json_file_render() {
-        const view = json_view_of_file(editor.value, current_line);
-        json_line = null;
-        json_modes_render();
-        json_editor.value = view.json;
-        json_editor.readOnly = !!view.error;
-        try {
-            json_file_shown = JSON.parse(view.json);
-        }
-        catch {
-            json_file_shown = null;
-        }
-        json_colours.innerHTML = view.html;
-        json_locked.textContent = view.locked;
-        json_error.textContent = view.error ?? '';
-        json_error.toggleAttribute('data-warn', !!view.warning);
-        const lit = view.lit ? view.lit.join('-') : null;
-        if (view.lit && lit !== json_file_lit) {
-            const style = getComputedStyle(json_editor);
-            const line_height = parseFloat(style.lineHeight);
-            const top = parseFloat(style.paddingTop) + view.lit[0] * line_height;
-            const bottom = parseFloat(style.paddingTop) + (view.lit[1] + 1) * line_height;
-            if (top < json_editor.scrollTop || bottom > json_editor.scrollTop + json_editor.clientHeight) {
-                json_editor.scrollTop = top - 2 * line_height;
-            }
-        }
-        json_file_lit = lit;
-        code_scroll_sync(json_editor, json_colours);
-    }
-
-    function json_render() {
-        const view = json_view_of_line(editor.value, current_line);
-        json_line = current_line;
-        json_modes_render();
-        json_editor.value = view.json;
-        json_editor.readOnly = !view.editable;
-        json_colours.innerHTML = render_json_html(view.json);
-        json_locked.textContent = view.locked;
-        json_error.textContent = view.error ?? '';
-        json_error.toggleAttribute('data-warn', !!view.warning);
-        code_scroll_sync(json_editor, json_colours);
     }
 
     // Valid JSON goes into its line at once; broken JSON waits, marked, the text untouched
@@ -1361,9 +1747,10 @@ async function main()
             json_file_apply();
             return;
         }
-        const range = line_range(editor.value, json_line);
-        const raw = editor.value.slice(range[0], range[1]);
         let edited;
+
+        const range = range_from_line(editor.value, json_line);
+        const raw = editor.value.slice(range[0], range[1]);
         try {
             edited = JSON.parse(json_editor.value);
         }
@@ -1384,11 +1771,11 @@ async function main()
             return;
         }
         editor.setRangeText(result.line, range[0], range[1], 'preserve');
-        save_draft(editor.value);
-        clearTimeout(render_timer);
-        render_timer = setTimeout(render, 300);
-        editor_colours.innerHTML = render_links_html(editor.value, current_line, left_out_of_text(editor.value)?.lines);
-        json_locked.textContent = json_view_of_line(editor.value, json_line).locked;
+        draft_save(editor.value);
+        clearTimeout(text_refresh_timer);
+        text_refresh_timer = setTimeout(refresh_text, 300);
+        editor_colours.innerHTML = render_links_html(editor.value, current_line, left_out_from_text(editor.value)?.note_by_line);
+        json_locked.textContent = json_view_from_line(editor.value, json_line).locked;
         preview_mark();
     }
 
@@ -1450,126 +1837,24 @@ async function main()
         preview_mark();
     }
 
-    function render() {
-        let parsed;
-        try {
-            parsed = parse(editor.value);
-        }
-        catch (error) {
-            status.textContent = `${error.message}. The preview shows the last text that parsed.`;
-            status.dataset.error = '';
-            parse_error = {where: {file: 'links.txt', line: line_of_parse_error(editor.value)}, what: error.message, count: 1};
-            parse_warnings = [];
-            render_errors();
-            return;
-        }
-        parse_error = null;
-        parse_warnings = (parsed.warnings ?? []).map(v => ({where: {file: 'links.txt', line: v.line}, what: v.message, count: 1, warning: true}));
-        render_errors();
-        let name = parsed.meta.design || 'basic';
-        design_select.value = name;
-        // A half-typed name would load a missing page: the design shown stays,
-        // or basic when none is shown yet
-        if (designs && !designs.includes(name)) {
-            status.textContent = `No design named "${name}". The preview shows "${frame_design ?? 'basic'}".`;
-            status.dataset.error = '';
-            if (frame_design) {
-                if (frame_ready) {
-                    post_text();
-                }
-                return;
-            }
-            name = 'basic';
-        }
-        else {
-            delete status.dataset.error;
-        }
-        links_count = parsed.items.length;
-        left_out_count = left_out_of_text(editor.value)?.count ?? 0;
-        text_design = name;
-        // The code follows the text's design until it is edited; then only Load replaces it
-        if (!design_is_edited(design) && design?.name !== name) {
-            design_load(name);
-        }
-        render_design_pane(false);
-        preview_update();
-    }
-
-    // The preview shows the text's design. Its edited code shows only while the text names
-    // that design; the Design tab shows its code whatever the text names. Basic shows a
-    // design's own page while its code is untouched; the other tabs draw the code, which
-    // lets the errors panel see the page's errors.
-    function preview_update() {
-        const own = !!design && (tab === 'design' || design.name === text_design);
-        let shown = null;
-        let key;
-        if (own && (tab !== 'basic' || design_is_edited(design))) {
-            shown = design;
-        }
-        else if (tab === 'basic') {
-            key = `src:${text_design}`;
-        }
-        else if (fetched_designs[text_design]) {
-            shown = fetched_designs[text_design];
-        }
-        else {
-            const name = text_design;
-            design_fetch(name).then(function (value) {
-                fetched_designs[name] = value;
-                preview_update();
-            }, e => preview_errors_set(`The code of "${name}" did not load: ${e.message}.`));
-            return;
-        }
-        if (shown) {
-            key = `doc:${shown.name}:${JSON.stringify(shown.files)}`;
-        }
-        status_render();
-        if (key === preview_key) {
-            if (frame_ready) {
-                post_text();
-            }
-            return;
-        }
-        preview_key = key;
-        frame_ready = false;
-        frame_has_text = false;
-        preview_errors = [];
-        render_errors();
-        refocus = [editor, json_editor, design_editor].includes(document.activeElement) ? document.activeElement : null;
-        if (!shown) {
-            frame_design = text_design;
-            frame.removeAttribute('srcdoc');
-            frame.src = `designs/${encodeURIComponent(text_design)}/index.html`;
-        }
-        else {
-            frame_design = shown.name;
-            for (const url of Object.keys(blob_files)) {
-                URL.revokeObjectURL(url);
-            }
-            blob_files = {};
-            frame.srcdoc = render_design_doc(shown, new URL(`designs/${encodeURIComponent(shown.name)}/`, location.href).href, blob_files);
-        }
-    }
-
-    // Says when the preview is code edited in the Design tab, not the design's own page
-    function status_render() {
-        if (status.dataset.error !== undefined) {
-            return;
-        }
-        const count = links_count;
-        const edited = !!design && design_is_edited(design) && (tab === 'design' || design.name === text_design);
-        const left_out = left_out_count ? ` · ${left_out_count} left out by % ns` : '';
-        const skipped = parse_warnings.length ? ` · ${parse_warnings.length} ${parse_warnings.length === 1 ? 'line' : 'lines'} skipped, see Warnings` : '';
-        const note = editor_note ? ` · ${editor_note}` : '';
-        status.textContent = `${count} ${count === 1 ? 'link' : 'links'}${left_out}${skipped}${edited ? ` · ${design.name}, edited in Design` : ''}${note}`;
-        // Cut short when the toolbar is narrow; the whole line on hover
-        status.title = status.textContent;
-        status.toggleAttribute('data-warn', parse_warnings.length > 0);
-    }
-
     function preview_errors_set(message) {
         preview_errors = [{where: null, what: message, count: 1}];
-        render_errors();
+        refresh_errors();
+    }
+
+    // The same error again counts up instead of making a new row
+    function preview_error_add(data) {
+        const where = error_where_from_source(data.source, data.line, frame_design, file_by_blob_url);
+        const what = String(data.message).slice(0, 500);
+        const same = preview_errors.find(v => (v.what === what) && (JSON.stringify(v.where) === JSON.stringify(where)));
+        if (same) {
+            same.count += 1;
+        }
+        else if (preview_errors.length < 50) {
+            // A load that failed after the links came in is a picture or icon of theirs
+            preview_errors.push({where, what, count: 1, url: (data.load && frame_has_text) ? data.source : null});
+        }
+        refresh_errors();
     }
 
     // The text files of a design's folder, as {name, all, files, originals, current}
@@ -1589,8 +1874,9 @@ async function main()
 
     // The Design tab takes a design's files; true once they are in
     async function design_load(name) {
-        const request = design_request = {};
         let value;
+
+        const request = design_request = {};
         try {
             value = await design_fetch(name);
         }
@@ -1603,67 +1889,10 @@ async function main()
             return false;
         }
         design = value;
-        save_design_draft(design);
-        render_design_pane(true);
-        preview_update();
+        design_draft_save(design);
+        refresh_design_pane(true);
+        refresh_preview();
         return true;
-    }
-
-    // The same error again counts up instead of making a new row
-    function preview_error_add(data) {
-        const where = error_where(data.source, data.line, frame_design, blob_files);
-        const what = String(data.message).slice(0, 500);
-        const same = preview_errors.find(v => v.what === what && JSON.stringify(v.where) === JSON.stringify(where));
-        if (same) {
-            same.count += 1;
-        }
-        else if (preview_errors.length < 50) {
-            // A load that failed after the links came in is a picture or icon of theirs
-            preview_errors.push({where, what, count: 1, url: (data.load && frame_has_text) ? data.source : null});
-        }
-        render_errors();
-    }
-
-    function render_errors() {
-        const errors = [...(parse_error ? [parse_error] : []), ...preview_errors, ...parse_warnings];
-        const error_count = errors.length - parse_warnings.length;
-        const title = document.querySelector('.errors-title');
-        title.textContent = [
-            error_count ? `Errors: ${error_count}` : '',
-            parse_warnings.length ? `Warnings: ${parse_warnings.length}` : '',
-        ].filter(Boolean).join(' · ') || 'No errors';
-        if (errors.length) {
-            title.setAttribute('data-count', error_count ? 'errors' : 'warnings');
-        }
-        else {
-            title.removeAttribute('data-count');
-        }
-        document.querySelector('.pane-errors').toggleAttribute('data-count', errors.length > 0);
-        work.toggleAttribute('data-errors', errors.length > 0);
-        document.querySelector('.errors-list').replaceChildren(...errors.map(function (error) {
-            const li = document.createElement('li');
-            li.toggleAttribute('data-warning', !!error.warning);
-            const reachable = !!error.where?.line && (error.where.file === 'links.txt' || (!!design && error.where.file in design.files));
-            const where = document.createElement(reachable ? 'button' : 'span');
-            where.className = 'errors-where';
-            where.textContent = error.where ? `${error.where.file}${error.where.line ? ` : ${error.where.line}` : ''}` : 'preview';
-            if (reachable) {
-                where.type = 'button';
-                where.title = 'Go to this line';
-                where.addEventListener('click', () => error_go(error.where));
-            }
-            const what = document.createElement('span');
-            what.className = 'errors-what';
-            what.textContent = error.what;
-            li.append(where, what);
-            if (error.count > 1) {
-                const count = document.createElement('span');
-                count.className = 'errors-count';
-                count.textContent = `×${error.count}`;
-                li.append(count);
-            }
-            return li;
-        }));
     }
 
     // To the line: links.txt in Advanced, a design's file in Design
@@ -1672,81 +1901,37 @@ async function main()
         if (where.file === 'links.txt') {
             if (tab !== 'advanced') {
                 tab = 'advanced';
-                save_tab(tab);
-                render_tab();
+                tab_save(tab);
+                refresh_tab();
             }
         }
-        else if (design && where.file in design.files) {
+        else if (design && (where.file in design.files)) {
             design.current = where.file;
-            save_design_draft(design);
+            design_draft_save(design);
             if (tab !== 'design') {
                 tab = 'design';
-                save_tab(tab);
+                tab_save(tab);
             }
-            render_tab();
+            refresh_tab();
             textarea = design_editor;
         }
         else {
             return;
         }
-        const range = line_range(textarea.value, where.line);
+        const range = range_from_line(textarea.value, where.line);
         textarea.focus();
         textarea.setSelectionRange(range[0], range[1]);
         const line_height = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
-        textarea.scrollTop = Math.max(0, (where.line - 4) * line_height);
+        textarea.scrollTop = Math.max(0, (where.line - 4)*line_height);
         textarea.dispatchEvent(new Event('scroll'));
-        render_cursor_line();
-    }
-
-    // `whole` puts the current file into the editor; otherwise only the marks around it change
-    function render_design_pane(whole) {
-        if (!design) {
-            return;
-        }
-        const edited = design_is_edited(design);
-        document.querySelector('.design-name').textContent = `designs/${design.name}/`;
-        const files = document.querySelector('.design-files');
-        files.replaceChildren(...design.all.map(function (file) {
-            if (!(file in design.files)) {
-                const span = document.createElement('span');
-                span.textContent = file;
-                return span;
-            }
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.role = 'tab';
-            button.textContent = file;
-            button.setAttribute('aria-selected', String(file === design.current));
-            button.toggleAttribute('data-edited', design.files[file] !== design.originals[file]);
-            button.addEventListener('click', function () {
-                design.current = file;
-                save_design_draft(design);
-                render_design_pane(true);
-            });
-            return button;
-        }));
-        document.querySelector('.design-state').textContent = edited ? 'edited' : '';
-        design_load_button.textContent = `Load ${text_design}`;
-        design_load_button.title = `Replace this code with the files of designs/${text_design}/`;
-        design_load_button.hidden = !edited && design.name === text_design;
-        design_undo_button.hidden = !design_undo;
-        if (whole && design_editor.value !== design.files[design.current]) {
-            design_editor.value = design.files[design.current];
-            design_editor.scrollTop = 0;
-        }
-        if (tab === 'design') {
-            design_colours.innerHTML = render_code_html(design_editor.value);
-            design_gutter.textContent = design_editor.value.split('\n').map((v, i) => i + 1).join('\n');
-            code_scroll_sync(design_editor, design_colours);
-            design_gutter.scrollTop = design_editor.scrollTop;
-        }
+        refresh_cursor_line();
     }
 
     // null when the design has no sample; undefined when a later pick took over
-    async function load_sample(design) {
+    async function sample_load(design_name) {
         const request = sample_request = {};
         try {
-            const response = await fetch(`designs/${encodeURIComponent(design)}/links.txt`);
+            const response = await fetch(`designs/${encodeURIComponent(design_name)}/links.txt`);
             const text = response.ok ? (await response.text()).trim() : null;
             return (request === sample_request) ? text : undefined;
         }
@@ -1775,24 +1960,24 @@ async function main()
         const name = picture_name_from_file_name(file.name, picture_names_of_text(text));
         const glue = (text && !text.endsWith('\n')) ? '\n' : '';
         const line = `% picture ${name}: ${picture.url}`;
-        const n = line_at(text, Math.min(at, text.length));
-        const spans = item_spans_at_line(text, n);
+        const n = line_from_offset(text, Math.min(at, text.length));
+        const spans = item_spans_from_text(text, n);
         const shrunk = picture.note ? `, ${picture.note}` : '';
         editor.focus();
         if (spans) {
-            const line_start = line_range(text, n)[0];
+            const line_start = range_from_line(text, n)[0];
             const scroll = [editor.scrollTop, editor.scrollLeft];
-            const [start, end] = spans.image ? [line_start + spans.image[0], line_start + spans.image[1]] : [line_start + spans.href[0], line_start + spans.href[0]];
+            const [begin, end] = spans.image ? [line_start + spans.image[0], line_start + spans.image[1]] : [line_start + spans.href[0], line_start + spans.href[0]];
             const ref = spans.image ? `@${name}` : `@${name} `;
-            editor_text_replace(start, text.length, ref + text.slice(end) + glue + line);
-            editor.setSelectionRange(start + name.length + 1, start + name.length + 1);
+            editor_text_replace(begin, text.length, `${ref}${text.slice(end)}${glue}${line}`);
+            editor.setSelectionRange(begin + name.length + 1, begin + name.length + 1);
             picture_line_entry = {line: n, name};
             editor.scrollTop = scroll[0];
             editor.scrollLeft = scroll[1];
             editor_note_show(`pasted @${name} on line ${n}, the picture at the end${shrunk}`);
         }
         else {
-            editor_text_replace(text.length, text.length, glue + line);
+            editor_text_replace(text.length, text.length, `${glue}${line}`);
             const name_start = text.length + glue.length + '% picture '.length;
             editor.setSelectionRange(name_start, name_start + name.length);
             editor.scrollTop = editor.scrollHeight;
@@ -1809,33 +1994,44 @@ async function main()
     function picture_rename_follow(before, now) {
         const lines = now.split('\n');
         const lines_before = before.split('\n');
-        const n = line_at(now, editor.selectionStart);
-        if (lines.length !== lines_before.length || picture_rename?.line !== n) {
+        const n = line_from_offset(now, editor.selectionStart);
+        if ((lines.length !== lines_before.length) || (picture_rename?.line !== n)) {
             picture_rename = null;
         }
         if (lines.length !== lines_before.length) {
             return;
         }
-        const name_of = v => (kind === 'picture') ? picture_name_of_line(v) : picture_ref_of_line(v);
-        const kind = picture_rename?.kind ?? (picture_name_of_line(lines_before[n - 1]) ? 'picture' : (picture_ref_of_line(lines_before[n - 1]) ? 'link' : null));
+        function name_of(line) {
+            return (kind === 'picture') ? picture_name_of_line(line) : picture_ref_of_line(line);
+        }
+        let kind = null;
+        if (picture_rename) {
+            kind = picture_rename.kind;
+        }
+        else if (picture_name_of_line(lines_before[n - 1])) {
+            kind = 'picture';
+        }
+        else if (picture_ref_of_line(lines_before[n - 1])) {
+            kind = 'link';
+        }
         if (!kind) {
             return;
         }
         const from = picture_rename?.current ?? name_of(lines_before[n - 1]);
         const origin = picture_rename?.origin ?? from;
         const name = name_of(lines[n - 1]);
-        const pictures = lines.filter((v, i) => i !== n - 1 && picture_name_of_line(v) === from).length;
+        const picture_count = lines.filter((v, i) => (i !== n - 1) && (picture_name_of_line(v) === from)).length;
         // On its own line the picture is the only one of its name; a link's picture is one other line
-        if (pictures !== (kind === 'picture' ? 0 : 1) || (kind === 'link' && picture_line_entry?.name !== origin)) {
+        if ((picture_count !== ((kind === 'picture') ? 0 : 1)) || ((kind === 'link') && (picture_line_entry?.name !== origin))) {
             picture_rename = null;
             return;
         }
         picture_rename = {line: n, kind, current: from, origin};
-        if (!name || name === from) {
+        if (!name || (name === from)) {
             return;
         }
         let to = name;
-        if (lines.some((v, i) => i !== n - 1 && picture_name_of_line(v) === name)) {
+        if (lines.some((v, i) => (i !== n - 1) && (picture_name_of_line(v) === name))) {
             if (kind === 'picture') {
                 editor_note_show(`@${name} is another picture's: the links keep @${from}`);
                 return;
@@ -1844,25 +2040,24 @@ async function main()
             to = origin;
         }
         const spots = picture_spots_of_text(now, from, n);
-        if (to === from || !spots.length) {
+        if ((to === from) || !spots.length) {
             picture_rename.current = to;
             return;
         }
         let middle = '';
         let last = spots[0];
         for (const spot of spots) {
-            middle += now.slice(last, spot) + to;
+            middle = `${middle}${now.slice(last, spot)}${to}`;
             last = spot + from.length;
         }
         const span = [spots[0], last];
-        middle += now.slice(last, span[1]);
-        const shift = spots.filter(v => v < editor.selectionStart).length * (to.length - from.length);
+        const shift = spots.filter(v => v < editor.selectionStart).length*(to.length - from.length);
         const selection = [editor.selectionStart + shift, editor.selectionEnd + shift];
         const scroll = [editor.scrollTop, editor.scrollLeft];
         if (picture_rename_marks.size > 1000) {
             picture_rename_marks.clear();
         }
-        picture_rename_marks.add(hash_of_text(now));
+        picture_rename_marks.add(hash_from_text(now));
         picture_renaming = true;
         editor_text_replace(span[0], span[1], middle);
         picture_renaming = false;
@@ -1872,16 +2067,27 @@ async function main()
         code_scroll_sync(editor, editor_colours);
         picture_rename.current = to;
         if (to === name) {
-            const links = spots.length - (kind === 'link' ? 1 : 0);
+            const link_count = spots.length - ((kind === 'link') ? 1 : 0);
             const where = (kind === 'link') ? `% picture ${name}` : '';
-            const also = links ? `${links} ${links === 1 ? 'link' : 'links'}` : '';
+            const also = link_count ? plural(link_count, '# link', '# links') : '';
             editor_note_show(`renamed: ${[where, also].filter(Boolean).join(' and ')} too`);
         }
     }
 
     // Through the editing commands, so Ctrl+Z takes it back
-    function editor_text_replace(start, end, text) {
-        textarea_text_replace(editor, start, end, text);
+    function editor_text_replace(begin, end, text) {
+        textarea_text_replace(editor, begin, end, text);
+    }
+
+    function editor_note_show(text) {
+        editor_note = text;
+        refresh_status();
+        clearTimeout(editor_note_timer);
+        editor_note_timer = setTimeout(editor_note_clear, 8000);
+        function editor_note_clear() {
+            editor_note = '';
+            refresh_status();
+        }
     }
 
     // Within one line, Tab fills spaces up to the next tab stop (every 4 columns) and Shift+Tab takes the
@@ -1889,55 +2095,55 @@ async function main()
     // Shift+Tab takes up to 4 spaces (or a tab) off each. A selection ending at the start of a line leaves that line alone.
     function textarea_tab(textarea, outdent) {
         const text = textarea.value;
-        const start = textarea.selectionStart;
+        const begin = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const end_in = (end > start && text[end - 1] === '\n') ? end - 1 : end;
-        const one_line = !text.slice(start, end_in).includes('\n');
-        const first = text.lastIndexOf('\n', start - 1) + 1;
+        const end_in = ((end > begin) && (text[end - 1] === '\n')) ? end - 1 : end;
+        const one_line = !text.slice(begin, end_in).includes('\n');
+        const first = text.lastIndexOf('\n', begin - 1) + 1;
         if (!outdent && one_line) {
-            textarea_text_replace(textarea, start, end, ' '.repeat(4 - (start - first) % 4));
+            textarea_text_replace(textarea, begin, end, ' '.repeat(4 - (begin - first) % 4));
             return;
         }
         const last = (text.indexOf('\n', end_in) === -1) ? text.length : text.indexOf('\n', end_in);
         const lines = text.slice(first, last).split('\n');
         // How far each line moves: + right, - left; an empty line stays empty
-        const shifts = lines.map(function (v) {
+        const shifts = lines.map(function (line) {
             if (!outdent) {
-                return v ? 4 : 0;
+                return line ? 4 : 0;
             }
-            if (v.startsWith('\t')) {
+            if (line.startsWith('\t')) {
                 return -1;
             }
-            const spaces = v.match(/^ */)[0].length;
-            return -(one_line ? (spaces % 4 || Math.min(4, spaces)) : Math.min(4, spaces));
+            const spaces = line.match(/^ */)[0].length;
+            return -(one_line ? ((spaces % 4) || Math.min(4, spaces)) : Math.min(4, spaces));
         });
         if (shifts.every(v => v === 0)) {
             return;
         }
-        const out = lines.map((v, i) => (shifts[i] < 0) ? v.slice(-shifts[i]) : ' '.repeat(shifts[i]) + v).join('\n');
+        const text_shifted = lines.map((v, i) => (shifts[i] < 0) ? v.slice(-shifts[i]) : `${' '.repeat(shifts[i])}${v}`).join('\n');
         // Where a position lands once its line has moved; one at the very start of a line stays there
-        const moved = function (pos) {
+        function pos_shift(pos) {
             if (pos > last) {
                 return pos + shifts.reduce((a, b) => a + b, 0);
             }
             let line_start = first;
             let i = 0;
-            while (i < lines.length - 1 && pos > line_start + lines[i].length) {
+            while ((i < lines.length - 1) && (pos > line_start + lines[i].length)) {
                 line_start += lines[i].length + 1;
                 i++;
             }
             const before = shifts.slice(0, i).reduce((a, b) => a + b, 0);
             const column = pos - line_start;
             return line_start + before + ((column === 0) ? 0 : Math.max(0, column + shifts[i]));
-        };
-        const selection = [moved(start), moved(end)];
-        textarea_text_replace(textarea, first, last, out);
+        }
+        const selection = [pos_shift(begin), pos_shift(end)];
+        textarea_text_replace(textarea, first, last, text_shifted);
         textarea.setSelectionRange(selection[0], selection[1]);
     }
 
     // Through the editing commands, so Ctrl+Z takes it back
-    function textarea_text_replace(textarea, start, end, text) {
-        textarea.setSelectionRange(start, end);
+    function textarea_text_replace(textarea, begin, end, text) {
+        textarea.setSelectionRange(begin, end);
         text_replacing = {textarea, before_sent: false};
         let done = false;
         try {
@@ -1947,41 +2153,31 @@ async function main()
             text_replacing = null;
         }
         if (!done) {
-            textarea.setRangeText(text, start, end, 'end');
+            textarea.setRangeText(text, begin, end, 'end');
         }
         textarea.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText'}));
     }
 
-    function editor_note_show(text) {
-        editor_note = text;
-        status_render();
-        clearTimeout(editor_note_timer);
-        editor_note_timer = setTimeout(function () {
-            editor_note = '';
-            status_render();
-        }, 8000);
-    }
-
     // Through the editing commands, so Ctrl+Z brings the previous text back
-    function replace_text(text) {
+    function text_replace(text) {
         editor.focus();
         textarea_text_replace(editor, 0, editor.value.length, text);
         editor.setSelectionRange(0, 0);
         editor.scrollTop = 0;
-        save_draft(editor.value);
-        clearTimeout(render_timer);
-        render();
+        draft_save(editor.value);
+        clearTimeout(text_refresh_timer);
+        refresh_text();
     }
 
     // A failed load of the links' stays while the text still has that picture or icon: a preview
     // does not always load it again to say so, and a name typed half-way must not stay behind
-    function post_text() {
+    function text_post() {
         if (preview_errors.some(v => v.url)) {
-            const urls = urls_of_items(editor.value, frame.contentDocument?.baseURI ?? location.href);
+            const urls = urls_from_text(editor.value, frame.contentDocument?.baseURI ?? location.href);
             const kept = preview_errors.filter(v => !v.url || urls.has(v.url));
             if (kept.length !== preview_errors.length) {
                 preview_errors = kept;
-                render_errors();
+                refresh_errors();
             }
         }
         frame.contentWindow.postMessage({type: 'navplace:items-text', text: editor.value}, '*');
@@ -1993,51 +2189,20 @@ async function main()
     function sizes_move(index, at) {
         const parts = sizes[tab];
         const before = parts.slice(0, index).reduce((a, b) => a + b, 0);
-        const end = (index + 1 < parts.length) ? before + parts[index] + parts[index + 1] : 1;
-        const min = 200 / work.clientWidth;
-        const max = end - ((index + 1 < parts.length) ? min : 280 / work.clientWidth);
+        const pair_end = (index + 1 < parts.length) ? before + parts[index] + parts[index + 1] : 1;
+        const min = 200/work.clientWidth;
+        const max = pair_end - ((index + 1 < parts.length) ? min : 280/work.clientWidth);
         const value = Math.min(max, Math.max(before + min, at)) - before;
         if (index + 1 < parts.length) {
-            parts[index + 1] = end - before - value;
+            parts[index + 1] = pair_end - before - value;
         }
         parts[index] = value;
-        render_sizes();
+        refresh_sizes();
     }
 
-    // A narrow window squeezes the panes without forgetting their sizes
-    function render_sizes() {
-        const parts = sizes[tab];
-        const min = Math.min(200 / work.clientWidth, 0.3);
-        const shown = parts.map(v => Math.max(min, v));
-        work.style.setProperty('--a', `${(shown[0] * 100).toFixed(2)}%`);
-        work.style.setProperty('--b', `${((shown[1] ?? 0) * 100).toFixed(2)}%`);
-        let at = 0;
-        for (const divider of dividers) {
-            at += shown[Number(divider.dataset.divider) - 1] ?? 0;
-            divider.setAttribute('aria-valuenow', String(Math.round(at * 100)));
-        }
-        sizes.errors = Math.min(Math.max(40, sizes.errors), Math.max(40, work.clientHeight * 0.6));
-        work.style.setProperty('--errors-height', `${Math.round(sizes.errors)}px`);
-    }
-
-    async function load_designs() {
+    async function embed_copy() {
         try {
-            const response = await fetch('designs/index.json');
-            const options = await response.json();
-            for (const option of options) {
-                design_select.append(new Option(option.label, option.value));
-            }
-            designs = options.map(v => v.value);
-            files_by_design = Object.fromEntries(options.map(v => [v.value, v.files ?? ['index.html']]));
-        }
-        catch {
-            design_select.disabled = true;
-        }
-    }
-
-    async function copy() {
-        try {
-            await navigator.clipboard.writeText(format_snippet(editor.value.trim()));
+            await navigator.clipboard.writeText(render_embed_snippet(editor.value.trim()));
             copy_button.textContent = 'Copied!';
             clearTimeout(copy_timer);
             copy_timer = setTimeout(() => copy_button.textContent = 'Copy embed', 2000);
@@ -2049,36 +2214,37 @@ async function main()
 }
 
 // The JSON pane's view of one line: {json, editable, locked, error}
-function json_view_of_line(text, n)
+function json_view_from_line(text, n)
 {
-    const range = line_range(text, n);
+    const range = range_from_line(text, n);
     const raw = text.slice(range[0], range[1]);
     const line = raw.trim();
     if (!line) {
         return {json: `// line ${n} is empty`, editable: false, locked: ''};
     }
     if (line[0] === '%') {
-        const m = line.match(/^%\s*([^:]+?)\s*:\s*(.+)$/);
-        if (!m) {
+        const directive_match = line.match(/^%\s*([^:]+?)\s*:\s*(.+)$/);
+        if (!directive_match) {
             return {json: `// line ${n}: a directive is % key: value`, editable: false, locked: '', error: `Invalid meta line: ${line}`};
         }
         // A % picture that is not a web or data url: shown and editable, named as skipped
         const warning = parse(line).warnings?.[0];
-        return {json: json_format({[m[1]]: m[2]}), editable: true, locked: '', error: warning && `${warning.message}. Skipped; the rest of the text still shows.`, warning: !!warning};
+        return {json: json_from_value({[directive_match[1]]: directive_match[2]}), editable: true, locked: '', error: warning && `${warning.message}. Skipped; the rest of the text still shows.`, warning: !!warning};
     }
     if (line[0] === '#') {
-        const names = line.replace(/^#+/, '').split('|').map(v => v.trim()).filter(Boolean);
         let count = null;
+
+        const names = line.replace(/^#+/, '').split('|').map(v => v.trim()).filter(Boolean);
         try {
             const items = parse(text, {spans: true}).items;
-            count = items.filter(v => v.line > n && names.every(name => v.namespaces.includes(name))).length;
+            count = items.filter(v => (v.line > n) && names.every(vv => v.namespaces.includes(vv))).length;
         }
         catch {
         }
-        return {json: json_format({namespaces: names}), editable: true, locked: (count === null) ? '' : `"links under it": ${count}`};
+        return {json: json_from_value({namespaces: names}), editable: true, locked: (count === null) ? '' : `"links under it": ${count}`};
     }
-    const left_out = left_out_of_text(text);
-    const item = left_out?.items.get(n) ?? item_of_line(text, n);
+    const left_out = left_out_from_text(text);
+    const item = left_out?.item_by_line.get(n) ?? item_of_line(text, n);
     if (!item) {
         const warning = parse(line).warnings?.[0];
         if (warning) {
@@ -2088,16 +2254,75 @@ function json_view_of_line(text, n)
     }
     const editable = {label: item.label, href: item.href, tags: item.tags, image_url: item.image_url, meta: item.meta};
     const locked = {namespaces: item.namespaces, icon_url: item.icon_url, search1: item.search1, search2: item.search2};
-    const locked_lines = Object.entries(locked).map(([key, value]) => `"${key}": ${JSON.stringify(value)}`);
-    if (left_out?.items.has(n)) {
+    const locked_lines = Object.entries(locked).map(v => `"${v[0]}": ${JSON.stringify(v[1])}`);
+    if (left_out?.item_by_line.has(n)) {
         const section = item.namespaces.length ? item.namespaces.join(' | ') : 'no section';
         locked_lines.unshift(`// left out of items: % ns does not name its section (${section})`);
     }
-    return {
-        json: json_format(editable),
-        editable: true,
-        locked: locked_lines.join('\n'),
-    };
+    return {json: json_from_value(editable), editable: true, locked: locked_lines.join('\n')};
+}
+
+// The JSON pane's view of the whole text: {json, html, lit, error}; lit is [first, last], the 0-based
+// lines of the JSON that line n became (its item, or meta for a % line), or null
+function json_view_from_file(text, n)
+{
+    let parsed;
+    let items_with_lines;
+    try {
+        parsed = parse(text);
+        items_with_lines = parse(text, {spans: true}).items;
+    }
+    catch (error) {
+        const json = '// the text does not parse; the line it stops at is in Errors below';
+        return {json, html: render_json_html(json), lit: null, locked: '', error: error.message};
+    }
+    let lit = null;
+    let locked = '';
+
+    const left_out = left_out_from_text(text);
+    const json = json_from_value(parsed);
+    const lines = json.split('\n');
+    const line = text.slice(...range_from_line(text, n)).trim();
+    if (line[0] === '%') {
+        const first = lines.findIndex(v => v.startsWith('  "meta":'));
+        const last = lines[first].endsWith('{') ? lines.indexOf('  },', first) : first;
+        lit = [first, last];
+    }
+    else {
+        const index = items_with_lines.findIndex(v => v.line === n);
+        if (index !== -1) {
+            let first = -1;
+            for (let i = 0, item_index = -1; i < lines.length; ++i) {
+                if (lines[i].startsWith('    {')) {
+                    ++item_index;
+                }
+                if (item_index === index) {
+                    first = i;
+                    break;
+                }
+            }
+            lit = [first, lines.findIndex((v, i) => (i > first) && /^    \}/.test(v))];
+        }
+    }
+    const html = lines.map(function (json_line, i) {
+        const line_html = render_json_html(json_line).slice(0, -1);
+        return (lit && (i >= lit[0]) && (i <= lit[1])) ? `<span class="c-current">${line_html || ' '}</span>` : line_html;
+    });
+    if (left_out?.count) {
+        const sections = left_out.sections.map(v => v.length ? v.join(' | ') : 'no section').join(', ');
+        const left_out_phrase = plural(left_out.count, '# link is left out of items', '# links are left out of items');
+        locked = `// ${left_out_phrase}: % ns does not name their section (${sections})`;
+        if (left_out.note_by_line.has(n) && (left_out.note_by_line.get(n) === '')) {
+            locked = `${locked}\n// line ${n} is one of them`;
+        }
+    }
+    return {json, html: `${html.join('\n')}\n`, lit, locked, error: null};
+}
+
+// Two-space JSON, a list or an object of plain values kept on one line
+function json_from_value(value)
+{
+    return JSON.stringify(value, null, 2).replace(/([[{])\n\s*([^[\]{}]*?)\n\s*([\]}])/g, (all, open, inner, close) => `${open}${inner.replace(/,\n\s*/g, ', ')}${close}`);
 }
 
 // links.txt with the edits of the whole file's JSON, parse(text) changed by hand: {text, note} or {error}.
@@ -2106,32 +2331,34 @@ function json_view_of_line(text, n)
 // shown is the JSON as the pane showed it, so a value the text recomputed is not taken for an edit
 function text_from_file_json(text, edited, shown = null)
 {
-    if (!edited || typeof edited !== 'object' || Array.isArray(edited)
-        || !edited.meta || typeof edited.meta !== 'object' || Array.isArray(edited.meta) || !Array.isArray(edited.items)) {
+    if (!edited || (typeof edited !== 'object') || Array.isArray(edited)
+        || !edited.meta || (typeof edited.meta !== 'object') || Array.isArray(edited.meta) || !Array.isArray(edited.items)) {
         return {error: 'The JSON is {"meta": {…}, "items": […]}, as parse() gives it.'};
     }
     const current = parse(text);
-    const spans = parse(text, {spans: true}).items;
+    const items_with_spans = parse(text, {spans: true}).items;
     if (edited.items.length !== current.items.length) {
         return {error: 'A link is added or taken out in links.txt; here each link is edited in place.'};
     }
     const lines = text.split('\n');
-    const pictures = current.meta.picture ?? {};
+    const picture_url_by_name = current.meta.picture ?? {};
     const editable_keys = ['label', 'href', 'tags', 'image_url', 'meta'];
     const locked_keys = ['icon_url', 'search1', 'search2', 'namespaces'];
-    const pick = (item, keys) => Object.fromEntries(keys.map(key => [key, item?.[key]]));
+    function item_pick(item, keys) {
+        return Object.fromEntries(keys.map(v => [v, item?.[v]]));
+    }
     let note = null;
     for (let i = 0; i < edited.items.length; ++i) {
-        const now = pick(current.items[i], editable_keys);
-        const next = pick(edited.items[i], editable_keys);
-        if (JSON.stringify(pick((shown ?? current).items?.[i], locked_keys)) !== JSON.stringify(pick(edited.items[i], locked_keys))) {
+        const previous = item_pick(current.items[i], editable_keys);
+        const next = item_pick(edited.items[i], editable_keys);
+        if (JSON.stringify(item_pick((shown ?? current).items?.[i], locked_keys)) !== JSON.stringify(item_pick(edited.items[i], locked_keys))) {
             note = `${locked_keys.map(v => `"${v}"`).join(', ')} come from the text; their edits are not kept.`;
         }
-        if (JSON.stringify(now) === JSON.stringify(next)) {
+        if (JSON.stringify(previous) === JSON.stringify(next)) {
             continue;
         }
-        const n = spans[i].line;
-        const result = line_from_json(lines[n - 1], next, pictures);
+        const n = items_with_spans[i].line;
+        const result = line_from_json(lines[n - 1], next, picture_url_by_name);
         if (result.error) {
             return {error: `Link ${i + 1} (line ${n}): ${result.error}`};
         }
@@ -2139,23 +2366,23 @@ function text_from_file_json(text, edited, shown = null)
     }
 
     // The % keys as written: "design", "picture kimi", "ns"…, each with the lines that set it
-    const directives = new Map();
-    lines.forEach(function (raw, index) {
-        const m = raw.trim().match(/^%\s*([^:]+)\s*:\s*(.+)$/);
-        if (m) {
-            const key = m[1].trim().replace(/\s+/g, ' ');
-            directives.set(key, [...(directives.get(key) ?? []), index]);
+    const lines_by_key = new Map();
+    for (const [index, raw] of lines.entries()) {
+        const directive_match = raw.trim().match(/^%\s*([^:]+)\s*:\s*(.+)$/);
+        if (directive_match) {
+            const key = directive_match[1].trim().replace(/\s+/g, ' ');
+            lines_by_key.set(key, [...(lines_by_key.get(key) ?? []), index]);
         }
-    });
-    const flat = function (meta) {
+    }
+    function meta_flatten(meta) {
         const out = new Map();
         for (const [key, value] of Object.entries(meta)) {
-            if (key === 'picture' && value && typeof value === 'object' && !Array.isArray(value)) {
+            if ((key === 'picture') && value && (typeof value === 'object') && !Array.isArray(value)) {
                 for (const [name, url] of Object.entries(value)) {
                     out.set(`picture ${name}`, url);
                 }
             }
-            else if (key === 'ns' && Array.isArray(value)) {
+            else if ((key === 'ns') && Array.isArray(value)) {
                 out.set(key, value.join(' | '));
             }
             else if (key === 'include') {
@@ -2166,31 +2393,31 @@ function text_from_file_json(text, edited, shown = null)
             }
         }
         return out;
-    };
-    const now = flat(current.meta);
-    const next = flat(edited.meta);
+    }
+    const previous = meta_flatten(current.meta);
+    const next = meta_flatten(edited.meta);
     const removed = [];
     const added = [];
-    for (const key of new Set([...now.keys(), ...next.keys()])) {
-        if (now.get(key) === next.get(key)) {
+    for (const key of new Set([...previous.keys(), ...next.keys()])) {
+        if (previous.get(key) === next.get(key)) {
             continue;
         }
         if (key === 'include') {
             return {error: '"include" is edited in links.txt, a % include: line per document.'};
         }
         const value = next.get(key);
-        if (value !== undefined && (typeof value !== 'string' || !value.trim() || /\n/.test(value))) {
+        if ((value !== undefined) && ((typeof value !== 'string') || !value.trim() || /\n/.test(value))) {
             return {error: `"${key}" in meta: a value is one line of text.`};
         }
-        if (value !== undefined && (key.includes(':') || !/^\S/.test(key))) {
+        if ((value !== undefined) && (key.includes(':') || !/^\S/.test(key))) {
             return {error: `"${key}" in meta: a key has no ":".`};
         }
-        const at = directives.get(key) ?? [];
+        const key_lines = lines_by_key.get(key) ?? [];
         if (value === undefined) {
-            removed.push(...at);
+            removed.push(...key_lines);
         }
-        else if (at.length) {
-            const n = at[at.length - 1];
+        else if (key_lines.length) {
+            const n = key_lines[key_lines.length - 1];
             const lead = lines[n].slice(0, lines[n].length - lines[n].trimStart().length);
             lines[n] = `${lead}% ${key}: ${value}`;
         }
@@ -2199,7 +2426,7 @@ function text_from_file_json(text, edited, shown = null)
         }
     }
     if (added.length) {
-        const last = Math.max(-1, ...[...directives.values()].flat());
+        const last = Math.max(-1, ...[...lines_by_key.values()].flat());
         lines.splice(last + 1, 0, ...added);
         for (let i = 0; i < removed.length; ++i) {
             if (removed[i] > last) {
@@ -2213,66 +2440,6 @@ function text_from_file_json(text, edited, shown = null)
     return {text: lines.join('\n'), note};
 }
 
-// The JSON pane's view of the whole text: {json, html, lit, error}; lit is [first, last], the 0-based
-// lines of the JSON that line n became (its item, or meta for a % line), or null
-function json_view_of_file(text, n)
-{
-    let parsed;
-    let items_with_lines;
-    try {
-        parsed = parse(text);
-        items_with_lines = parse(text, {spans: true}).items;
-    }
-    catch (error) {
-        const json = '// the text does not parse; the line it stops at is in Errors below';
-        return {json, html: render_json_html(json), lit: null, locked: '', error: error.message};
-    }
-    const left_out = left_out_of_text(text);
-    const json = json_format(parsed);
-    const lines = json.split('\n');
-    const line = text.slice(...line_range(text, n)).trim();
-    let lit = null;
-    if (line[0] === '%') {
-        const first = lines.findIndex(v => v.startsWith('  "meta":'));
-        const last = lines[first].endsWith('{') ? lines.indexOf('  },', first) : first;
-        lit = [first, last];
-    }
-    else {
-        const index = items_with_lines.findIndex(v => v.line === n);
-        if (index !== -1) {
-            let first = -1;
-            for (let i = 0, k = -1; i < lines.length; ++i) {
-                if (lines[i].startsWith('    {')) {
-                    ++k;
-                }
-                if (k === index) {
-                    first = i;
-                    break;
-                }
-            }
-            lit = [first, lines.findIndex((v, i) => i > first && /^    \}/.test(v))];
-        }
-    }
-    const html = lines.map(function (v, i) {
-        const line_html = render_json_html(v).slice(0, -1);
-        return (lit && i >= lit[0] && i <= lit[1]) ? `<span class="c-current">${line_html || ' '}</span>` : line_html;
-    });
-    let locked = '';
-    if (left_out?.count) {
-        const sections = left_out.sections.map(v => v.length ? v.join(' | ') : 'no section').join(', ');
-        locked = `// ${left_out.count} ${left_out.count === 1 ? 'link is' : 'links are'} left out of items: % ns does not name their section (${sections})`;
-        if (left_out.lines.has(n) && left_out.lines.get(n) === '') {
-            locked += `\n// line ${n} is one of them`;
-        }
-    }
-    return {json, html: `${html.join('\n')}\n`, lit, locked, error: null};
-}
-
-// The longest data url a pasted picture keeps, in characters; a bigger one is drawn smaller to fit
-const PICTURE_URL_MAX = 100000;
-// The longest side a picture drawn smaller starts from, in pixels
-const PICTURE_SIDE_MAX = 1024;
-
 // The picture on the clipboard, or null when it holds none or text of its own: a copied spreadsheet
 // brings a picture of its cells and their text, and the text is what is meant. A copied file may
 // bring its own name or path as text; that is still the picture
@@ -2281,7 +2448,7 @@ function picture_file_from_clipboard(data)
     if (!data) {
         return null;
     }
-    const item = [...data.items].find(v => v.kind === 'file' && v.type.startsWith('image/'));
+    const item = [...data.items].find(v => (v.kind === 'file') && v.type.startsWith('image/'));
     const file = item?.getAsFile();
     if (!file) {
         return null;
@@ -2301,7 +2468,7 @@ function picture_name_from_file_name(file_name, names)
     const generic = !base || /^(image|img|picture|clipboard|unknown|blob)$/.test(base);
     const stem = generic ? 'image' : base;
     for (let i = 1; ; ++i) {
-        const name = (i === 1 && !generic) ? stem : `${stem}${i}`;
+        const name = ((i === 1) && !generic) ? stem : `${stem}${i}`;
         if (!names.has(name)) {
             return name;
         }
@@ -2329,57 +2496,21 @@ async function picture_from_file(file)
     catch {
         return {url: null, note: `${format_kb(url.length)}, over ${format_kb(PICTURE_URL_MAX)}, and not a picture the browser can draw smaller`};
     }
-    const canvas = document.createElement('canvas');
     let side = Math.min(PICTURE_SIDE_MAX, Math.max(bitmap.width, bitmap.height));
+
+    const canvas = document.createElement('canvas');
     while (side >= 32) {
-        const scale = side / Math.max(bitmap.width, bitmap.height);
-        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        const scale = side/Math.max(bitmap.width, bitmap.height);
+        canvas.width = Math.max(1, Math.round(bitmap.width*scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height*scale));
         canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
         const smaller = canvas.toDataURL('image/webp', 0.85);
         if (smaller.length <= PICTURE_URL_MAX) {
             return {url: smaller, note: `drawn smaller to ${canvas.width}×${canvas.height}, ${format_kb(url.length)} → ${format_kb(smaller.length)}`};
         }
-        side = Math.floor(side * 0.75);
+        side = Math.floor(side*0.75);
     }
     return {url: null, note: `${format_kb(url.length)}, and no smaller copy fits ${format_kb(PICTURE_URL_MAX)}`};
-}
-
-function data_url_from_blob(blob)
-{
-    return new Promise(function (resolve, reject) {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('the clipboard\'s picture could not be read'));
-        reader.readAsDataURL(blob);
-    });
-}
-
-function format_kb(chars)
-{
-    return `${Math.round(chars / 1000)} KB`;
-}
-
-// The pictures and icons of the text's links, as the page at `base` asks for them
-function urls_of_items(text, base)
-{
-    const out = new Set();
-    let items = [];
-    try {
-        items = parse(text).items;
-    }
-    catch {
-    }
-    for (const item of items) {
-        for (const url of [item.image_url, item.icon_url]) {
-            try {
-                out.add(new URL(url, base).href);
-            }
-            catch {
-            }
-        }
-    }
-    return out;
 }
 
 // The name a `% picture <name>:` line gives, or null on any other line; `% picture https://…` has none
@@ -2398,45 +2529,23 @@ function picture_ref_of_line(line)
 // the name itself; the 1-based line `skip` left out
 function picture_spots_of_text(text, name, skip)
 {
-    const out = [];
     let start = 0;
-    text.split('\n').forEach(function (line, i) {
+
+    const out = [];
+    for (const [i, line] of text.split('\n').entries()) {
         if (i + 1 !== skip) {
             const picture = line.match(/^(\s*%\s*picture\s+)([^\s:]+)\s*:(?!\/\/)/);
             const link = picture ? null : line.match(/(^|\s)@(\S+)\s+(?:file|https?):\/\/\S+\s*$/);
             if (picture?.[2] === name) {
                 out.push(start + picture[1].length);
             }
-            else if (link?.[2] === name && !/^[%#]/.test(line.trim())) {
+            else if ((link?.[2] === name) && !/^[%#]/.test(line.trim())) {
                 out.push(start + link.index + link[1].length + 1);
             }
         }
         start += line.length + 1;
-    });
+    }
     return out;
-}
-
-// The spans of the link on the 1-based line n as parse() finds them, or null when the line is no
-// link; a link % ns leaves out is one too
-function item_spans_at_line(text, n)
-{
-    const without_ns = text.split('\n').map(v => /^\s*%\s*ns\s*:/.test(v) ? '' : v).join('\n');
-    try {
-        return parse(without_ns, {spans: true}).items.find(v => v.line === n)?.spans ?? null;
-    }
-    catch {
-        return null;
-    }
-}
-
-// FNV-1a of the text: enough to know a text seen before without keeping it
-function hash_of_text(text)
-{
-    let out = 0x811c9dc5;
-    for (let i = 0, end = text.length; i < end; ++i) {
-        out = Math.imul(out ^ text.charCodeAt(i), 0x01000193);
-    }
-    return `${text.length}:${out >>> 0}`;
 }
 
 // The text's % picture names and their urls; {} when it has none or does not parse
@@ -2450,10 +2559,95 @@ function pictures_of_text(text)
     }
 }
 
-// What % ns leaves out of items: {lines, items, count, sections}, or null when nothing is.
-// lines: a Map of the 1-based lines to their note, '' on a link, a note on a # line ns does not
-// name; items: the left-out items by line; sections: the namespaces of the left-out links
-function left_out_of_text(text)
+function data_url_from_blob(blob)
+{
+    return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function () {
+            resolve(reader.result);
+        };
+        reader.onerror = function () {
+            reject(new Error('the clipboard\'s picture could not be read'));
+        };
+        reader.readAsDataURL(blob);
+    });
+}
+
+function format_kb(chars)
+{
+    return `${Math.round(chars/1000)} KB`;
+}
+
+// The pictures and icons of the text's links, as the page at `base` asks for them
+function urls_from_text(text, base)
+{
+    let items = [];
+
+    const out = new Set();
+    try {
+        items = parse(text).items;
+    }
+    catch {
+    }
+    for (const item of items) {
+        for (const url of [item.image_url, item.icon_url]) {
+            try {
+                out.add(new URL(url, base).href);
+            }
+            catch {
+            }
+        }
+    }
+    return out;
+}
+
+// The spans of the link on the 1-based line n as parse() finds them, or null when the line is no
+// link; a link % ns leaves out is one too
+function item_spans_from_text(text, n)
+{
+    const without_ns = text.split('\n').map(v => /^\s*%\s*ns\s*:/.test(v) ? '' : v).join('\n');
+    try {
+        return parse(without_ns, {spans: true}).items.find(v => v.line === n)?.spans ?? null;
+    }
+    catch {
+        return null;
+    }
+}
+
+// The item of line n, with its spans; from the whole text when it parses, so its groups are right
+function item_of_line(text, n)
+{
+    try {
+        const item = parse(text, {spans: true}).items.find(v => v.line === n);
+        if (item) {
+            return item;
+        }
+    }
+    catch {
+    }
+    const range = range_from_line(text, n);
+    try {
+        return parse(text.slice(range[0], range[1]), {spans: true}).items[0] ?? null;
+    }
+    catch {
+        return null;
+    }
+}
+
+// FNV-1a of the text: enough to know a text seen before without keeping it
+function hash_from_text(text)
+{
+    let hash = 0x811c9dc5;
+    for (let i = 0, end = text.length; i < end; ++i) {
+        hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193);
+    }
+    return `${text.length}:${hash >>> 0}`;
+}
+
+// What % ns leaves out of items: {note_by_line, item_by_line, count, sections}, or null when nothing is.
+// note_by_line: a Map of the 1-based lines to their note, '' on a link, a note on a # line ns does not
+// name; item_by_line: the left-out items by line; sections: the namespaces of the left-out links
+function left_out_from_text(text)
 {
     let kept;
     let all;
@@ -2471,19 +2665,19 @@ function left_out_of_text(text)
     }
     const ns = kept.meta.ns;
     const kept_lines = new Set(kept.items.map(v => v.line));
-    const lines = new Map();
-    const items = new Map();
+    const note_by_line = new Map();
+    const item_by_line = new Map();
     const sections = [];
     for (const item of all.items) {
         if (!kept_lines.has(item.line)) {
-            lines.set(item.line, '');
-            items.set(item.line, item);
+            note_by_line.set(item.line, '');
+            item_by_line.set(item.line, item);
             if (!sections.some(v => v.join('|') === item.namespaces.join('|'))) {
                 sections.push(item.namespaces);
             }
         }
     }
-    if (!items.size) {
+    if (!item_by_line.size) {
         return null;
     }
     const text_lines = text.split('\n');
@@ -2491,185 +2685,77 @@ function left_out_of_text(text)
         const line = text_lines[i].trim();
         if (line[0] === '#') {
             const names = line.replace(/^#+/, '').split('|').map(v => v.trim().replace(/\s+/g, ' ')).filter(Boolean);
-            if (names.length && !names.some(name => ns.includes(name))) {
-                lines.set(i + 1, '   ← not in % ns: left out');
+            if (names.length && !names.some(v => ns.includes(v))) {
+                note_by_line.set(i + 1, '   ← not in % ns: left out');
             }
         }
     }
-    return {lines, items, count: items.size, sections};
-}
-
-// The item of line n, with its spans; from the whole text when it parses, so its groups are right
-function item_of_line(text, n)
-{
-    try {
-        const item = parse(text, {spans: true}).items.find(v => v.line === n);
-        if (item) {
-            return item;
-        }
-    }
-    catch {
-    }
-    const range = line_range(text, n);
-    try {
-        return parse(text.slice(range[0], range[1]), {spans: true}).items[0] ?? null;
-    }
-    catch {
-        return null;
-    }
+    return {note_by_line, item_by_line, count: item_by_line.size, sections};
 }
 
 function href_of_line(text, n)
 {
-    const range = line_range(text, n);
-    const m = text.slice(range[0], range[1]).trim().match(/(file:\/\/\S+|https?:\/\/\S+)$/);
-    return (m && !/^[%#]/.test(text.slice(range[0], range[1]).trim())) ? m[1] : null;
+    const range = range_from_line(text, n);
+    const href_match = text.slice(range[0], range[1]).trim().match(/(file:\/\/\S+|https?:\/\/\S+)$/);
+    return (href_match && !/^[%#]/.test(text.slice(range[0], range[1]).trim())) ? href_match[1] : null;
 }
 
-// {line} the raw line with the JSON written into it, or {error} saying what is wrong; `pictures`
+// {line} the raw line with the JSON written into it, or {error} saying what is wrong; `picture_url_by_name`
 // is the text's % picture names and urls, so a url of one of them goes back as its @name
-function line_from_json(raw, edited, pictures = {})
+function line_from_json(raw, edited, picture_url_by_name = {})
 {
     const lead = raw.slice(0, raw.length - raw.trimStart().length);
     const line = raw.trim();
-    if (!edited || typeof edited !== 'object' || Array.isArray(edited)) {
+    if (!edited || (typeof edited !== 'object') || Array.isArray(edited)) {
         return {error: 'The JSON is one object, in { }.'};
     }
     if (line[0] === '%') {
         const entries = Object.entries(edited);
-        if (entries.length !== 1 || typeof entries[0][1] !== 'string' || !entries[0][1].trim() || entries[0][0].includes(':')) {
+        if ((entries.length !== 1) || (typeof entries[0][1] !== 'string') || !entries[0][1].trim() || entries[0][0].includes(':')) {
             return {error: 'A directive is one key and its text value, as {"design": "basic"}.'};
         }
         return {line: `${lead}% ${entries[0][0]}: ${entries[0][1]}`};
     }
     if (line[0] === '#') {
-        if (!Array.isArray(edited.namespaces) || edited.namespaces.some(v => typeof v !== 'string' || v.includes('|'))) {
+        if (!Array.isArray(edited.namespaces) || edited.namespaces.some(v => (typeof v !== 'string') || v.includes('|'))) {
             return {error: '"namespaces" is a list of names, as ["Mail", "Work"].'};
         }
         const hashes = line.match(/^#+/)[0];
         return {line: `${lead}${hashes} ${edited.namespaces.map(v => v.trim()).filter(Boolean).join(' | ')}`};
     }
     const item = parse(raw, {spans: true}).items[0];
-    if (typeof edited.label !== 'string' || /#|\n/.test(edited.label)) {
+    if ((typeof edited.label !== 'string') || /#|\n/.test(edited.label)) {
         return {error: '"label" is text without #.'};
     }
-    if (typeof edited.href !== 'string' || !/^(file:\/\/\S+|https?:\/\/\S+)$/.test(edited.href)) {
+    if ((typeof edited.href !== 'string') || !/^(file:\/\/\S+|https?:\/\/\S+)$/.test(edited.href)) {
         return {error: '"href" is a link starting with https://, http:// or file://, without spaces.'};
     }
-    if (!Array.isArray(edited.tags) || edited.tags.some(v => typeof v !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(v))) {
+    if (!Array.isArray(edited.tags) || edited.tags.some(v => (typeof v !== 'string') || !/^[a-zA-Z0-9_-]+$/.test(v))) {
         return {error: '"tags" are words of letters, digits, _ and -, as ["work"].'};
     }
-    if (edited.image_url !== null && (typeof edited.image_url !== 'string' || /\s/.test(edited.image_url))) {
+    if ((edited.image_url !== null) && ((typeof edited.image_url !== 'string') || /\s/.test(edited.image_url))) {
         return {error: '"image_url" is null or a file name without spaces, as "private://m.png".'};
     }
-    if (!edited.meta || typeof edited.meta !== 'object' || Array.isArray(edited.meta)
-        || Object.entries(edited.meta).some(([key, value]) => !/^[a-zA-Z0-9_-]+$/.test(key) || typeof value !== 'string' || !/^[^\s#]+$/.test(value))) {
+    if (!edited.meta || (typeof edited.meta !== 'object') || Array.isArray(edited.meta)
+        || Object.entries(edited.meta).some(v => !/^[a-zA-Z0-9_-]+$/.test(v[0]) || (typeof v[1] !== 'string') || !/^[^\s#]+$/.test(v[1]))) {
         return {error: '"meta" holds words and their values, as {"w": "2"}.'};
     }
     let image_url = edited.image_url || null;
+
     const name = item.image_url?.slice('private://'.length);
-    if (image_url && pictures[name] === image_url) {
+    if (image_url && (picture_url_by_name[name] === image_url)) {
         image_url = item.image_url;
     }
-    else if (image_url && Object.values(pictures).includes(image_url)) {
-        image_url = `private://${Object.keys(pictures).find(v => pictures[v] === image_url)}`;
+    else if (image_url && Object.values(picture_url_by_name).includes(image_url)) {
+        image_url = `private://${Object.keys(picture_url_by_name).find(v => picture_url_by_name[v] === image_url)}`;
     }
-    return {line: line_from_item(raw, item, {...edited, image_url})};
-}
-
-// Two-space JSON, a list or an object of plain values kept on one line
-function json_format(value)
-{
-    return JSON.stringify(value, null, 2).replace(/([[{])\n\s*([^[\]{}]*?)\n\s*([\]}])/g, (all, open, inner, close) => `${open}${inner.replace(/,\n\s*/g, ', ')}${close}`);
+    return {line: line_from_item(raw, item, {label: edited.label, href: edited.href, tags: edited.tags, image_url, meta: edited.meta})};
 }
 
 // 1-based line of a character offset
-function line_at(text, offset)
+function line_from_offset(text, offset)
 {
     return text.slice(0, offset).split('\n').length;
-}
-
-// [start, end) of the 1-based line n
-function line_range(text, n)
-{
-    let start = 0;
-    for (let i = 1; i < n; ++i) {
-        const next = text.indexOf('\n', start);
-        if (next === -1) {
-            return [text.length, text.length];
-        }
-        start = next + 1;
-    }
-    const end = text.indexOf('\n', start);
-    return [start, (end === -1) ? text.length : end];
-}
-
-function code_scroll_sync(textarea, pre)
-{
-    pre.scrollTop = textarea.scrollTop;
-    pre.scrollLeft = textarea.scrollLeft;
-}
-
-// Runs first in the preview: its errors, failed loads and console.error go to the Playground
-const PREVIEW_ERRORS_HOOK = `(function () {
-    function send(message, source, line, load) {
-        parent.postMessage({type: 'navplace:error', message: String(message), source: source || '', line: line || 0, load: !!load}, '*');
-    }
-    function where_of(error) {
-        const m = String(error && error.stack || '').match(/(about:srcdoc|blob:[^\\s)]+?|https?:[^\\s)]+?):(\\d+):\\d+/);
-        return m ? [m[1], Number(m[2])] : ['', 0];
-    }
-    window.addEventListener('error', function (event) {
-        const target = event.target;
-        if (target && target !== window && (target.src || target.href)) {
-            send('Could not load ' + (target.src || target.href), target.src || target.href, 0, true);
-            return;
-        }
-        send(event.message, event.filename, event.lineno);
-    }, true);
-    window.addEventListener('unhandledrejection', function (event) {
-        const where = where_of(event.reason);
-        send('Unhandled: ' + (event.reason && event.reason.message || event.reason), where[0], where[1]);
-    });
-    const console_error = console.error;
-    console.error = function () {
-        const error = Array.from(arguments).find(v => v instanceof Error);
-        const where = where_of(error);
-        send(Array.from(arguments).map(v => (v instanceof Error) ? v.message : String(v)).join(' '), where[0], where[1]);
-        return console_error.apply(console, arguments);
-    };
-})();`.replace(/\n\s*/g, ' ');
-
-// {file, line} for an error's source: index.html for the page itself, a file of the design,
-// or a path of the site such as lib/navplace.js; null when it has none
-function error_where(source, line, design_name, blob_files)
-{
-    if (!source) {
-        return null;
-    }
-    if (source === 'about:srcdoc') {
-        return {file: 'index.html', line};
-    }
-    if (blob_files[source]) {
-        return {file: blob_files[source], line};
-    }
-    let url;
-    try {
-        url = new URL(source);
-    }
-    catch {
-        return {file: source, line};
-    }
-    if (!/^https?:$/.test(url.protocol)) {
-        return {file: source, line: 0};
-    }
-    if (url.origin !== location.origin) {
-        return {file: url.host + url.pathname, line: 0};
-    }
-    const prefix = `/designs/${design_name}/`;
-    const path = decodeURIComponent(url.pathname);
-    const at = path.indexOf(prefix);
-    return {file: (at !== -1) ? path.slice(at + prefix.length) : path.replace(/^\//, ''), line};
 }
 
 // The 1-based line parse() stops at: the first line that does not parse on its own
@@ -2687,51 +2773,81 @@ function line_of_parse_error(text)
     return 0;
 }
 
+// [begin, end) of the 1-based line n
+function range_from_line(text, n)
+{
+    let begin = 0;
+    for (let i = 1; i < n; ++i) {
+        const next = text.indexOf('\n', begin);
+        if (next === -1) {
+            return [text.length, text.length];
+        }
+        begin = next + 1;
+    }
+    const end = text.indexOf('\n', begin);
+    return [begin, (end === -1) ? text.length : end];
+}
+
+function code_scroll_sync(textarea, pre)
+{
+    pre.scrollTop = textarea.scrollTop;
+    pre.scrollLeft = textarea.scrollLeft;
+}
+
+// {file, line} for an error's source: index.html for the page itself, a file of the design,
+// or a path of the site such as lib/navplace.js; null when it has none
+function error_where_from_source(source, line, design_name, file_by_blob_url)
+{
+    if (!source) {
+        return null;
+    }
+    if (source === 'about:srcdoc') {
+        return {file: 'index.html', line};
+    }
+    if (file_by_blob_url[source]) {
+        return {file: file_by_blob_url[source], line};
+    }
+    let url;
+    try {
+        url = new URL(source);
+    }
+    catch {
+        return {file: source, line};
+    }
+    if (!/^https?:$/.test(url.protocol)) {
+        return {file: source, line: 0};
+    }
+    if (url.origin !== location.origin) {
+        return {file: `${url.host}${url.pathname}`, line: 0};
+    }
+    const prefix = `/designs/${design_name}/`;
+    const path = decodeURIComponent(url.pathname);
+    const at = path.indexOf(prefix);
+    return {file: (at !== -1) ? path.slice(at + prefix.length) : path.replace(/^\//, ''), line};
+}
+
 function design_is_edited(design)
 {
     return !!design && Object.keys(design.files).some(v => design.files[v] !== design.originals[v]);
 }
 
-// The design's index.html for the preview: its folder as the base, so its own files and
-// ../../lib load as on the site; a changed file comes in as a blob of its own, so the lines
-// of index.html stay where they are
-function render_design_doc(design, base, blob_files)
+// Every changed file of the design but index.html as a blob of its own, for the preview to load:
+// {blob url: file name}; the caller revokes them once the preview moves on
+function design_blobs_create(design, base)
 {
-    let html = design.files['index.html'] ?? '';
+    const out = {};
     for (const [file, text] of Object.entries(design.files)) {
-        if (file === 'index.html' || text === design.originals[file]) {
+        if ((file === 'index.html') || (text === design.originals[file])) {
             continue;
         }
-        const body = /\.css$/i.test(file) ? css_with_absolute_urls(text, base) : text;
+        const body = /\.css$/i.test(file) ? css_resolve_urls(text, base) : text;
         const type = /\.css$/i.test(file) ? 'text/css' : 'text/javascript';
-        const url = URL.createObjectURL(new Blob([body], {type}));
-        blob_files[url] = file;
-        html = html.replace(new RegExp(`((?:href|src)\\s*=\\s*["'])(?:\\./)?${regexp_escape(file)}(["'])`, 'g'), `$1${url}$2`);
+        out[URL.createObjectURL(new Blob([body], {type}))] = file;
     }
-    // On the line of <head>, so every line of index.html keeps its number
-    const head = `<base href="${base.replaceAll('"', '&quot;')}"><script>${PREVIEW_ERRORS_HOOK}<\/script>`;
-    const at = html.match(/<head[^>]*>/i) ?? html.match(/<html[^>]*>/i) ?? html.match(/<!doctype[^>]*>/i);
-    if (!at) {
-        return head + html;
-    }
-    const i = at.index + at[0].length;
-    return html.slice(0, i) + head + html.slice(i);
+    return out;
 }
 
-// A stylesheet from a blob has no folder: its url(...) are made whole against the design's
-function css_with_absolute_urls(css, base)
-{
-    return css.replace(/url\(\s*(["']?)([^"')]+)\1\s*\)/g, function (all, quote, url) {
-        return /^(data:|[a-z]+:|\/|#)/i.test(url) ? all : `url("${new URL(url, base).href}")`;
-    });
-}
-
-function regexp_escape(text)
-{
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function load_design_draft()
+function design_draft_load()
 {
     try {
         const value = JSON.parse(localStorage.getItem('navplace.playground.design'));
@@ -2743,7 +2859,7 @@ function load_design_draft()
 }
 
 // Only edited code is kept; an untouched design comes from the site again
-function save_design_draft(design)
+function design_draft_save(design)
 {
     try {
         if (design_is_edited(design)) {
@@ -2757,7 +2873,45 @@ function save_design_draft(design)
     }
 }
 
-function load_tab()
+// The design's index.html for the preview: its folder as the base, so its own files and
+// ../../lib load as on the site; a changed file comes in as its blob of `file_by_blob_url`,
+// so the lines of index.html stay where they are
+function render_design_doc(design, base, file_by_blob_url)
+{
+    let html = design.files['index.html'] ?? '';
+    for (const [url, file] of Object.entries(file_by_blob_url)) {
+        html = html.replace(new RegExp(`((?:href|src)\\s*=\\s*["'])(?:\\./)?${regexp_escape(file)}(["'])`, 'g'), `$1${url}$2`);
+    }
+    // On the line of <head>, so every line of index.html keeps its number
+    const head = `<base href="${base.replaceAll('"', '&quot;')}"><script>${PREVIEW_ERRORS_HOOK}<\/script>`;
+    const head_match = html.match(/<head[^>]*>/i) ?? html.match(/<html[^>]*>/i) ?? html.match(/<!doctype[^>]*>/i);
+    if (!head_match) {
+        return `${head}${html}`;
+    }
+    const head_end = head_match.index + head_match[0].length;
+    return `${html.slice(0, head_end)}${head}${html.slice(head_end)}`;
+}
+
+function render_embed_snippet(text)
+{
+    const attr = text.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+    return `<div style="position:fixed;inset:0;">\n<script src="https://navplace.com/lib/embed.js" data-links="\n${attr}\n"><\/script>\n</div>\n`;
+}
+
+// A stylesheet from a blob has no folder: its url(...) are made whole against the design's
+function css_resolve_urls(css, base)
+{
+    return css.replace(/url\(\s*(["']?)([^"')]+)\1\s*\)/g, function (all, quote, url) {
+        return /^(data:|[a-z]+:|\/|#)/i.test(url) ? all : `url("${new URL(url, base).href}")`;
+    });
+}
+
+function regexp_escape(text)
+{
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function tab_load()
 {
     try {
         const value = localStorage.getItem('navplace.playground.tab');
@@ -2768,7 +2922,16 @@ function load_tab()
     }
 }
 
-function load_json_mode()
+function tab_save(value)
+{
+    try {
+        localStorage.setItem('navplace.playground.tab', value);
+    }
+    catch {
+    }
+}
+
+function json_mode_load()
 {
     try {
         return (localStorage.getItem('navplace.playground.json') === 'file') ? 'file' : 'line';
@@ -2778,7 +2941,7 @@ function load_json_mode()
     }
 }
 
-function save_json_mode(value)
+function json_mode_save(value)
 {
     try {
         localStorage.setItem('navplace.playground.json', value);
@@ -2787,16 +2950,7 @@ function save_json_mode(value)
     }
 }
 
-function save_tab(value)
-{
-    try {
-        localStorage.setItem('navplace.playground.tab', value);
-    }
-    catch {
-    }
-}
-
-function save_theme(theme)
+function theme_save(theme)
 {
     document.documentElement.dataset.theme = theme;
     try {
@@ -2806,7 +2960,7 @@ function save_theme(theme)
     }
 }
 
-function load_draft()
+function draft_load()
 {
     try {
         return localStorage.getItem('navplace.playground');
@@ -2816,23 +2970,32 @@ function load_draft()
     }
 }
 
+function draft_save(text)
+{
+    try {
+        localStorage.setItem('navplace.playground', text);
+    }
+    catch {
+    }
+}
+
 // Kept sizes over the defaults; Basic's split from before the tabs counts as Basic's
-function load_sizes()
+function sizes_load()
 {
     const out = JSON.parse(JSON.stringify(SIZES_DEFAULT));
     try {
         const saved = JSON.parse(localStorage.getItem('navplace.playground.sizes')) ?? {};
         for (const key of Object.keys(SIZES_DEFAULT)) {
             const value = saved[key];
-            if (Array.isArray(value) && value.length === out[key].length && value.every(v => Number.isFinite(v) && v > 0) && value.reduce((a, b) => a + b, 0) < 1) {
+            if (Array.isArray(value) && (value.length === out[key].length) && value.every(v => Number.isFinite(v) && (v > 0)) && (value.reduce((a, b) => a + b, 0) < 1)) {
                 out[key] = value;
             }
-            else if (key === 'errors' && Number.isFinite(value)) {
+            else if ((key === 'errors') && Number.isFinite(value)) {
                 out.errors = value;
             }
         }
         const split = parseFloat(localStorage.getItem('navplace.playground.split'));
-        if (!saved.basic && split > 0 && split < 1) {
+        if (!saved.basic && (split > 0) && (split < 1)) {
             out.basic = [split];
         }
     }
@@ -2841,7 +3004,7 @@ function load_sizes()
     return out;
 }
 
-function save_sizes(sizes)
+function sizes_save(sizes)
 {
     try {
         localStorage.setItem('navplace.playground.sizes', JSON.stringify(sizes));
@@ -2851,34 +3014,19 @@ function save_sizes(sizes)
     }
 }
 
-function save_draft(text)
-{
-    try {
-        localStorage.setItem('navplace.playground', text);
-    }
-    catch {
-    }
-}
-
 // Rewrites the last `% design:` line, the one the parser keeps
-function format_design(links, design)
+function text_design_set(text, design_name)
 {
-    const lines = links.split('\n');
-    const i = lines.findLastIndex(v => /^\s*%\s*design\s*:/.test(v));
-    if (i === -1) {
-        return `% design: ${design}\n${links}`;
+    const lines = text.split('\n');
+    const line_index = lines.findLastIndex(v => /^\s*%\s*design\s*:/.test(v));
+    if (line_index === -1) {
+        return `% design: ${design_name}\n${text}`;
     }
-    lines[i] = `% design: ${design}`;
+    lines[line_index] = `% design: ${design_name}`;
     return lines.join('\n');
 }
 
-function format_snippet(links)
-{
-    const attr = links.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
-    return `<div style="position:fixed;inset:0;">\n<script src="https://navplace.com/lib/embed.js" data-links="\n${attr}\n"><\/script>\n</div>\n`;
-}
-
-function open_codepen(html)
+function codepen_open(html)
 {
     const form = document.createElement('form');
     const input = document.createElement('input');

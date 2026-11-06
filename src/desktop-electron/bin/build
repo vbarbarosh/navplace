@@ -22,4 +22,7 @@ cd $scriptdir/..
 rm -rf build
 npm run build
 
+# A build that fails its own check ships nothing
+bin/self-check
+
 EXIT_MESSAGE="${GREEN}bin/build succeeded${RESET}"

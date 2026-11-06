@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+RED="\e[31m" GREEN="\e[32m" RESET="\e[0m"
+
+EXIT_MESSAGE="${RED}bin/self-check failed${RESET}"
+
+# http://redsymbol.net/articles/bash-exit-traps/
+trap 'echo -e "$EXIT_MESSAGE"' EXIT
+cd $scriptdir/..
+
+# Each probe runs in its own strict shell; its lines carry its name.
+(
+    set -o nounset -o errexit -o pipefail
+    node --version
+) 2>&1 | sed 's/^/[node] /'
+
+(
+    set -o nounset -o errexit -o pipefail
+    for file in index.html docs.html playground.html lib/navplace.js lib/parse.js lib/filter1_from_spec.js designs/index.json; do
+        if [ ! -s build/www/$file ]; then
+            echo "build/www/$file: missing, run bin/build"
+            exit 1
+        fi
+    done
+    echo "`node -p 'require("./build/www/designs/index.json").length'` designs, the pages and lib/"
+) 2>&1 | sed 's/^/[build\/www] /'
+
+EXIT_MESSAGE="${GREEN}bin/self-check succeeded${RESET}"

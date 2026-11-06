@@ -1,9 +1,9 @@
 const assert = require('node:assert/strict');
-const parse_include_spec = require('./parse_include_spec');
+const include_spec_from_text = require('./include_spec_from_text');
 const test = require('node:test');
 
 test('reads the url alone', function () {
-    assert.deepEqual(parse_include_spec('https://example.com/links.md'), {
+    assert.deepEqual(include_spec_from_text('https://example.com/links.md'), {
         url: 'https://example.com/links.md',
         tags: [],
         prefix: '',
@@ -12,7 +12,7 @@ test('reads the url alone', function () {
 });
 
 test('reads common tags, prefix, and suffix', function () {
-    assert.deepEqual(parse_include_spec('  https://example.com/links.md  #work #shared #prefix=ACME/ #suffix=! '), {
+    assert.deepEqual(include_spec_from_text('  https://example.com/links.md  #work #shared #prefix=ACME/ #suffix=! '), {
         url: 'https://example.com/links.md',
         tags: ['work', 'shared'],
         prefix: 'ACME/',
@@ -21,7 +21,7 @@ test('reads common tags, prefix, and suffix', function () {
 });
 
 test('ignores options it does not know', function () {
-    assert.deepEqual(parse_include_spec('https://example.com/links.md #design=github #ns=work'), {
+    assert.deepEqual(include_spec_from_text('https://example.com/links.md #design=github #ns=work'), {
         url: 'https://example.com/links.md',
         tags: [],
         prefix: '',

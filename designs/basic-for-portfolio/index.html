@@ -170,12 +170,22 @@
 
 <script src="../../lib/navplace.js"></script>
 <script>
-    (function() {
-        const container = document.getElementById('items-container');
-        const searchInput = document.querySelector('input[type="search"]');
+    main();
 
-        function update(items) {
-            if (!items || items.length === 0) {
+    function main()
+    {
+        const container = document.getElementById('items-container');
+        const search_input = document.querySelector('input[type="search"]');
+
+        if (typeof navplace === 'function') {
+            navplace({input: search_input, update: refresh_items});
+        }
+
+        // Initial empty state
+        refresh_items([]);
+
+        function refresh_items(items) {
+            if (!items || (items.length === 0)) {
                 container.innerHTML = `
                         <div class="empty-state">
                             No items found. Try a different search.
@@ -184,57 +194,58 @@
                 return;
             }
 
-            container.innerHTML = items.map(item => `
-                    <a href="${item.href}" class="item-card" target="_blank" rel="noopener">
-                        ${item.icon_url ? `
+            container.innerHTML = items.map(render_item_html).join('');
+
+            function render_item_html(item) {
+                const icon_html = item.icon_url ? `
                             <img src="${item.icon_url}"
                                  alt="${item.label} icon"
                                  class="item-icon"
                                  onerror="this.style.display='none'">
-                        ` : ''}
-
-                        <div class="item-content">
-                            <div class="item-label">${escapeHtml(item.label)}</div>
-                            <div class="item-href">${escapeHtml(item.href)}</div>
-
-                            ${item.meta && Object.keys(item.meta).length > 0 ? `
+                        ` : '';
+                const meta_html = (item.meta && (Object.keys(item.meta).length > 0)) ? `
                                 <div class="item-meta">
-                                    ${Object.entries(item.meta).map(([key, value]) => `
-                                        <span class="meta-tag">
-                                            ${escapeHtml(key)}: ${escapeHtml(String(value))}
-                                        </span>
-                                    `).join('')}
+                                    ${Object.entries(item.meta).map(render_meta_tag_html).join('')}
                                 </div>
-                            ` : ''}
-                        </div>
-
-                        ${item.image_url ? `
+                            ` : '';
+                const image_html = item.image_url ? `
                             <img src="${item.image_url}"
                                  alt="${item.label} preview"
                                  class="item-image"
                                  onerror="this.style.display='none'">
-                        ` : ''}
+                        ` : '';
+                return `
+                    <a href="${item.href}" class="item-card" target="_blank" rel="noopener">
+                        ${icon_html}
+
+                        <div class="item-content">
+                            <div class="item-label">${html_escape(item.label)}</div>
+                            <div class="item-href">${html_escape(item.href)}</div>
+
+                            ${meta_html}
+                        </div>
+
+                        ${image_html}
                     </a>
-                `).join('');
+                `;
+            }
         }
 
-        function escapeHtml(text) {
+        // [key, value] of item.meta
+        function render_meta_tag_html(entry) {
+            return `
+                                        <span class="meta-tag">
+                                            ${html_escape(entry[0])}: ${html_escape(String(entry[1]))}
+                                        </span>
+                                    `;
+        }
+
+        function html_escape(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-
-        // Initialize NavPlace
-        if (typeof navplace === 'function') {
-            navplace({
-                input: searchInput,
-                update: update
-            });
-        }
-
-        // Initial empty state
-        update([]);
-    })();
+    }
 </script>
 </body>
 </html>

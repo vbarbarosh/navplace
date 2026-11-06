@@ -6,6 +6,10 @@ function make_config(settings)
     const out = make(settings, {
         config_dir: {type: 'str'},
         user_data_dir: {type: 'str'},
+        data_home_dir: {type: 'str'},
+        appimage_file: {type: 'str', nullable: true},
+        appimage_mount_dir: {type: 'str', nullable: true},
+        is_wayland: {type: 'bool'},
         designs_dir: {type: 'null'},
         readme_file: {type: 'null'},
         socket_file: {type: 'null'},

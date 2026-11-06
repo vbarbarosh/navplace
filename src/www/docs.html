@@ -346,32 +346,40 @@
         .c-tag {
             color: var(--c-tag);
         }
+
         .c-image {
             color: var(--c-image);
         }
+
         .c-url {
             color: var(--c-url);
         }
+
         .c-directive,
         .c-key {
             color: var(--c-key);
         }
+
         .c-value {
             color: var(--c-image);
         }
+
         .c-section {
             font-weight: 650;
         }
+
         .c-ignored,
         .c-mark,
         .c-comment {
             color: var(--text-mute);
         }
+
         .c-word,
         .c-number,
         .c-tagname {
             color: var(--c-url);
         }
+
         .c-error {
             color: var(--danger);
         }
@@ -387,17 +395,20 @@
             border-radius: 8px;
             background: var(--code-bg);
         }
+
         .legend-row {
             display: flex;
             flex-wrap: wrap;
             align-items: flex-start;
             gap: 10px 16px;
         }
+
         .legend-part {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
+
         .docs .legend-part code {
             padding: 0;
             background: none;
@@ -405,11 +416,13 @@
             font-size: 13px;
             white-space: pre;
         }
+
         .legend-bar {
             height: 2px;
             border-radius: 1px;
             background: currentColor;
         }
+
         .legend-label {
             color: var(--text-soft);
             font-size: 12px;
@@ -423,11 +436,13 @@
             gap: 12px;
             margin: 12px 0;
         }
+
         .becomes-name {
             margin-bottom: 6px;
             color: var(--text-soft);
             font-size: 13px;
         }
+
         .docs .becomes pre {
             margin: 0;
         }
@@ -883,7 +898,7 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
     <li>Clicks call <code>navplace.navigate(item, event)</code>, so a click opens the selection of several words too.</li>
     <li>Fonts, scripts and images ship inside the folder or inline: the desktop app <a href="#network-gate">blocks remote requests</a>.</li>
 </ul>
-<p>The same file runs in the desktop app (links from <code>window.ElectronApp</code>), inside the embed widget and in the Playground (links by <code>postMessage</code>). The full guide for writing one: <a href="https://github.com/vbarbarosh/navplace/blob/master/specs/DESIGN.ai.md">specs/DESIGN.ai.md</a>.</p>
+<p>The same file runs in the desktop app (links from <code>window.ElectronApp</code>), inside the embed widget and in the Playground (links by <code>postMessage</code>). The full guide for writing one: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/DESIGN.ai.md">specs/DESIGN.ai.md</a>.</p>
 <p>To work on one, open the Playground's <strong>Design</strong> tab: the <code>% design:</code> line opens the design's folder there, a tab per file, and every edit redraws the preview. The edits stay in the browser until <strong>Load</strong> brings a design's files back; copy them into <code>designs/&lt;name&gt;/</code> to keep them.</p>
 
 <!-- ============================================================ -->
@@ -935,6 +950,7 @@ Gmail   https://mail.google.com/
     <tbody>
         <tr><td><code>parse.js</code></td><td>The parser: text in, <code>{meta, items}</code> out. A Node module and a browser global. Its options <code>{prefix, suffix, tags, ns}</code> serve <code>% include:</code>.</td></tr>
         <tr><td><code>filter1_from_spec.js</code></td><td>Compiles one search expression (<code>^</code>, <code>$</code>, <code>!</code>, <code>/</code>) into a test; a copy from <a href="https://github.com/vbarbarosh/node-helpers">node-helpers</a>.</td></tr>
+        <tr><td><code>plural.js</code></td><td>The phrase for a count, <code>plural(n, '# link', '# links')</code>; a copy from <a href="https://github.com/vbarbarosh/node-helpers">node-helpers</a>, loaded by the playground and the designs that count.</td></tr>
         <tr><td><code>navplace.js</code></td><td>The runtime every design loads: the search box, filtering, the selection, Enter and clicks, the embed messages, and the items from <code>window.ElectronApp</code> in the desktop app. It loads the two files above from its own folder.</td></tr>
         <tr><td><code>embed.js</code></td><td>The <a href="#embed">embed widget</a>.</td></tr>
         <tr><td><code>parse.test.js</code></td><td>The parser's tests (mocha, <code>npm test</code>).</td></tr>
@@ -954,11 +970,11 @@ Gmail   https://mail.google.com/
         <tr><td><code>designs/</code></td><td>One folder per design.</td></tr>
         <tr><td><code>src/desktop-electron/</code></td><td>The desktop app.</td></tr>
         <tr><td><code>src/cloudflare/</code></td><td>The Worker on navplace.com: the site's files from <code>build/www/</code> and <code>/icon/</code>; anything else is a 404.</td></tr>
-        <tr><td><code>www/</code></td><td>The site: the home page, the Playground, these docs.</td></tr>
-        <tr><td><code>docs/</code></td><td>Notes in markdown: the format, instant launch, Chrome on Wayland; the format cheat sheet.</td></tr>
-        <tr><td><code>specs/</code></td><td>The product brief and the guide for writing designs.</td></tr>
+        <tr><td><code>src/www/</code></td><td>The site: the home page, the Playground, these docs.</td></tr>
+        <tr><td><code>docs/</code></td><td>The documentation in markdown: the product brief, the guide for writing designs, the desktop app, instant launch, Chrome on Wayland.</td></tr>
+        <tr><td><code>notes/</code></td><td>Working notes: the prompts for new designs, similar projects, findings.</td></tr>
         <tr><td><code>demos/</code></td><td>Standalone pages that embed a design.</td></tr>
-        <tr><td><code>bin/</code></td><td>Scripts: <code>build-www</code>, <code>deploy-www</code>, <code>test</code>.</td></tr>
+        <tr><td><code>bin/</code></td><td>Scripts: <code>configure</code>, <code>build</code>, <code>self-check</code>, <code>deploy-www</code>, <code>test</code>.</td></tr>
     </tbody>
 </table>
 
@@ -967,29 +983,29 @@ Gmail   https://mail.google.com/
     <li><code>main.js</code>: the window, loading <code>~/.navplace/README.md</code> and its includes, the socket the launcher pings, the single-instance lock, the <code>private://</code> and <code>app://</code> protocols, the network gate.</li>
     <li><code>launcher.js</code>: the hotkey side; Node built-ins only.</li>
     <li><code>renderer.js</code>: the preload that gives designs <code>window.ElectronApp</code>.</li>
-    <li><code>helpers/</code>: <code>resolve_includes</code> and <code>parse_include_spec</code> for <code>% include:</code>, <code>configure_gnome</code>, <code>focus_chrome_window</code>, <code>wait_for_socket_connections</code>.</li>
+    <li><code>helpers/</code>: <code>collection_resolve_includes</code> and <code>include_spec_from_text</code> for <code>% include:</code>, <code>gnome_configure</code>, <code>chrome_window_focus</code>, <code>make_socket_server</code>.</li>
 </ul>
 
 <h3 id="architecture-site">The site</h3>
 <ul>
-    <li><code>bin/build-www</code> puts the site together in <code>build/www/</code>: <code>www/</code>, <code>lib/</code> without the tests and the CLI, <code>designs/</code> without the drafts, and <code>designs/index.json</code>, the Playground's list of designs with the files of each.</li>
+    <li><code>bin/build</code> puts the site together in <code>build/www/</code>: <code>src/www/</code>, <code>lib/</code> without the tests and the CLI, <code>designs/</code> without the drafts, and <code>designs/index.json</code>, the Playground's list of designs with the files of each.</li>
 </ul>
 
 <!-- ============================================================ -->
 <h2 id="development">Development</h2>
-<pre><code data-lang="shell"># the parser's tests
-npm ci
-npm test
+<pre><code data-lang="shell"># after every git pull: the packages, and the desktop app's sandbox
+bin/configure
+
+# the parser's tests
+bin/test
+
+# the static site, into build/www/, then its self-check
+bin/build
 
 # the desktop app from source
-cd src/desktop-electron
-npm ci
-npm start        # run it
-npm test         # the helpers' tests
-npm run build    # the AppImage, into src/desktop-electron/build/
-
-# the static site, into build/www/
-bin/build-www</code></pre>
+src/desktop-electron/bin/run      # run it
+src/desktop-electron/bin/test     # the helpers' tests
+src/desktop-electron/bin/build    # the AppImage, into src/desktop-electron/build/</code></pre>
 
 <!-- ============================================================ -->
 <h2 id="faq">FAQ</h2>
@@ -1011,7 +1027,7 @@ bin/build-www</code></pre>
 <!-- ============================================================ -->
 <h2 id="status">Status and contributing</h2>
 <ul>
-    <li>Known issues: <a href="https://github.com/vbarbarosh/navplace/blob/master/src/desktop-electron/ISSUES.md">src/desktop-electron/ISSUES.md</a>.</li>
+    <li>Known issues: <a href="https://github.com/vbarbarosh/navplace/blob/master/notes/chrome-external-links.md">notes/chrome-external-links.md</a>.</li>
     <li>Issues and pull requests: <a href="https://github.com/vbarbarosh/navplace">github.com/vbarbarosh/navplace</a>.</li>
 </ul>
 
@@ -1040,71 +1056,74 @@ main();
 
 function main()
 {
-    const links = new Map();
     let pinned = null;
+
+    const link_by_heading = new Map();
 
     // Chrome on Wayland can hold a drag session and freeze the tab
     document.addEventListener('dragstart', v => v.preventDefault());
 
-
     // What a link becomes: the items the parser makes of the text beside them, never typed by hand
     const becomes_text = document.getElementById('becomes_text').textContent;
     // Short arrays and objects on one line each, so an item reads at a glance; a long one keeps its lines
-    const one_line = (all, open, inner, close) => {
+    function brackets_join_short(all, open, inner, close) {
         const line = `${open}${inner.replace(/\s*\n\s*/g, ' ')}${close}`;
-        return line.length <= 40 ? line : all;
-    };
-    document.getElementById('becomes_items').textContent = JSON.stringify(parse(becomes_text), null, 2)
-        .replace(/(\[)\s+([^[\]{}]*?)\s+(\])/g, one_line)
-        .replace(/(\{)\s+([^[\]{}]*?)\s+(\})/g, one_line);
+        return (line.length <= 40) ? line : all;
+    }
+    const json = JSON.stringify(parse(becomes_text), null, 2);
+    const json_short_arrays = json.replace(/(\[)\s+([^[\]{}]*?)\s+(\])/g, brackets_join_short);
+    document.getElementById('becomes_items').textContent = json_short_arrays.replace(/(\{)\s+([^[\]{}]*?)\s+(\})/g, brackets_join_short);
 
     // The examples in the Playground's colours: links.txt as its editor draws it
     for (const code of document.querySelectorAll('pre code[data-lang]')) {
         code.innerHTML = render_example_html(code.textContent, code.dataset.lang);
     }
 
-
     document.querySelector('.theme-switch').addEventListener('click', function () {
-        save_theme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+        theme_save((document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark');
     });
-
 
     for (const link of document.querySelectorAll('.toc a[href^="#"]')) {
         const heading = document.getElementById(link.getAttribute('href').slice(1));
         // The jump to the heading is done by the time the next frame runs
-        link.addEventListener('click', () => requestAnimationFrame(() => pin(heading)));
-        links.set(heading, link);
+        link.addEventListener('click', () => requestAnimationFrame(() => heading_pin(heading)));
+        link_by_heading.set(heading, link);
     }
 
-    window.addEventListener('scroll', mark_current, {passive: true});
-    window.addEventListener('resize', mark_current);
-    window.addEventListener('hashchange', () => pin(find_section(find_hash())));
-    pin(find_section(find_hash()));
+    window.addEventListener('scroll', refresh_toc_current, {passive: true});
+    window.addEventListener('resize', refresh_toc_current);
+    window.addEventListener('hashchange', function () {
+        const target = hash_target_find();
+        heading_pin(section_heading_find(target));
+    });
+    const target = hash_target_find();
+    heading_pin(section_heading_find(target));
 
-    function find_hash() {
+    function hash_target_find() {
         return location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
     }
 
     // A link to a subsection marks the section it belongs to
-    function find_section(target) {
+    function section_heading_find(target) {
         if (!target) {
             return null;
         }
-        const headings = [...links.keys()];
-        return headings.findLast(v => v.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING || v === target) ?? null;
+        const headings = [...link_by_heading.keys()];
+        return headings.findLast(v => (v.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING) || (v === target)) ?? null;
     }
 
     // A section near the end cannot reach the top; the one picked stays current until the page moves
-    function pin(heading) {
+    function heading_pin(heading) {
         pinned = heading && {heading, y: window.scrollY};
-        mark_current();
+        refresh_toc_current();
     }
 
     // The current section is the last heading that passed the bar; at the end of the page, the topmost one in view
-    function mark_current() {
-        const headings = [...links.keys()];
+    function refresh_toc_current() {
         let current = null;
-        if (pinned && Math.abs(window.scrollY - pinned.y) < 2) {
+
+        const headings = [...link_by_heading.keys()];
+        if (pinned && (Math.abs(window.scrollY - pinned.y) < 2)) {
             current = pinned.heading;
         }
         else {
@@ -1115,7 +1134,7 @@ function main()
             }
             current ??= headings.findLast(v => v.getBoundingClientRect().top <= 124) ?? headings[0];
         }
-        for (const [heading, link] of links) {
+        for (const [heading, link] of link_by_heading) {
             if (heading === current) {
                 link.setAttribute('aria-current', 'location');
             }
@@ -1126,7 +1145,7 @@ function main()
     }
 }
 
-function save_theme(theme)
+function theme_save(theme)
 {
     document.documentElement.dataset.theme = theme;
     try {

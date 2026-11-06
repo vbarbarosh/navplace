@@ -24,7 +24,7 @@ official Linux desktop entries. Window selection:
 3. Else no focus step; the URL opens as before.
 
 Implemented in `open_external` (`src/desktop-electron/main.js`), which calls
-`src/desktop-electron/helpers/focus_chrome_window.js` before
+`src/desktop-electron/helpers/chrome_window_focus.js` before
 `shell.openExternal`. Only `http(s)` URLs on Linux get the focus step.
 
 ## Mechanism

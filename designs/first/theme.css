@@ -19,15 +19,21 @@ a {
 }
 
 .gap10 { gap: 10px; }
+
 .gap15 { gap: 15px; }
+
 .gap20 { gap: 20px; }
+
 .gap25 { gap: 25px; }
+
 .fit-cover { object-fit: cover; }
+
 .fit-contain { object-fit: contain; }
 
 .container {
     display: grid;
     grid-template-columns: repeat(auto-fill, 200px);
+    gap: 25px;
     align-content: start;
     justify-content: center;
 }

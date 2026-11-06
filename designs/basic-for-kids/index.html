@@ -14,6 +14,7 @@
             flex-direction: column;
             align-items: center;
         }
+
         #search {
             width: 80%;
             max-width: 600px;
@@ -25,9 +26,11 @@
             outline: none;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         #search::placeholder {
             color: #a9a9a9;
         }
+
         #results {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -35,6 +38,7 @@
             width: 90%;
             max-width: 1200px;
         }
+
         .card {
             display: flex;
             flex-direction: column;
@@ -50,9 +54,11 @@
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
             transition: transform 0.2s ease;
         }
+
         .card:hover {
             transform: scale(1.05);
         }
+
         .card img {
             width: 120px;
             height: 120px;
@@ -62,12 +68,15 @@
             border: 3px solid #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .card:nth-child(3n+1) {
             background-color: #b0e57c;
         }
+
         .card:nth-child(3n+2) {
             background-color: #ffd700;
         }
+
         .card:nth-child(3n+3) {
             background-color: #87cefa;
         }
@@ -80,9 +89,18 @@
 <script>
     const input = document.getElementById('search');
     const container = document.getElementById('results');
-    const update = (items) => {
+
+    main();
+
+    function main()
+    {
+        navplace({input, update: refresh_results});
+    }
+
+    function refresh_results(items)
+    {
         container.innerHTML = '';
-        items.forEach(item => {
+        for (const item of items) {
             const card = document.createElement('a');
             card.href = item.href;
             card.className = 'card';
@@ -94,9 +112,8 @@
             label.textContent = item.label;
             card.appendChild(label);
             container.appendChild(card);
-        });
-    };
-    navplace({ input, update });
+        }
+    }
 </script>
 </body>
 </html>

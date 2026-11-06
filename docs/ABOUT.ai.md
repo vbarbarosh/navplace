@@ -51,7 +51,7 @@ Parser output shape per item:
 
 - `search1` = transliterated `label + tags` (lowercased, Cyrillic→Latin).
 - `search2` = transliterated `href`.
-- `icon_url` = `app://favicon/<host>` inside Electron, `/icon/<host>` on navplace.com (its Worker, `src/cloudflare/icon.mjs`), `https://icon.horse/icon/<host>` elsewhere.
+- `icon_url` = `app://favicon/<host>` inside Electron, `/icon/<host>` on navplace.com (its Worker, `src/cloudflare/serve_icon.mjs`), `https://icon.horse/icon/<host>` elsewhere.
 
 ## Filter language
 
@@ -110,7 +110,7 @@ Goal: every summon after the first is a socket ping, not a process start.
 
 1. `bin/configure-gnome` (run once on Linux/GNOME) writes a `dconf` custom keybinding mapping **Ctrl+Shift+Alt+N** to `desktop-electron/launcher.js`, and installs `~/.local/share/applications/navplace.desktop` (Exec=`npm start`, StartupWMClass=`@vbarbarosh/navplace`).
 2. `desktop-electron/launcher.js` is a tiny Node script (no Electron boot). It connects to a Unix socket at `${XDG_CONFIG_HOME:-~/.config}/navplace/navplace.sock` with a 150ms timeout.
-3. If the connection succeeds, the running Electron process (which is listening via `desktop-electron/helpers/wait_for_socket_connections.js`) shows the window, focuses it, clears the input, and dispatches a synthetic `input` event.
+3. If the connection succeeds, the running Electron process (which is listening via `desktop-electron/helpers/make_socket_server.js`) shows the window, focuses it, clears the input, and dispatches a synthetic `input` event.
 4. If the connection fails, the launcher invokes `gtk-launch navplace` to start Electron, then exits.
 5. Single-instance is enforced via `electron.app.requestSingleInstanceLock()`. A second `npm start` fires the same `second-instance` handler used by the socket path.
 6. `win.on('blur', () => win.hide())` keeps the process resident between summons.
@@ -119,7 +119,7 @@ Other desktop environments are not wired by `bin/configure-gnome`; the socket me
 
 ## The site
 
-navplace.com is a Cloudflare Worker (`src/cloudflare/worker.js`) serving `build/www/`, which `bin/build-www` puts together: the pages in `www/`, `lib/` and `designs/`. The Worker also answers `/icon/<host>`; anything else is a 404. There is no server, no database and no account: to keep links in one place, a collection pulls them from any url with `% include: <url>`.
+navplace.com is a Cloudflare Worker (`src/cloudflare/worker.js`) serving `build/www/`, which `bin/build` puts together: the pages in `www/`, `lib/` and `designs/`. The Worker also answers `/icon/<host>`; anything else is a 404. There is no server, no database and no account: to keep links in one place, a collection pulls them from any url with `% include: <url>`.
 
 ## Embed widget
 
@@ -158,13 +158,15 @@ desktop-electron/              desktop app
   main.js              window, IPC, protocols, socket server
   launcher.js          tiny hotkey-side socket pinger
   renderer.js          contextBridge preload
-  helpers/wait_for_socket_connections.js
+  helpers/make_socket_server.js
 src/cloudflare/        the Worker on navplace.com: build/www and /icon/
 designs/               one folder per design, each with index.html
-www/                   the site: index, docs, playground
+src/www/               the site: index, docs, playground
 demos/                 standalone HTML demos of each design
-bin/                   shell scripts (configure-gnome, build, watch, migrate, test, run)
-ubuntu/                .desktop file and icon for GNOME install
+bin/                   shell scripts (configure, build, self-check, deploy-www, test)
+docs/                  the product brief, the design guide, the desktop app
+notes/                 working notes: design prompts, similar projects, findings
+img/                   the cover and the GNOME install's icon
 package.json           name: "navplace", main: "desktop-electron/main.js"
 ```
 

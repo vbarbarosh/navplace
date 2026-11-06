@@ -199,9 +199,9 @@
             <input type="search" id="ops-search" placeholder="Filter operational nodes..." spellcheck="false">
         </div>
         <div class="theme-toggle">
-            <button class="btn-ui" onclick="setTheme('light')">Light</button>
-            <button class="btn-ui" onclick="setTheme('dark')">Dark</button>
-            <button class="btn-ui" onclick="setTheme('system')">Auto</button>
+            <button class="btn-ui" onclick="theme_set('light')">Light</button>
+            <button class="btn-ui" onclick="theme_set('dark')">Dark</button>
+            <button class="btn-ui" onclick="theme_set('system')">Auto</button>
         </div>
     </header>
 
@@ -212,23 +212,41 @@
 
 <script src="../../lib/navplace.js"></script>
 <script>
-    function setTheme(theme) {
+    const results_container = document.getElementById('navplace-results');
+
+    main();
+
+    function main()
+    {
+        if (typeof navplace === 'function') {
+            navplace({input: '#ops-search', update: refresh_items});
+        }
+        else {
+            console.error('NavPlace runtime not detected.');
+        }
+    }
+
+    function theme_set(theme)
+    {
         if (theme === 'system') {
             document.documentElement.removeAttribute('data-theme');
-        } else {
+        }
+        else {
             document.documentElement.setAttribute('data-theme', theme);
         }
     }
 
-    const resultsContainer = document.getElementById('navplace-results');
-
-    function renderItems(items) {
-        if (!items || items.length === 0) {
-            resultsContainer.innerHTML = '<div class="empty-state">No matching operational records found.</div>';
+    function refresh_items(items)
+    {
+        if (!items || (items.length === 0)) {
+            results_container.innerHTML = '<div class="empty-state">No matching operational records found.</div>';
             return;
         }
 
-        resultsContainer.innerHTML = items.map(item => `
+        results_container.innerHTML = items.map(render_item_html).join('');
+
+        function render_item_html(item) {
+            return `
             <a href="${item.href}" class="nav-item" target="_blank" rel="noopener noreferrer">
                 <img src="${item.icon_url}" class="nav-icon" onerror="this.style.display='none'">
                 <div class="nav-content">
@@ -237,18 +255,8 @@
                 </div>
                 ${item.image_url ? `<img src="${item.image_url}" class="nav-image">` : ''}
             </a>
-        `).join('');
-    }
-
-    // Initialize NavPlace
-    // Assuming navplace runtime is available globally
-    if (typeof navplace === 'function') {
-        navplace({
-            input: '#ops-search',
-            update: (items) => renderItems(items)
-        });
-    } else {
-        console.error('NavPlace runtime not detected.');
+        `;
+        }
     }
 </script>
 

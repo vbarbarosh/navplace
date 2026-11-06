@@ -37,121 +37,125 @@
 
 <script src="../../lib/navplace.js"></script>
 <script>
-    const ITEMS = [];
+    let selected_index = 0;
 
-    navplace({
-        input: 'input[type=search]',
-        update: function (items) {
-            ITEMS.splice(0, ITEMS.length, ...items);
-            refresh();
-        },
-        navigate: function () {
-            // Arrow keys required our own mechanics
-        },
-    });
+    const matches = [];
 
-    init();
+    main();
 
-    function escapeHtml(s)
+    function main()
     {
-        return String(s)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+        navplace({
+            input: 'input[type=search]',
+            update: function (items) {
+                matches.splice(0, matches.length, ...items);
+                selected_index = 0;
+                refresh();
+            },
+            navigate: function () {
+                // Arrow keys required our own mechanics
+            },
+        });
+
+        const search_input = document.getElementById('q');
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                selected_index = clamp(selected_index + 1, 0, Math.max(0, matches.length - 1));
+                refresh();
+                return;
+            }
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                selected_index = clamp(selected_index - 1, 0, Math.max(0, matches.length - 1));
+                refresh();
+                return;
+            }
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if (matches[selected_index]) {
+                    item_open(matches[selected_index]);
+                }
+                return;
+            }
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                search_input.value = '';
+                selected_index = 0;
+                refresh();
+            }
+        });
+        refresh();
     }
 
-    function render(items, selectedIndex)
+    function html_escape(s)
     {
-        var tbody = document.getElementById("rows");
-        var empty = document.getElementById("empty");
+        let escaped = String(s);
+        escaped = escaped.replace(/&/g, '&amp;');
+        escaped = escaped.replace(/</g, '&lt;');
+        escaped = escaped.replace(/>/g, '&gt;');
+        escaped = escaped.replace(/"/g, '&quot;');
+        escaped = escaped.replace(/'/g, '&#039;');
+        return escaped;
+    }
 
-        tbody.innerHTML = "";
+    function refresh_rows(items, selected_index)
+    {
+        const tbody = document.getElementById('rows');
+        const empty = document.getElementById('empty');
+        tbody.innerHTML = '';
         if (!items.length) {
-            empty.style.display = "block";
+            empty.style.display = 'block';
             return;
         }
-        empty.style.display = "none";
+        empty.style.display = 'none';
 
-        for (var i = 0; i < items.length; i++) {
-            var it = items[i];
-
-            var tr = document.createElement("tr");
-            tr.setAttribute("data-index", String(i));
+        for (const [i, item] of items.entries()) {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-index', String(i));
             tr.tabIndex = -1;
-            if (i === selectedIndex) tr.style.background = "rgba(255,255,255,.06)";
+            if (i === selected_index) {
+                tr.style.background = 'rgba(255,255,255,.06)';
+            }
 
-            var tdIcon = document.createElement("td");
-            tdIcon.className = "col-icon";
-            tdIcon.innerHTML = '<span class="icon"><img alt="" src="' + escapeHtml(it.icon_url || "") + '"></span>';
+            const td_icon = document.createElement('td');
+            td_icon.className = 'col-icon';
+            td_icon.innerHTML = `<span class="icon"><img alt="" src="${html_escape(item.icon_url || '')}"></span>`;
 
-            var tdLabel = document.createElement("td");
-            tdLabel.className = "label";
-            tdLabel.textContent = it.label || "";
+            const td_label = document.createElement('td');
+            td_label.className = 'label';
+            td_label.textContent = item.label || '';
 
-            var tdHref = document.createElement("td");
-            tdHref.className = "href";
-            tdHref.textContent = it.href || "";
+            const td_href = document.createElement('td');
+            td_href.className = 'href';
+            td_href.textContent = item.href || '';
 
-            tr.appendChild(tdIcon);
-            tr.appendChild(tdLabel);
-            tr.appendChild(tdHref);
+            tr.appendChild(td_icon);
+            tr.appendChild(td_label);
+            tr.appendChild(td_href);
 
-            tr.addEventListener("click", (function (it2) {
-                return function () { openHref(it2); };
-            })(it));
+            tr.addEventListener('click', function () {
+                item_open(item);
+            });
 
             tbody.appendChild(tr);
         }
     }
 
-    function openHref(item) {
+    function item_open(item)
+    {
         navplace.navigate(item);
-        // if (!href) return;
-        // // If you run this in Electron, prefer shell.openExternal(href).
-        // window.open(href, "_blank", "noopener,noreferrer");
     }
 
-    function clamp(n, a, b) {
+    function clamp(n, a, b)
+    {
         return Math.max(a, Math.min(b, n));
     }
 
-    var selected = 0;
-    function refresh() {
-        selected = clamp(selected, 0, Math.max(0, ITEMS.length - 1));
-        render(ITEMS, selected);
-    }
-
-    function init()
+    function refresh()
     {
-        const q = document.getElementById("q");
-        document.addEventListener("keydown", function (e) {
-            if (e.key === "ArrowDown") {
-                e.preventDefault();
-                selected = clamp(selected + 1, 0, Math.max(0, ITEMS.length - 1));
-                refresh();
-                return;
-            }
-            if (e.key === "ArrowUp") {
-                e.preventDefault();
-                selected = clamp(selected - 1, 0, Math.max(0, ITEMS.length - 1));
-                refresh();
-                return;
-            }
-            if (e.key === "Enter") {
-                e.preventDefault();
-                if (ITEMS[selected]) openHref(ITEMS[selected]);
-                return;
-            }
-            if (e.key === "Escape") {
-                e.preventDefault();
-                q.value = "";
-                selected = 0;
-                refresh();
-            }
-        });
-        refresh();
+        selected_index = clamp(selected_index, 0, Math.max(0, matches.length - 1));
+        refresh_rows(matches, selected_index);
     }
 </script>
 </body>

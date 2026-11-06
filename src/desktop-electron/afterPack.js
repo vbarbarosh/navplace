@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-exports.default = async function (context) {
+async function afterPack(context)
+{
     if (context.electronPlatformName !== 'linux') {
         return;
     }
@@ -9,14 +10,14 @@ exports.default = async function (context) {
     const executable_name = context.packager.executableName;
     const binary_path = path.join(context.appOutDir, executable_name);
     const binary_path_orig = path.join(context.appOutDir, `${executable_name}.orig`);
-
     fs.renameSync(binary_path, binary_path_orig);
 
-    // Create a shell script with the original name
+    // The original name now starts the binary with --no-sandbox
     const wrapper = `#!/bin/sh
 exec "$(dirname "$0")/${executable_name}.orig" --no-sandbox "$@"
 `;
-
     fs.writeFileSync(binary_path, wrapper);
     fs.chmodSync(binary_path, 0o755);
-};
+}
+
+exports.default = afterPack;

@@ -301,57 +301,63 @@
 
 <script src="../../lib/navplace.js"></script>
 <script>
+    let shown = [];
+    let section = null;
+    let selected_index = 0;
+
     const input = document.querySelector('input[type=search]');
     const grid = document.querySelector('.grid');
     const chips = document.querySelector('.chips');
     const empty = document.querySelector('.empty');
     const matches = [];
-    let shown = [];
-    let section = null;
-    let selected = 0;
 
-    navplace({
-        input: input,
-        meta: {title: '#title', subtitle: '#subtitle'},
-        update: function (filtered) {
-            matches.splice(0, matches.length, ...filtered);
-            render();
-        },
-        // Enter is ours: it opens the card the arrows chose, once
-        navigate: function () {},
-    });
+    main();
 
-    document.addEventListener('keydown', function (event) {
-        if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) {
-            return;
-        }
-        if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.key)) {
-            event.preventDefault();
-            move(event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1);
-        }
-        else if (event.key === 'Enter') {
-            event.preventDefault();
-            open_item(selected);
-        }
-        else if (event.key === 'Escape') {
-            event.preventDefault();
-            input.value = '';
-            input.dispatchEvent(new Event('input'));
-        }
-    });
-
-    function render()
+    function main()
     {
-        render_chips();
+        navplace({
+            input: input,
+            meta: {title: '#title', subtitle: '#subtitle'},
+            update: function (filtered) {
+                matches.splice(0, matches.length, ...filtered);
+                refresh_grid();
+            },
+            // Enter is ours: it opens the card the arrows chose, once
+            navigate: function () {},
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) {
+                return;
+            }
+            if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.key)) {
+                event.preventDefault();
+                selection_move(((event.key === 'ArrowDown') || (event.key === 'ArrowRight')) ? 1 : -1);
+            }
+            else if (event.key === 'Enter') {
+                event.preventDefault();
+                item_open(selected_index);
+            }
+            else if (event.key === 'Escape') {
+                event.preventDefault();
+                input.value = '';
+                input.dispatchEvent(new Event('input'));
+            }
+        });
+    }
+
+    function refresh_grid()
+    {
+        refresh_chips();
         shown = section ? matches.filter(v => v.namespaces.includes(section)) : matches.slice();
-        selected = 0;
+        selected_index = 0;
         grid.replaceChildren(...shown.map(make_card));
         empty.hidden = shown.length > 0;
     }
 
     // One chip per section of the links, in the order they first appear;
     // with nothing typed the matches are all the links, so the chips follow them
-    function render_chips()
+    function refresh_chips()
     {
         if (input.value.trim() && chips.childElementCount) {
             return;
@@ -378,8 +384,10 @@
             button.textContent = name ?? 'All';
             button.addEventListener('click', function () {
                 section = name;
-                Array.from(chips.children).forEach(v => v.classList.toggle('on', v === button));
-                render();
+                for (const chip of chips.children) {
+                    chip.classList.toggle('on', chip === button);
+                }
+                refresh_grid();
                 input.focus();
             });
             return button;
@@ -389,16 +397,16 @@
     function make_card(item, i)
     {
         const li = document.createElement('li');
-        li.className = (i === selected) ? 'card on' : 'card';
+        li.className = (i === selected_index) ? 'card on' : 'card';
         const head = document.createElement('div');
         head.className = 'head';
-        const names = document.createElement('div');
-        names.className = 'names';
-        names.append(make_text('div', 'label', item.label), make_text('div', 'domain', domain_of(item.href)));
-        head.append(make_icon(item), names);
+        const names_element = document.createElement('div');
+        names_element.className = 'names';
+        names_element.append(make_text('div', 'label', item.label), make_text('div', 'domain', domain_of(item.href)));
+        head.append(make_icon(item), names_element);
         li.append(head, make_text('span', 'section', item.namespaces.join(' · ')));
         li.addEventListener('click', function () {
-            open_item(i);
+            item_open(i);
         });
         return li;
     }
@@ -436,17 +444,19 @@
         }
     }
 
-    function move(delta)
+    function selection_move(delta)
     {
         if (!shown.length) {
             return;
         }
-        selected = (selected + delta + shown.length) % shown.length;
-        Array.from(grid.children).forEach((li, i) => li.classList.toggle('on', i === selected));
-        grid.children[selected]?.scrollIntoView({block: 'nearest'});
+        selected_index = (selected_index + delta + shown.length) % shown.length;
+        for (const [i, li] of Array.from(grid.children).entries()) {
+            li.classList.toggle('on', i === selected_index);
+        }
+        grid.children[selected_index]?.scrollIntoView({block: 'nearest'});
     }
 
-    function open_item(i)
+    function item_open(i)
     {
         if (shown[i]) {
             navplace.navigate(shown[i]);

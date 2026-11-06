@@ -7,7 +7,6 @@ const fs_path_join = require('@vbarbarosh/node-helpers/src/fs_path_join');
 const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_read = require('@vbarbarosh/node-helpers/src/fs_read');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
-const os = require('os');
 const shell_spawn = require('@vbarbarosh/node-helpers/src/shell_spawn');
 
 // Install the GNOME hotkey for the AppImage build, invoked as
@@ -18,24 +17,23 @@ const shell_spawn = require('@vbarbarosh/node-helpers/src/shell_spawn');
 // So we extract the (dependency-free) launcher next to the socket and bind the
 // hotkey to it; the .desktop's Exec points back at the AppImage for cold start.
 //
-// Returns {launcher_file, appimage, node_bin}; the caller reports success.
-async function configure_gnome()
+// Returns {launcher_file, appimage_file, node_bin}; the caller reports success.
+async function gnome_configure()
 {
-    const appimage = process.env.APPIMAGE;
-    if (!appimage) {
+    const appimage_file = config.appimage_file;
+    if (!appimage_file) {
         throw new Error('--configure-gnome must be run from the AppImage (APPIMAGE is not set)');
     }
 
     // The hotkey fires the extracted launcher via its `env node` shebang, so node
     // must be resolvable on PATH — check before writing anything, fail fast if not.
-    const node_bin = await node_on_path();
+    const node_bin = await node_bin_find();
     if (!node_bin) {
         throw new Error('node was not found in PATH — the hotkey launcher needs Node.js. Install it (or add it to PATH) and run --configure-gnome again.');
     }
 
-    const data_home = process.env.XDG_DATA_HOME || fs_path_join(os.homedir(), '.local', 'share');
     const launcher_file = fs_path_join(config.user_data_dir, 'launcher.js');
-    const desktop_file = fs_path_join(data_home, 'applications', 'navplace.desktop');
+    const desktop_file = fs_path_join(config.data_home_dir, 'applications', 'navplace.desktop');
 
     await fs_mkdirp(config.user_data_dir);
 
@@ -44,12 +42,11 @@ async function configure_gnome()
     await fs.promises.chmod(launcher_file, 0o755);
 
     // 2. extract the app icon (best-effort; the AppImage runtime exposes APPDIR)
-    const icon = await extract_icon();
+    const icon = await icon_extract();
 
-    // 3. register the hotkey -> the extracted launcher
-    await register_keybinding(launcher_file);
+    await keybinding_register(launcher_file);
 
-    // 4. .desktop -> the AppImage; `gtk-launch navplace` (the launcher's cold path) lands here
+    // 3. .desktop -> the AppImage; `gtk-launch navplace` (the launcher's cold path) lands here
     await fs_mkdirp(fs_path_dirname(desktop_file));
     await fs_write(desktop_file, [
         '[Desktop Entry]',
@@ -57,35 +54,36 @@ async function configure_gnome()
         'Name=NavPlace',
         'Comment=The fastest way to open your links',
         `Icon=${icon}`,
-        `Exec=${appimage}`,
+        `Exec=${appimage_file}`,
         'Categories=Utility;',
         'StartupWMClass=NavPlace',
         '',
     ].join('\n'));
 
-    return {launcher_file, appimage, node_bin};
+    return {launcher_file, appimage_file, node_bin};
 }
 
-async function extract_icon()
+async function icon_extract()
 {
-    const appdir = process.env.APPDIR;
-    if (appdir) {
-        for (const name of ['navplace.png', '.DirIcon']) {
-            const src = fs_path_join(appdir, name);
-            if (await fs_exists(src)) {
-                const dst = fs_path_join(config.user_data_dir, 'navplace.png');
-                await fs_write(dst, await fs_read(src));
-                return dst;
-            }
+    const appimage_mount_dir = config.appimage_mount_dir;
+    if (!appimage_mount_dir) {
+        return 'application-x-executable';
+    }
+    for (const name of ['navplace.png', '.DirIcon']) {
+        const src = fs_path_join(appimage_mount_dir, name);
+        if (await fs_exists(src)) {
+            const dest = fs_path_join(config.user_data_dir, 'navplace.png');
+            await fs_write(dest, await fs_read(src));
+            return dest;
         }
     }
     return 'application-x-executable';
 }
 
-async function node_on_path()
+async function node_bin_find()
 {
     try {
-        await run(['node', '--version']);
+        await command_run(['node', '--version']);
         return 'node';
     }
     catch {
@@ -93,19 +91,19 @@ async function node_on_path()
     }
 }
 
-async function register_keybinding(launcher_file)
+async function keybinding_register(launcher_file)
 {
     const base = '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings';
     const slot = `${base}/navplace/`;
 
-    const raw = (await run(['dconf', 'read', base])).trim().replace(/^@as\s+/, '');
-    const items = raw ? JSON.parse(raw.replaceAll("'", '"')) : [];
-    if (!items.includes(slot)) {
-        items.push(slot);
-        await run(['dconf', 'write', base, JSON.stringify(items).replaceAll('"', "'")]);
+    const raw = (await command_run(['dconf', 'read', base])).trim().replace(/^@as\s+/, '');
+    const slots = raw ? JSON.parse(raw.replaceAll("'", '"')) : [];
+    if (!slots.includes(slot)) {
+        slots.push(slot);
+        await command_run(['dconf', 'write', base, JSON.stringify(slots).replaceAll('"', "'")]);
     }
 
-    await run(['dconf', 'load', '/'], [
+    await command_run(['dconf', 'load', '/'], [
         '[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/navplace]',
         "binding='<Ctrl><Shift><Alt>N'",
         `command='${launcher_file}'`,
@@ -114,14 +112,14 @@ async function register_keybinding(launcher_file)
     ].join('\n'));
 }
 
-async function run(args, input)
+async function command_run(args, input)
 {
-    const proc = shell_spawn(args, {stdio: ['pipe', 'pipe', 'pipe']});
     let stdout = '';
     let stderr = '';
 
-    proc.stdout.on('data', chunk => stdout += chunk);
-    proc.stderr.on('data', chunk => stderr += chunk);
+    const proc = shell_spawn(args, {stdio: ['pipe', 'pipe', 'pipe']});
+    proc.stdout.on('data', v => stdout = `${stdout}${v}`);
+    proc.stderr.on('data', v => stderr = `${stderr}${v}`);
 
     // shell_spawn rejects BOTH init() and promise() on a spawn error — keep a
     // handler on promise() so ENOENT (node/dconf missing) doesn't leak.
@@ -146,4 +144,4 @@ async function run(args, input)
     return stdout;
 }
 
-module.exports = configure_gnome;
+module.exports = gnome_configure;

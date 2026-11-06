@@ -15,27 +15,31 @@
 <script src="../../lib/vendor/vue-3/vue.global.prod.js"></script>
 <script src="../../lib/navplace.js"></script>
 <script>
-const app = Vue.createApp({
-    template: `
+main();
+
+function main()
+{
+    const app = Vue.createApp({
+        template: `
 <div class="fix-f vsplit bg-page">
 <div class="p10">
-    <input ref="search" class="search db ma ph10 pv5 h20 w400" />
+    <input ref="search" class="db ma ph10 pv5 h20 w400 search" />
 </div>
 <div class="fluid flex-row-center p10 oa">
-    <div class="ma flex-fluid container gap25">
+    <div class="flex-fluid ma container">
         <a v-for="(item, i) in items"
            v-bind:href="item.href"
            v-bind:class="{break: row_starts(i)}"
            target="_blank"
-           class="rel flex-col w200 bs10 bg-bookmark"
-           style="height:112px;">
-            <template v-if="picture_shown(item)">
-                <img v-if="(item.meta.padding === '1')" v-bind:src="item.image_url" v-on:error="picture_failed(item)" class="flex-fluid fit-contain" style="padding: 10px 0 35px;" />
-                <img v-else-if="(item.meta.padding === '2')" v-bind:src="item.image_url" v-on:error="picture_failed(item)" class="flex-fluid fit-contain" style="padding: 0 10px 15px;" />
-                <img v-else v-bind:src="item.image_url" v-on:error="picture_failed(item)" class="flex-fluid fit-cover" />
+           style="height:112px;"
+           class="rel flex-col w200 bs10 bg-bookmark">
+            <template v-if="is_picture_shown(item)">
+                <img v-if="(item.meta.padding === '1')" v-on:error="picture_mark_failed(item)" v-bind:src="item.image_url" style="padding: 10px 0 35px;" class="flex-fluid fit-contain" />
+                <img v-else-if="(item.meta.padding === '2')" v-on:error="picture_mark_failed(item)" v-bind:src="item.image_url" style="padding: 0 10px 15px;" class="flex-fluid fit-contain" />
+                <img v-else v-on:error="picture_mark_failed(item)" v-bind:src="item.image_url" class="flex-fluid fit-cover" />
             </template>
-            <span v-else class="flex-fluid flex-row-center" style="padding-bottom: 28px;">
-                <img v-bind:src="item.icon_url" class="fit-contain" style="width: 48px; height: 48px;" />
+            <span v-else style="padding-bottom: 28px;" class="flex-fluid flex-row-center">
+                <img v-bind:src="item.icon_url" style="width: 48px; height: 48px;" class="fit-contain" />
             </span>
             <span class="bookmark-label">{{ item.label }}</span>
         </a>
@@ -43,44 +47,44 @@ const app = Vue.createApp({
 </div>
 </div>
 `,
-    data: function () {
-        return {
-            items: [],
-            // Pictures that did not load: their links show the site's icon instead
-            failed: {},
-        };
-    },
-    methods: {
-        // A link under another # section than the one before it starts a new row
-        row_starts: function (i) {
-            return (i > 0) && (this.items[i].namespaces.join('|') !== this.items[i - 1].namespaces.join('|'));
+        data: function () {
+            return {
+                items: [],
+                // Pictures that did not load: their links show the site's icon instead
+                failed: {},
+            };
         },
-        picture_shown: function (item) {
-            return !!item.image_url && !this.failed[item.image_url];
+        methods: {
+            // A link under another # section than the one before it starts a new row
+            row_starts: function (i) {
+                return (i > 0) && (this.items[i].namespaces.join('|') !== this.items[i - 1].namespaces.join('|'));
+            },
+            is_picture_shown: function (item) {
+                return !!item.image_url && !this.failed[item.image_url];
+            },
+            picture_mark_failed: function (item) {
+                this.failed[item.image_url] = true;
+            },
         },
-        picture_failed: function (item) {
-            this.failed[item.image_url] = true;
+        mounted: function () {
+            navplace({
+                input: this.$refs.search,
+                update: v => this.items.splice(0, this.items.length, ...v),
+            });
         },
-    },
-    mounted: function () {
-        navplace({
-            input: this.$refs.search,
-            update: items => this.items.splice(0, this.items.length, ...items),
-        });
-    },
-});
-app.mixin({
-    methods: {
-        px,
-        pc,
-    },
-});
-app.mount('#app');
-function px(v) {
-    return v ? `${v}px` : '0';
+    });
+    app.mixin({methods: {px, pc}});
+    app.mount('#app');
 }
-function pc(v) {
-    return v ? `${v*100}%` : '0';
+
+function px(value)
+{
+    return value ? `${value}px` : '0';
+}
+
+function pc(value)
+{
+    return value ? `${value*100}%` : '0';
 }
 </script>
 

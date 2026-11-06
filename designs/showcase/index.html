@@ -31,28 +31,27 @@
 
 <script src="../../lib/navplace.js"></script>
 <script>
-(function () {
+main();
 
+function main()
+{
     navplace({
         input: '#search',
-        meta: {
-            title: '.identity h1',
-            email: '.identity a',
-            subtitle: '.section-title',
-        },
-        update: items => render(items),
+        meta: {title: '.identity h1', email: '.identity a', subtitle: '.section-title'},
+        update: v => refresh_grid(v),
     });
 
     const root = document.documentElement;
     const buttons = document.querySelectorAll('.theme-switch button');
 
-    const saved = localStorage.getItem('theme') || 'system';
-    apply_theme(saved);
+    const saved = theme_read();
+    theme_apply(saved);
 
-    buttons.forEach(v => v.addEventListener('click', () => apply_theme(v.dataset.theme)));
+    for (const button of buttons) {
+        button.addEventListener('click', () => theme_apply(button.dataset.theme));
+    }
 
-    function render(items)
-    {
+    function refresh_grid(items) {
         const grid = document.getElementById('grid');
         grid.replaceChildren(...items.map(function (item) {
             const templ = document.createElement('template');
@@ -68,18 +67,44 @@
                 </a>
             `;
             const out = templ.content.firstElementChild;
-            out.onclick = e => navplace.navigate(item, e);
+            out.onclick = function (event) {
+                navplace.navigate(item, event);
+            };
             return out;
         }));
     }
 
-    function apply_theme(t) {
-        root.dataset.theme = t !== 'system' ? t : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        buttons.forEach(v => v.classList.toggle('active', v.dataset.theme === t));
-        localStorage.setItem('theme', t);
+    // 'system' when nothing is saved or the storage is closed
+    function theme_read() {
+        try {
+            return localStorage.getItem('theme') || 'system';
+        }
+        catch {
+            return 'system';
+        }
     }
 
-})();
+    function theme_apply(theme) {
+        if (theme !== 'system') {
+            root.dataset.theme = theme;
+        }
+        else if (matchMedia('(prefers-color-scheme: dark)').matches) {
+            root.dataset.theme = 'dark';
+        }
+        else {
+            root.dataset.theme = 'light';
+        }
+        for (const button of buttons) {
+            button.classList.toggle('active', button.dataset.theme === theme);
+        }
+        try {
+            localStorage.setItem('theme', theme);
+        }
+        catch {
+            // Not kept: the page still switches
+        }
+    }
+}
 </script>
 </body>
 </html>

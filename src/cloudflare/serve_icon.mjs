@@ -4,7 +4,7 @@
 // service. A request can fake its headers; this keeps honest pages out.
 
 const DAY = 86400;
-const MAX_BYTES = 200 * 1024;
+const MAX_BYTES = 200*1024;
 const TIMEOUT_MS = 4000;
 // A new value drops every icon kept at the edge: what it keeps under the old one is never asked again
 const CACHE_VERSION = 3;
@@ -17,7 +17,8 @@ const ICON_HEADERS = {
 };
 
 // `cache` is caches.default in the Worker; `fetch_fn` is fetch, a fake in the tests
-export async function serve_icon(request, {cache = null, fetch_fn = fetch} = {})
+// GET /icon/<domain> (header:sec-fetch-site, header:referer)
+async function serve_icon(request, {cache = null, fetch_fn = fetch} = {})
 {
     const url = new URL(request.url);
     if (!is_own_page(request, url.origin)) {
@@ -36,9 +37,9 @@ export async function serve_icon(request, {cache = null, fetch_fn = fetch} = {})
         return kept;
     }
 
-    const icon = await find_icon(domain, fetch_fn);
+    const icon = await icon_find(domain, fetch_fn);
     const response = icon
-        ? make_icon_response(icon.bytes, icon.type, 30 * DAY)
+        ? make_icon_response(icon.bytes, icon.type, 30*DAY)
         : make_icon_response(render_tile_svg(domain), 'image/svg+xml', DAY);
     if (cache) {
         await cache.put(key, response.clone());
@@ -64,52 +65,13 @@ function is_own_page(request, origin)
 
 function is_public_domain(domain)
 {
-    return domain.length <= 253
-        && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(domain)
-        && !/^[\d.]+$/.test(domain);
-}
-
-// The site's own icon, its /favicon.ico, then Google's; null when none has one
-async function find_icon(domain, fetch_fn)
-{
-    return await find_page_icon(domain, fetch_fn)
-        ?? await fetch_image(`https://${domain}/apple-touch-icon.png`, fetch_fn)
-        ?? await fetch_image(`https://${domain}/favicon.ico`, fetch_fn)
-        ?? await fetch_image(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`, fetch_fn);
-}
-
-// The best <link rel="…icon…"> of the home page, a data: one too. An
-// apple-touch-icon, linked or at its usual /apple-touch-icon.png, comes before
-// the rest: a square with its own background, it reads on a light and a dark tile
-async function find_page_icon(domain, fetch_fn)
-{
-    const page = await fetch_ok(`https://${domain}/`, fetch_fn);
-    if (!page || !String(page.headers.get('Content-Type')).includes('html')) {
-        return null;
-    }
-    const html = (await page.text()).slice(0, 512 * 1024);
-    const links = [...html.matchAll(/<link\b[^>]*>/gi)]
-        .map(m => ({rel: read_attr(m[0], 'rel'), href: read_attr(m[0], 'href'), type: read_attr(m[0], 'type'), sizes: read_attr(m[0], 'sizes')}))
-        .filter(v => is_icon_rel(v.rel) && v.href);
-    links.sort((a, b) => rank_icon_link(b) - rank_icon_link(a));
-    if (!links.some(is_apple_link)) {
-        links.unshift({rel: 'apple-touch-icon', href: '/apple-touch-icon.png'});
-    }
-    for (const link of links) {
-        const icon = link.href.startsWith('data:')
-            ? decode_data_url(link.href)
-            : await fetch_image(new URL(html_unescape(link.href), page.url || `https://${domain}/`).href, fetch_fn);
-        if (icon) {
-            return icon;
-        }
-    }
-    return null;
+    return (domain.length <= 253) && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(domain) && !/^[\d.]+$/.test(domain);
 }
 
 // icon, shortcut icon, alternate icon, apple-touch-icon; never Safari's one-colour mask-icon or fluid-icon
 function is_icon_rel(rel)
 {
-    return String(rel ?? '').toLowerCase().split(/\s+/).some(v => v === 'icon' || v.startsWith('apple-touch-icon'));
+    return String(rel ?? '').toLowerCase().split(/\s+/).some(v => (v === 'icon') || v.startsWith('apple-touch-icon'));
 }
 
 function is_apple_link(link)
@@ -117,8 +79,55 @@ function is_apple_link(link)
     return /apple-touch-icon/i.test(link.rel);
 }
 
+// The site's own icon, its /favicon.ico, then Google's; null when none has one
+async function icon_find(domain, fetch_fn)
+{
+    return await page_icon_find(domain, fetch_fn)
+        ?? await image_fetch(`https://${domain}/apple-touch-icon.png`, fetch_fn)
+        ?? await image_fetch(`https://${domain}/favicon.ico`, fetch_fn)
+        ?? await image_fetch(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`, fetch_fn);
+}
+
+// The best <link rel="…icon…"> of the home page, a data: one too. An
+// apple-touch-icon, linked or at its usual /apple-touch-icon.png, comes before
+// the rest: a square with its own background, it reads on a light and a dark tile
+async function page_icon_find(domain, fetch_fn)
+{
+    const page = await response_fetch_ok(`https://${domain}/`, fetch_fn);
+    if (!page || !String(page.headers.get('Content-Type')).includes('html')) {
+        return null;
+    }
+    const html = (await page.text()).slice(0, 512*1024);
+    const links = [];
+    for (const link_match of html.matchAll(/<link\b[^>]*>/gi)) {
+        const tag = link_match[0];
+        const link = {rel: attr_from_tag(tag, 'rel'), href: attr_from_tag(tag, 'href'), type: attr_from_tag(tag, 'type'), sizes: attr_from_tag(tag, 'sizes')};
+        if (is_icon_rel(link.rel) && link.href) {
+            links.push(link);
+        }
+    }
+    links.sort((a, b) => icon_link_rank(b) - icon_link_rank(a));
+    if (!links.some(is_apple_link)) {
+        links.unshift({rel: 'apple-touch-icon', href: '/apple-touch-icon.png'});
+    }
+    for (const link of links) {
+        let icon = null;
+        if (link.href.startsWith('data:')) {
+            icon = icon_from_data_url(link.href);
+        }
+        else {
+            const href = new URL(html_unescape(link.href), page.url || `https://${domain}/`).href;
+            icon = await image_fetch(href, fetch_fn);
+        }
+        if (icon) {
+            return icon;
+        }
+    }
+    return null;
+}
+
 // An apple-touch-icon first, then an SVG, then the largest
-function rank_icon_link(link)
+function icon_link_rank(link)
 {
     if (is_apple_link(link)) {
         return 2000;
@@ -129,10 +138,10 @@ function rank_icon_link(link)
     return Math.max(0, ...String(link.sizes ?? '').split(/\s+/).map(v => parseInt(v, 10) || 0)) || 32;
 }
 
-function read_attr(tag, name)
+function attr_from_tag(tag, name)
 {
-    const m = tag.match(new RegExp(`\\s${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
-    return m ? (m[2] ?? m[3] ?? m[4]) : null;
+    const attr_match = tag.match(new RegExp(`\\s${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
+    return attr_match ? (attr_match[2] ?? attr_match[3] ?? attr_match[4]) : null;
 }
 
 function html_unescape(text)
@@ -140,23 +149,23 @@ function html_unescape(text)
     return text.replaceAll('&amp;', '&');
 }
 
-function decode_data_url(href)
+function icon_from_data_url(href)
 {
-    const m = html_unescape(href).match(/^data:(image\/[\w.+-]+)?(;base64)?,(.*)$/is);
-    if (!m) {
+    const data_url_match = html_unescape(href).match(/^data:(image\/[\w.+-]+)?(;base64)?,(.*)$/is);
+    if (!data_url_match) {
         return null;
     }
-    const type = m[1] || 'image/png';
-    const bytes = m[2]
-        ? Uint8Array.from(atob(m[3]), c => c.charCodeAt(0))
-        : new TextEncoder().encode(decodeURIComponent(m[3]));
-    return (bytes.length && bytes.length <= MAX_BYTES) ? {bytes, type} : null;
+    const type = data_url_match[1] || 'image/png';
+    const bytes = data_url_match[2]
+        ? Uint8Array.from(atob(data_url_match[3]), v => v.charCodeAt(0))
+        : new TextEncoder().encode(decodeURIComponent(data_url_match[3]));
+    return (bytes.length && (bytes.length <= MAX_BYTES)) ? {bytes, type} : null;
 }
 
 // A picture, not a page, under MAX_BYTES; null for anything else
-async function fetch_image(href, fetch_fn)
+async function image_fetch(href, fetch_fn)
 {
-    const response = await fetch_ok(href, fetch_fn);
+    const response = await response_fetch_ok(href, fetch_fn);
     if (!response) {
         return null;
     }
@@ -165,10 +174,10 @@ async function fetch_image(href, fetch_fn)
         return null;
     }
     const bytes = new Uint8Array(await response.arrayBuffer());
-    return (bytes.length && bytes.length <= MAX_BYTES) ? {bytes, type} : null;
+    return (bytes.length && (bytes.length <= MAX_BYTES)) ? {bytes, type} : null;
 }
 
-async function fetch_ok(href, fetch_fn)
+async function response_fetch_ok(href, fetch_fn)
 {
     try {
         const response = await fetch_fn(href, {redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT_MS), headers: {'User-Agent': 'navplace-icon/1 (+https://navplace.com)'}});
@@ -198,3 +207,5 @@ function render_tile_svg(domain)
     const letter = (name.match(/[a-z0-9]/i)?.[0] ?? '?').toUpperCase();
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#286445"/><text x="32" y="43" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#fff" text-anchor="middle">${letter}</text></svg>`;
 }
+
+export default serve_icon;

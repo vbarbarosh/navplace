@@ -14,7 +14,7 @@
     "appId": "com.navplace",
     "productName": "NavPlace",
     "executableName": "navplace",
-    "afterPack": "./bin/afterPack.js",
+    "afterPack": "./afterPack.js",
     "directories": {
       "output": "build"
     },

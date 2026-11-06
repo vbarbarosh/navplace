@@ -7,7 +7,7 @@
     "routes": [
         {"pattern": "navplace.com/*", "zone_name": "navplace.com"}
     ],
-    // The files bin/build-www makes; a request for one is answered from the edge
+    // The files bin/build makes; a request for one is answered from the edge
     "assets": {
         "directory": "../../build/www",
         "binding": "ASSETS",

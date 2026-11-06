@@ -1,8 +1,10 @@
 const assert = require('node:assert/strict');
+const collection_resolve_includes = require('./collection_resolve_includes');
 const http = require('node:http');
 const parse = require('../../../lib/parse');
-const resolve_includes = require('./resolve_includes');
 const test = require('node:test');
+
+const GROUP_UID = 'test';
 
 const REMOTE = `% design: showcase
 % ns: nothing
@@ -16,15 +18,13 @@ Netflix                 https://netflix.example.com/
 `;
 
 test('appends the links and sections of a pulled document', async function () {
-    await using server = await serve(REMOTE);
-
+    await using server = await make_text_server(REMOTE);
     const collection = parse(`% design: github
 % include: ${server.url} #work #prefix=ACME
 
 Local   https://local.example.com/
 `);
-    const actual = await resolve_includes(collection);
-
+    const actual = await collection_resolve_includes(collection, GROUP_UID);
     assert.equal(actual.meta.design, 'github');
     assert.deepEqual(actual.items.map(v => [v.label, v.href, v.tags, v.namespaces]), [
         ['Local', 'https://local.example.com/', [], []],
@@ -34,8 +34,7 @@ Local   https://local.example.com/
 });
 
 test('the ns of the pulling document gates pulled links too', async function () {
-    await using server = await serve(REMOTE);
-
+    await using server = await make_text_server(REMOTE);
     const collection = parse(`% ns: Work
 % include: ${server.url}
 
@@ -45,8 +44,7 @@ Local   https://local.example.com/
 # Personal
 Hidden  https://hidden.example.com/
 `);
-    const actual = await resolve_includes(collection);
-
+    const actual = await collection_resolve_includes(collection, GROUP_UID);
     assert.deepEqual(actual.items.map(v => v.label), ['Local', 'Jira']);
 });
 
@@ -55,20 +53,19 @@ test('keeps the collection when a url is dead', async function () {
 
 Local   https://local.example.com/
 `);
-    const actual = await resolve_includes(collection);
-
+    const actual = await collection_resolve_includes(collection, GROUP_UID);
     assert.deepEqual(actual.items.map(v => v.label), ['Local']);
 });
 
-async function serve(text)
+async function make_text_server(text)
 {
-    const server = http.createServer((req, res) => res.end(text));
-    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    const server = http.createServer((request, response) => response.end(text));
+    await new Promise(v => server.listen(0, '127.0.0.1', v));
 
     return {
         url: `http://127.0.0.1:${server.address().port}/links.md`,
-        async [Symbol.asyncDispose]() {
-            await new Promise(resolve => server.close(resolve));
+        [Symbol.asyncDispose]: async function () {
+            await new Promise(v => server.close(v));
         },
     };
 }

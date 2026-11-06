@@ -636,32 +636,40 @@
         .c-tag {
             color: var(--c-tag);
         }
+
         .c-image {
             color: var(--c-image);
         }
+
         .c-url {
             color: var(--c-url);
         }
+
         .c-directive,
         .c-key {
             color: var(--c-key);
         }
+
         .c-value {
             color: var(--c-image);
         }
+
         .c-section {
             font-weight: 650;
         }
+
         .c-ignored,
         .c-mark,
         .c-comment {
             color: var(--text-mute);
         }
+
         .c-word,
         .c-number,
         .c-tagname {
             color: var(--c-url);
         }
+
         .c-error {
             color: var(--danger);
         }
@@ -886,7 +894,7 @@
                 <span class="keys">
                     <kbd data-key="Ctrl">Ctrl</kbd><kbd data-key="Shift">Shift</kbd><kbd data-key="Alt">Alt</kbd><kbd data-key="N">N</kbd>
                     <span class="then">→</span>
-                    <kbd data-key="typed" class="typed">a few letters</kbd>
+                    <kbd data-key="typed">a few letters</kbd>
                     <span class="then">→</span>
                     <kbd data-key="Enter">Enter</kbd>
                 </span>
@@ -1028,7 +1036,7 @@ Electron         https://www.electronjs.org/docs/latest/
 `;
 
 // What the demo types by itself until the visitor takes over
-const SCRIPT = ['mail', 'docs', 'git cal'];
+const DEMO_QUERIES = ['mail', 'docs', 'git cal'];
 
 main();
 
@@ -1046,6 +1054,7 @@ function main()
     const opened_text = opened.querySelector('span');
     const typed_key = document.querySelector('[data-key="typed"]');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     let ready = false;
     let playing = !reduced;
     let opened_timer;
@@ -1054,15 +1063,14 @@ function main()
     document.addEventListener('dragstart', v => v.preventDefault());
 
     document.querySelector('.theme-switch').addEventListener('click', function () {
-        save_theme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+        theme_save((document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark');
     });
 
-
-    new ResizeObserver(fit_window).observe(view);
-    fit_window();
+    new ResizeObserver(window_fit).observe(view);
+    window_fit();
 
     window.addEventListener('message', function (event) {
-        if (event.source !== iframe.contentWindow || event.data?.type !== 'navplace:ready') {
+        if ((event.source !== iframe.contentWindow) || (event.data?.type !== 'navplace:ready')) {
             return;
         }
         iframe.contentWindow.postMessage({type: 'navplace:items-text', text: DEFAULT_README}, '*');
@@ -1072,14 +1080,14 @@ function main()
         // The app opens a link in the browser; here it opens in a new tab and the page stays
         iframe.contentWindow.open = function (href) {
             window.open(href, '_blank', 'noopener,noreferrer');
-            show_opened([href]);
+            opened_show([href]);
             return null;
         };
-        doc.addEventListener('pointerdown', take_over);
-        doc.addEventListener('keydown', take_over);
+        doc.addEventListener('pointerdown', demo_stop);
+        doc.addEventListener('keydown', demo_stop);
         ready = true;
         if (playing) {
-            play();
+            demo_play();
         }
     });
     iframe.src = 'designs/github/index.html';
@@ -1092,123 +1100,117 @@ function main()
         if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) {
             return;
         }
-        if (event.key.length !== 1 || event.key === ' ' && document.activeElement !== document.body) {
+        if ((event.key.length !== 1) || ((event.key === ' ') && (document.activeElement !== document.body))) {
             return;
         }
-        take_over();
-        const input = search_input();
+        demo_stop();
+        const input = search_input_find();
         if (!input) {
             return;
         }
         event.preventDefault();
         input.focus({preventScroll: true});
-        set_query(input.value + event.key);
+        query_set(`${input.value}${event.key}`);
     });
 
-    function fit_window()
-    {
+    function window_fit() {
         const width = view.clientWidth;
         // The app's window is 1200×1000 at zoom 1.25: 960 CSS pixels wide
         const inner_width = (width < 600) ? 640 : 960;
         const inner_height = (width < 600) ? 560 : 520;
-        const scale = width / inner_width;
+        const scale = width/inner_width;
         iframe.style.width = `${inner_width}px`;
         iframe.style.height = `${inner_height}px`;
         iframe.style.transform = `scale(${scale})`;
-        view.style.height = `${Math.round(inner_height * scale)}px`;
+        view.style.height = `${Math.round(inner_height*scale)}px`;
     }
 
-    function search_input()
-    {
+    function search_input_find() {
         return iframe.contentDocument?.querySelector('input[type=search]');
     }
 
-    function set_query(value)
-    {
-        const input = search_input();
+    function query_set(value) {
+        const input = search_input_find();
         input.value = value;
         input.dispatchEvent(new Event('input', {bubbles: true}));
         typed_key.textContent = value || 'a few letters';
     }
 
-    function take_over()
-    {
+    function demo_stop() {
         if (!playing) {
             return;
         }
         playing = false;
         win.classList.remove('away');
-        press([]);
-        set_query('');
+        refresh_desk_keys([]);
+        query_set('');
     }
 
-    function show_opened(hrefs)
-    {
+    function opened_show(hrefs) {
         opened_text.textContent = `Opened in your browser: ${hrefs.map(v => new URL(v).host).join(', ')}`;
         opened.classList.add('shown');
         clearTimeout(opened_timer);
         opened_timer = setTimeout(() => opened.classList.remove('shown'), 2200);
     }
 
-    function press(keys)
-    {
+    function refresh_desk_keys(keys) {
         for (const kbd of document.querySelectorAll('.desk-keys kbd')) {
             kbd.classList.toggle('down', keys.includes(kbd.dataset.key));
         }
     }
 
-    async function play()
-    {
+    async function demo_play() {
         await sleep(900);
         for (let round = 0; playing; round++) {
-            const query = SCRIPT[round % SCRIPT.length];
-            press(['Ctrl', 'Shift', 'Alt', 'N']);
+            const query = DEMO_QUERIES[round % DEMO_QUERIES.length];
+            refresh_desk_keys(['Ctrl', 'Shift', 'Alt', 'N']);
             win.classList.remove('away');
             await sleep(700);
-            press([]);
-            for (let i = 1; i <= query.length && playing; i++) {
-                press(['typed']);
-                set_query(query.slice(0, i));
+            refresh_desk_keys([]);
+            for (let i = 1; (i <= query.length) && playing; i++) {
+                refresh_desk_keys(['typed']);
+                query_set(query.slice(0, i));
                 await sleep(170);
             }
-            press([]);
+            refresh_desk_keys([]);
             await sleep(1100);
             if (!playing) {
                 return;
             }
-            press(['Enter']);
-            show_opened(top_matches(query));
+            refresh_desk_keys(['Enter']);
+            opened_show(top_hrefs_from_query(query));
             await sleep(450);
             if (!playing) {
                 return;
             }
-            press([]);
+            refresh_desk_keys([]);
             win.classList.add('away');
             await sleep(1700);
             if (!playing) {
                 return;
             }
-            set_query('');
+            query_set('');
         }
     }
 
     // The top match of each word, as the app picks them
-    function top_matches(query)
-    {
+    function top_hrefs_from_query(query) {
         const lines = DEFAULT_README.split('\n').filter(v => /^\S.*https?:\/\//.test(v) && !v.startsWith('%'));
-        return query.split(' ').filter(Boolean).map(function (word) {
+        const out = [];
+        for (const word of query.split(' ').filter(Boolean)) {
             const line = lines.find(v => v.toLowerCase().includes(word.toLowerCase()));
-            return line.match(/https?:\/\/\S+/)[0];
-        });
+            out.push(line.match(/https?:\/\/\S+/)[0]);
+        }
+        return out;
     }
 }
 
 function sleep(ms)
 {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(v => setTimeout(v, ms));
 }
 
-function save_theme(theme)
+function theme_save(theme)
 {
     document.documentElement.dataset.theme = theme;
     try {

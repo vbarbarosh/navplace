@@ -1,8 +1,8 @@
-import {serve_icon} from './icon.mjs';
+import serve_icon from './serve_icon.mjs';
 
 // Runs only for what the site's files do not have: / and /icon/; the rest is a 404
-export default {
-    async fetch(request, env) {
+const worker = {
+    fetch: async function (request, env) {
         const url = new URL(request.url);
         if (url.pathname === '/') {
             return env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
@@ -14,3 +14,5 @@ export default {
         return new Response('Not found', {status: 404});
     },
 };
+
+export default worker;

@@ -3,24 +3,23 @@
 // wrap the label. Values hold no spaces — the rule item lines already follow.
 //
 //     https://example.com/links.md #work #prefix=ACME/
-function parse_include_spec(value)
+function include_spec_from_text(text)
 {
-    const [url, ...rest] = value.trim().split(/\s+/);
+    const [url, ...rest] = text.trim().split(/\s+/);
     const out = {url, tags: [], prefix: '', suffix: ''};
-
-    for (const [, key, option] of rest.join(' ').matchAll(/#([a-zA-Z0-9_-]+)(?:=([^\s#]+))?/g)) {
-        if (option === undefined) {
+    for (const [, key, value] of rest.join(' ').matchAll(/#([a-zA-Z0-9_-]+)(?:=([^\s#]+))?/g)) {
+        if (value === undefined) {
             out.tags.push(key);
         }
         else if (key === 'prefix') {
-            out.prefix = option;
+            out.prefix = value;
         }
         else if (key === 'suffix') {
-            out.suffix = option;
+            out.suffix = value;
         }
     }
 
     return out;
 }
 
-module.exports = parse_include_spec;
+module.exports = include_spec_from_text;

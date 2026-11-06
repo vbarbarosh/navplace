@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
-# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
 set -o nounset -o errexit -o pipefail
 
 script=`realpath $0`
@@ -13,6 +13,9 @@ GREEN="\e[32m"
 RESET="\e[0m"
 
 EXIT_MESSAGE="${RED}bin/release failed${RESET}"
+
+# http://redsymbol.net/articles/bash-exit-traps/
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/#essential-cleanup
 trap 'echo -e "$EXIT_MESSAGE"' EXIT
 
 cd $scriptdir/..
@@ -58,7 +61,7 @@ git add package.json
 if test -e package-lock.json; then
     git add package-lock.json
 fi
-git commit -m "release $tag"
+git commit -m "release: $tag"
 
 git tag $tag
 git push origin master

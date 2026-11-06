@@ -1,7 +1,7 @@
 const Promise = require('bluebird');
 
 // Provide access to an object only after it was initialized
-function init_proxy(init)
+function make_init_proxy(init)
 {
     if (typeof init !== 'function') {
         throw new Error('init must be a function');
@@ -11,24 +11,23 @@ function init_proxy(init)
     let object = null;
 
     return new Proxy({}, {
-        get(target, prop, receiver) {
+        get: function (target, prop, receiver) {
             if (prop === 'init') {
                 return async function (...args) {
                     if (status === 'ready') {
                         throw new Error('init() was already called');
                     }
-
                     if (status === 'running') {
                         throw new Error('init() is already running');
                     }
 
                     status = 'running';
                     try {
-                        const tmp = await Promise.resolve(init.apply(this, args));
-                        if (tmp === null || typeof tmp !== 'object') {
+                        const initialized = await Promise.resolve(init.apply(this, args));
+                        if ((initialized === null) || (typeof initialized !== 'object')) {
                             throw new Error('init() must return an object');
                         }
-                        object = tmp;
+                        object = initialized;
                         status = 'ready';
                     }
                     finally {
@@ -39,38 +38,37 @@ function init_proxy(init)
                 };
             }
 
-            assert_ready();
+            status_assert_ready();
             const value = Reflect.get(object, prop, object);
-            return typeof value === 'function' ? value.bind(object) : value;
+            return (typeof value === 'function') ? value.bind(object) : value;
         },
-        set(target, prop, value, receiver) {
-            assert_ready();
-
+        set: function (target, prop, value, receiver) {
+            status_assert_ready();
             if (prop === 'init') {
                 throw new Error('init() cannot be replaced');
             }
 
             return Reflect.set(object, prop, value, object);
         },
-        has(target, prop) {
-            assert_ready();
+        has: function (target, prop) {
+            status_assert_ready();
             return Reflect.has(object, prop);
         },
-        deleteProperty(target, prop) {
-            assert_ready();
+        deleteProperty: function (target, prop) {
+            status_assert_ready();
             return Reflect.deleteProperty(object, prop);
         },
-        ownKeys(target) {
-            assert_ready();
+        ownKeys: function (target) {
+            status_assert_ready();
             return Reflect.ownKeys(object);
         },
-        getOwnPropertyDescriptor(target, prop) {
-            assert_ready();
+        getOwnPropertyDescriptor: function (target, prop) {
+            status_assert_ready();
             return Reflect.getOwnPropertyDescriptor(object, prop);
         },
     });
 
-    function assert_ready() {
+    function status_assert_ready() {
         if (status === 'idle') {
             throw new Error('init() must be called first');
         }
@@ -80,4 +78,4 @@ function init_proxy(init)
     }
 }
 
-module.exports = init_proxy;
+module.exports = make_init_proxy;

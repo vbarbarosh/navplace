@@ -1,9 +1,10 @@
 const Promise = require('bluebird');
+const chrome_window_focus = require('./helpers/chrome_window_focus');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
+const collection_resolve_includes = require('./helpers/collection_resolve_includes');
 const config = require('./config');
-const configure_gnome = require('./helpers/configure_gnome');
+const crypto = require('crypto');
 const electron = require('electron');
-const focus_chrome_window = require('./helpers/focus_chrome_window');
 const format_date = require('@vbarbarosh/node-helpers/src/format_date');
 const fs = require('fs');
 const fs_exists = require('@vbarbarosh/node-helpers/src/fs_exists');
@@ -14,13 +15,13 @@ const fs_read = require('@vbarbarosh/node-helpers/src/fs_read');
 const fs_read_utf8 = require('@vbarbarosh/node-helpers/src/fs_read_utf8');
 const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
+const gnome_configure = require('./helpers/gnome_configure');
 const http_get_buffer = require('@vbarbarosh/node-helpers/src/http_get_buffer');
 const make = require('@vbarbarosh/type-helpers');
+const make_socket_server = require('./helpers/make_socket_server');
 const parse = require('../../lib/parse');
-const resolve_includes = require('./helpers/resolve_includes');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
 const urlmod = require('@vbarbarosh/node-helpers/src/urlmod');
-const wait_for_socket_connections = require('./helpers/wait_for_socket_connections');
 
 const DEFAULT_README = `% design: github
 
@@ -39,18 +40,12 @@ cli(main);
 async function main()
 {
     if (process.argv.includes('--configure-gnome')) {
-        try {
-            const info = await configure_gnome();
-            console.log('✓ Ctrl+Shift+Alt+N successfully registered — NavPlace will summon instantly.');
-            console.log(`  launcher:   ${info.launcher_file}`);
-            console.log(`  cold start: ${info.appimage}`);
-            console.log(`  node:       ${info.node_bin}`);
-            electron.app.exit(0);
-        }
-        catch (error) {
-            console.error(`✗ ${error.message}`);
-            electron.app.exit(1);
-        }
+        const info = await gnome_configure();
+        console.log('✓ Ctrl+Shift+Alt+N successfully registered — NavPlace will summon instantly.');
+        console.log(`  launcher:   ${info.launcher_file}`);
+        console.log(`  cold start: ${info.appimage_file}`);
+        console.log(`  node:       ${info.node_bin}`);
+        electron.app.exit(0);
         return;
     }
 
@@ -59,9 +54,12 @@ async function main()
         process.exit(0);
     }
 
+    const app_uid = crypto.randomUUID();
+    console.log(`[${app_uid}][group_spawn]`);
+
     await electron.app.whenReady();
 
-    let parsed_collection = await load_collection();
+    let parsed_collection = await collection_load();
 
     electron.ipcMain.handle('api_ping', function () {
         return `pong ${format_date(new Date())}`;
@@ -80,11 +78,6 @@ async function main()
         backgroundColor: '#bec2bd',
         webPreferences: {
             zoomFactor: 1.25,
-            // (node:127005) electron: The default of contextIsolation
-            // is deprecated and will be changing from false to true
-            // in a future release of Electron. See
-            // https://github.com/electron/electron/issues/23506 for
-            // more information
             contextIsolation: true,
             nodeIntegration: false,
             preload: fs_path_resolve(__dirname, 'renderer.js'),
@@ -99,22 +92,29 @@ async function main()
     });
 
     electron.app.on('second-instance', async function () {
-        console.log('second-instance');
-        await show_window();
+        console.log(`[${app_uid}][second_instance]`);
+        await window_show();
     });
-    await using _ = await wait_for_socket_connections({
-        socket: config.socket_file,
-        connection: async function () {
-            console.log('socket connection');
-            await show_window();
+    await using _ = await make_socket_server({
+        socket_file: config.socket_file,
+        connection_accept: async function () {
+            console.log(`[${app_uid}][socket_connection]`);
+            await window_show();
         },
     });
 
     electron.protocol.handle('private', async function (request) {
-        // XXX fs.promises.realpath will throw if file does not exist
-        const root = await fs.promises.realpath(config.config_dir) + '/';
+        let root = null;
+        let abs = null;
+
         const rel = decodeURIComponent(request.url.slice('private://'.length));
-        const abs = await fs.promises.realpath(fs_path_resolve(root, rel));
+        try {
+            root = `${await fs.promises.realpath(config.config_dir)}/`;
+            abs = await fs.promises.realpath(fs_path_resolve(root, rel));
+        }
+        catch {
+            return new Response('Not found', {status: 404});
+        }
         if (!abs.startsWith(root)) {
             return new Response('Forbidden', {status: 403});
         }
@@ -133,14 +133,14 @@ async function main()
         const domain = decodeURIComponent(request.url.slice('app://favicon/'.length));
         const file = fs_path_resolve(electron.app.getPath('userData'), `favicons/${sanitize_filename(domain)}.png`);
         await fs_mkdirp(fs_path_dirname(file));
-        const buf = await cache({
+        const buf = await cache_read({
             get: () => fs_read(file),
-            set: v => fs_write(file, v),
+            put: v => fs_write(file, v),
             refresh: () => http_get_buffer(urlmod('https://www.google.com/s2/favicons?domain=&sz=64', {domain})).then(v => Buffer.from(v)),
         });
         return new Response(buf, {
             headers: {
-                'Content-Type': 'image/png', // response.headers.get('content-type') || 'image/png',
+                'Content-Type': 'image/png',
                 'Cache-Control': 'max-age=86400',
             },
         });
@@ -160,61 +160,41 @@ async function main()
         callback({cancel: !prefixes.some(v => params.url.startsWith(v))});
     });
 
-    win.webContents.setWindowOpenHandler(function (event) {
-        open_external(event.url);
+    win.webContents.setWindowOpenHandler(function (details) {
+        url_open_external(details.url);
         return {action: 'deny'};
     });
 
-    // 🔶 Ctrl+Shift+I to open
-    // win.webContents.openDevTools({mode: 'bottom', activate: false});
-    //
-    // setInterval(function () {
-    //     win.webContents.executeJavaScript('console.log("js from main", new Date())');
-    // }, 2000);
-
-    // await win.loadFile(fs_path_resolve(__dirname, '../../designs/basic/index.html'));
-    // await win.loadFile(fs_path_resolve(__dirname, '../../designs/google-chrome/index.html'));
     const design = make(parsed_collection.meta.design, {type: 'enum', options: ['github', ...await fs_readdir(config.designs_dir)]});
     await win.loadFile(fs_path_resolve(__dirname, `../../designs/${design}/index.html`));
     win.show();
-    start_refresh();
+    refresh_collection_in_background();
 
-    // await once(win, {
-    //     closed: function () {
-    //         console.log('__closed');
-    //     },
-    //     blur: function () {
-    //         console.log('__blur');
-    //         win.close();
-    //     },
     win.on('blur', function () {
         win.hide();
     });
 
-    await once(win, {
+    await emitter_once(win, {
         closed: function () {
-            console.log('__closed');
+            console.log(`[${app_uid}][window_closed]`);
         },
     });
 
-    async function refresh_collection()
-    {
-        parsed_collection = await resolve_includes(await load_collection());
+    async function refresh_collection() {
+        parsed_collection = await collection_resolve_includes(await collection_load(), app_uid);
         win.webContents.send('api_items_changed', parsed_collection);
     }
 
     // Never awaited by anything that shows the window.
-    function start_refresh()
-    {
-        refresh_collection().catch(error => console.error('[collection_refresh_failed]', error.stack || error.message));
+    function refresh_collection_in_background() {
+        refresh_collection().catch(e => console.error(`[${app_uid}][collection_refresh_failed] reason=${JSON.stringify(e.message)}`));
     }
 
-    async function show_window()
-    {
+    async function window_show() {
         // Links change while the app waits in the background, so every summon
         // reloads them. The window goes up first; the renderer redraws when the
         // items arrive.
-        start_refresh();
+        refresh_collection_in_background();
         if (win.isMinimized()) {
             win.restore();
         }
@@ -228,18 +208,17 @@ async function main()
                 input.focus();
                 input.value = '';
                 input.dispatchEvent(new Event('input', {bubbles: true}));
-                // input.select();
             }
         }`);
     }
 }
 
-async function open_external(url)
+async function url_open_external(url)
 {
-    const scheme = url.startsWith('http://') ? 'http' : url.startsWith('https://') ? 'https' : null;
-    if (process.platform === 'linux' && process.env.XDG_SESSION_TYPE === 'wayland' && scheme) {
+    const scheme = url.match(/^(https?):\/\//)?.[1] ?? null;
+    if ((process.platform === 'linux') && config.is_wayland && scheme) {
         try {
-            await focus_chrome_window(scheme);
+            await chrome_window_focus(scheme);
         }
         catch {
             // Handler lookup and Window Calls are optional; fall back to normal URL opening.
@@ -250,13 +229,13 @@ async function open_external(url)
 
 // The local file only. `% include:` urls are pulled by refresh_collection,
 // which never runs in front of the window.
-async function load_collection()
+async function collection_load()
 {
-    await ensure_default_readme();
+    await readme_ensure_default();
     return parse(await fs_read_utf8(config.readme_file));
 }
 
-async function ensure_default_readme()
+async function readme_ensure_default()
 {
     if (await fs_exists(config.readme_file)) {
         return;
@@ -266,22 +245,24 @@ async function ensure_default_readme()
     await fs_write(config.readme_file, DEFAULT_README, {encoding: 'utf8', flag: 'wx'});
 }
 
-async function once(inst, spec)
+async function emitter_once(emitter, handler_by_event)
 {
     const listeners = [];
     return new Promise(function (resolve) {
-        Object.keys(spec).forEach(function (name) {
+        for (const name of Object.keys(handler_by_event)) {
             async function handler(...args) {
-                listeners.forEach(v => inst.off(v.name, v.handler));
-                resolve(await spec[name](...args));
+                for (const listener of listeners) {
+                    emitter.off(listener.name, listener.handler);
+                }
+                resolve(await handler_by_event[name](...args));
             }
             listeners.push({name, handler});
-            inst.on(name, handler);
-        });
+            emitter.on(name, handler);
+        }
     });
 }
 
-async function cache({get, set, refresh})
+async function cache_read({get, put, refresh})
 {
     try {
         return await get();
@@ -290,6 +271,6 @@ async function cache({get, set, refresh})
     }
 
     const value = await refresh();
-    await set(value);
+    await put(value);
     return value;
 }

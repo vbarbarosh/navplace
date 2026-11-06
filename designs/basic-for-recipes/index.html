@@ -217,7 +217,7 @@
            autocomplete="off">
 </div>
 
-<div class="items-container" id="itemsContainer">
+<div class="items-container" id="items-container">
     <div class="empty-state">
         <h2>Your recipe collection</h2>
         <p>Start typing to find your saved recipes and cooking resources</p>
@@ -226,13 +226,28 @@
 
 <script src="../../lib/navplace.js"></script>
 <script>
-    (function() {
-        const searchInput = document.querySelector('.search-input');
-        const itemsContainer = document.getElementById('itemsContainer');
+    main();
 
-        function updateItems(items) {
-            if (!items || items.length === 0) {
-                itemsContainer.innerHTML = `
+    function main()
+    {
+        const search_input = document.querySelector('.search-input');
+        const items_container = document.getElementById('items-container');
+
+        // Initialize with empty state
+        refresh_items([]);
+
+        if (typeof navplace === 'function') {
+            navplace({input: search_input, update: refresh_items});
+        }
+
+        // Fallback for development/demo
+        window.navplace_demo = function (items) {
+            refresh_items(items);
+        };
+
+        function refresh_items(items) {
+            if (!items || (items.length === 0)) {
+                items_container.innerHTML = `
                         <div class="empty-state">
                             <h2>No recipes found</h2>
                             <p>Try different keywords or browse your collection</p>
@@ -242,12 +257,14 @@
             }
 
             // A link's picture loads only in the desktop app (private://); elsewhere the card has none
-            function has_image(item)
-            {
+            function has_image(item) {
                 return !!item.image_url && (!!window.ElectronApp || !item.image_url.startsWith('private://'));
             }
 
-            itemsContainer.innerHTML = items.map(item => `
+            items_container.innerHTML = items.map(render_item_html).join('');
+
+            function render_item_html(item) {
+                return `
                     <a href="${item.href}" class="recipe-card" target="_blank">
                         ${has_image(item) ? `<div class="image-container"><img src="${item.image_url}" alt="${item.label}" class="recipe-image"></div>` : ''}
                         <div class="recipe-content">
@@ -262,25 +279,10 @@
                             ${item.meta?.category ? `<div class="recipe-meta">${item.meta.category}</div>` : ''}
                         </div>
                     </a>
-                `).join('');
+                `;
+            }
         }
-
-        // Initialize with empty state
-        updateItems([]);
-
-        // Bind NavPlace
-        if (typeof navplace === 'function') {
-            navplace({
-                input: searchInput,
-                update: updateItems
-            });
-        }
-
-        // Fallback for development/demo
-        window.navplaceDemo = function(items) {
-            updateItems(items);
-        };
-    })();
+    }
 </script>
 </body>
 </html>

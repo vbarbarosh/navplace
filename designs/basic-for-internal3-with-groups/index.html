@@ -57,7 +57,10 @@
         }
 
         * { box-sizing: border-box; }
-        html, body { height: 100%; }
+
+        html,
+        body { height: 100%; }
+
         body {
             margin: 0;
             font-family: var(--font);
@@ -80,6 +83,7 @@
             background: linear-gradient(to bottom, rgba(0,0,0,.25), rgba(0,0,0,0));
             padding: 12px 12px 8px 12px;
         }
+
         [data-theme="light"] .topbar {
             background: linear-gradient(to bottom, rgba(255,255,255,.85), rgba(255,255,255,0));
         }
@@ -145,6 +149,7 @@
             cursor: pointer;
             position: relative;
         }
+
         .select:focus { box-shadow: 0 0 0 3px var(--focus), var(--shadow-2); }
 
         .select-wrap {
@@ -152,6 +157,7 @@
             display: inline-flex;
             align-items: center;
         }
+
         .select-wrap::after {
             content: "";
             position: absolute;
@@ -191,6 +197,7 @@
             position: relative;
             opacity: .9;
         }
+
         .search__icon::after {
             content: "";
             position: absolute;
@@ -215,6 +222,7 @@
             padding: 4px 0;
             min-width: 0;
         }
+
         .search input[type="search"]::placeholder { color: var(--muted-2); }
 
         .hint {
@@ -227,6 +235,7 @@
             gap: 8px;
             align-items: center;
         }
+
         .kbd {
             border: 1px solid var(--border);
             border-bottom-color: var(--border-2);
@@ -258,6 +267,7 @@
             border-bottom: 1px solid var(--border);
             background: linear-gradient(to bottom, rgba(255,255,255,.04), rgba(255,255,255,0));
         }
+
         [data-theme="light"] .summary {
             background: linear-gradient(to bottom, rgba(0,0,0,.03), rgba(0,0,0,0));
         }
@@ -268,6 +278,7 @@
             align-items: baseline;
             min-width: 0;
         }
+
         .summary__title {
             font-weight: 650;
             font-size: 12px;
@@ -276,6 +287,7 @@
             color: var(--muted);
             user-select: none;
         }
+
         .summary__count {
             font-family: var(--mono);
             font-size: 11px;
@@ -283,11 +295,13 @@
             user-select: none;
             white-space: nowrap;
         }
+
         .summary__right {
             display: flex;
             gap: 10px;
             align-items: center;
         }
+
         .pill {
             font-family: var(--mono);
             font-size: 11px;
@@ -310,6 +324,7 @@
         .group {
             border-top: 1px solid var(--border);
         }
+
         .group:first-child { border-top: none; }
 
         .group__hdr {
@@ -332,6 +347,7 @@
             gap: 10px;
             min-width: 0;
         }
+
         .group__host {
             font-weight: 650;
             font-size: 12px;
@@ -340,6 +356,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
         .group__sub {
             font-family: var(--mono);
             font-size: 11px;
@@ -349,6 +366,7 @@
             text-overflow: ellipsis;
             max-width: 56ch;
         }
+
         .group__count {
             font-family: var(--mono);
             font-size: 11px;
@@ -370,10 +388,14 @@
             border-bottom: 1px solid var(--border);
             cursor: default;
         }
+
         .row:last-child { border-bottom: none; }
 
         .row:hover { background: var(--hover); }
+
         .row:focus-within { background: color-mix(in srgb, var(--hover) 65%, transparent); }
+
+        .row[aria-selected="true"] { background: color-mix(in srgb, var(--hover) 65%, transparent); }
 
         .favicon {
             width: var(--icon);
@@ -384,6 +406,7 @@
             overflow: hidden;
             flex: none;
         }
+
         .favicon img {
             width: 100%;
             height: 100%;
@@ -401,7 +424,9 @@
             flex: none;
             display: none;
         }
+
         .thumb.is-on { display: block; }
+
         .thumb img {
             width: 100%;
             height: 100%;
@@ -414,6 +439,7 @@
             display: grid;
             gap: 2px;
         }
+
         .label {
             font-size: 13px;
             line-height: 1.2;
@@ -422,6 +448,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
         .href {
             font-family: var(--mono);
             font-size: 11px;
@@ -455,8 +482,11 @@
             justify-content: center;
             gap: 6px;
         }
+
         .btn:hover { border-color: var(--border-2); }
+
         .btn:focus { outline: none; box-shadow: 0 0 0 3px var(--focus); }
+
         .btn[aria-pressed="true"] { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); color: color-mix(in srgb, var(--accent) 75%, var(--text)); }
 
         .btn--go {
@@ -486,9 +516,13 @@
 
         @media (max-width: 720px) {
             .brand__meta { display: none; }
+
             .hint { display: none; }
+
             .list { height: calc(100vh - 160px); }
+
             .row { grid-template-columns: auto 1fr auto; }
+
             .thumb { display: none !important; }
         }
 
@@ -508,8 +542,8 @@
                 </div>
                 <div class="controls">
                     <div class="select-wrap">
-                        <label class="sr" for="themeSel">Theme</label>
-                        <select id="themeSel" class="select">
+                        <label class="sr" for="theme-select">Theme</label>
+                        <select id="theme-select" class="select">
                             <option value="system">System</option>
                             <option value="dark">Dark</option>
                             <option value="light">Light</option>
@@ -519,9 +553,9 @@
             </div>
 
             <div class="search-row">
-                <div class="search" id="searchWrap">
+                <div class="search" id="search-wrap">
                     <div class="search__icon" aria-hidden="true"></div>
-                    <input type="search" id="navplaceSearch" placeholder="Search…" autocomplete="off" spellcheck="false" />
+                    <input type="search" id="navplace-search" placeholder="Search…" autocomplete="off" spellcheck="false" />
                     <div class="hint" aria-hidden="true">
                         <span class="kbd">↑</span><span class="kbd">↓</span>
                         <span class="kbd">Enter</span>
@@ -551,394 +585,522 @@
 </div>
 
 <script src="../../lib/navplace.js"></script>
+<script src="../../lib/plural.js"></script>
 <script>
-    (function () {
-        function $(sel, root) { return (root || document).querySelector(sel); }
-        function el(tag, attrs) {
-            var node = document.createElement(tag);
-            if (attrs) {
-                Object.keys(attrs).forEach(function (k) {
-                    if (k === "text") node.textContent = attrs[k];
-                    else if (k === "html") node.innerHTML = attrs[k];
-                    else if (k === "class") node.className = attrs[k];
-                    else node.setAttribute(k, attrs[k]);
+    main();
+
+    function main()
+    {
+        let active_row = null;
+
+        const app = document.getElementById('app');
+        const theme_select = document.getElementById('theme-select');
+        const list = document.getElementById('list');
+        const counts = document.getElementById('counts');
+        const status = document.getElementById('status');
+        const meta = document.getElementById('meta');
+
+        theme_load();
+
+        if (window.matchMedia) {
+            const media = window.matchMedia('(prefers-color-scheme: light)');
+            if (media && media.addEventListener) {
+                media.addEventListener('change', function () {
+                    if (theme_mode_read() === 'system') {
+                        theme_apply('system');
+                    }
                 });
+            }
+        }
+
+        theme_select.addEventListener('change', function () {
+            theme_save(theme_select.value);
+        });
+
+        list.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                active_row_move(1);
+                return;
+            }
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                active_row_move(-1);
+                return;
+            }
+            if (event.key === 'Home') {
+                event.preventDefault();
+                active_row_move(-999999);
+                return;
+            }
+            if (event.key === 'End') {
+                event.preventDefault();
+                active_row_move(999999);
+                return;
+            }
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if (active_row) {
+                    href_open(active_row.getAttribute('data-href'));
+                }
+            }
+        });
+
+        list.addEventListener('mousemove', function (event) {
+            const row = (event.target && event.target.closest) ? event.target.closest('.row') : null;
+            if (row && (row !== active_row)) {
+                active_row_set(row);
+            }
+        });
+
+        navplace_bind();
+        status.textContent = (status.textContent === 'idle') ? 'ready' : status.textContent;
+
+        function system_theme_detect() {
+            return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+        }
+
+        function theme_apply(mode) {
+            app.setAttribute('data-theme', mode);
+            if (mode === 'system') {
+                const system_theme = system_theme_detect();
+                app.setAttribute('data-theme', system_theme);
+                app.setAttribute('data-theme-mode', 'system');
+            }
+            else {
+                app.setAttribute('data-theme-mode', mode);
+            }
+        }
+
+        function theme_load() {
+            const mode = theme_mode_read();
+            theme_select.value = mode;
+            theme_apply(mode);
+        }
+
+        function theme_save(mode) {
+            try {
+                localStorage.setItem('navplace_theme_mode', mode);
+            }
+            catch {
+                // Not kept: the page still switches
+            }
+            theme_apply(mode);
+        }
+
+        // 'system' when nothing is saved or the storage is closed
+        function theme_mode_read() {
+            try {
+                return localStorage.getItem('navplace_theme_mode') || 'system';
+            }
+            catch {
+                return 'system';
+            }
+        }
+
+        function text_from_value(value) {
+            try {
+                return String(value || '');
+            }
+            catch {
+                return '';
+            }
+        }
+
+        function text_truncate_middle(value, max) {
+            const text = text_from_value(value);
+            if (text.length <= max) {
+                return text;
+            }
+            const head = Math.floor((max - 1)*0.62);
+            const tail = (max - 1) - head;
+            return `${text.slice(0, head)}…${text.slice(text.length - tail)}`;
+        }
+
+        function text_copy(value) {
+            const text = text_from_value(value);
+            if (!text) {
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).catch(function () {});
+                return;
+            }
+            const textarea = make_elem('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+            }
+            catch {
+                // The copy is lost; the page goes on
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function url_parts_from_href(href) {
+            const text = text_from_value(href);
+            if (!text) {
+                return {host: 'unknown', proto: '', pathname: ''};
+            }
+            try {
+                const url = new URL(text, window.location.href);
+                return {host: url.host || ((url.protocol === 'file:') ? 'local' : 'unknown'), proto: url.protocol || '', pathname: url.pathname || ''};
+            }
+            catch {
+                return {host: 'unknown', proto: '', pathname: ''};
+            }
+        }
+
+        function group_key_from_item(item) {
+            const url_parts = url_parts_from_href(text_from_value(item && item.href));
+            if (url_parts.proto === 'file:') {
+                return 'local';
+            }
+            if (url_parts.host && (url_parts.host !== 'unknown')) {
+                return url_parts.host;
+            }
+            return 'other';
+        }
+
+        // Local links first, the others last, the hosts between them
+        function group_rank(key) {
+            if (key === 'local') {
+                return 0;
+            }
+            if (key === 'other') {
+                return 9;
+            }
+            return 1;
+        }
+
+        function format_group_subtitle(key, sample_href) {
+            if (key === 'local') {
+                return 'file://…';
+            }
+            if (key === 'other') {
+                return 'misc';
+            }
+            return sample_href ? text_from_value(sample_href).replace(/^https?:\/\//, '').split('/')[0] : key;
+        }
+
+        function make_elem(tag, attrs) {
+            const node = document.createElement(tag);
+            if (attrs) {
+                for (const key of Object.keys(attrs)) {
+                    if (key === 'text') {
+                        node.textContent = attrs[key];
+                    }
+                    else if (key === 'html') {
+                        node.innerHTML = attrs[key];
+                    }
+                    else if (key === 'class') {
+                        node.className = attrs[key];
+                    }
+                    else {
+                        node.setAttribute(key, attrs[key]);
+                    }
+                }
             }
             return node;
         }
 
-        var app = $("#app");
-        var themeSel = $("#themeSel");
-        var list = $("#list");
-        var counts = $("#counts");
-        var status = $("#status");
-        var meta = $("#meta");
-
-        function getSystemTheme() {
-            return window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-        }
-
-        function applyTheme(mode) {
-            app.setAttribute("data-theme", mode);
-            if (mode === "system") {
-                var sys = getSystemTheme();
-                app.setAttribute("data-theme", sys);
-                app.setAttribute("data-theme-mode", "system");
-            } else {
-                app.setAttribute("data-theme-mode", mode);
-            }
-        }
-
-        function loadTheme() {
-            var v = localStorage.getItem("navplace_theme_mode") || "system";
-            themeSel.value = v;
-            applyTheme(v);
-        }
-
-        function saveTheme(v) {
-            localStorage.setItem("navplace_theme_mode", v);
-            applyTheme(v);
-        }
-
-        loadTheme();
-
-        if (window.matchMedia) {
-            var m = window.matchMedia("(prefers-color-scheme: light)");
-            if (m && m.addEventListener) {
-                m.addEventListener("change", function () {
-                    if ((localStorage.getItem("navplace_theme_mode") || "system") === "system") applyTheme("system");
-                });
-            }
-        }
-
-        themeSel.addEventListener("change", function () {
-            saveTheme(themeSel.value);
-        });
-
-        function safeUrl(u) {
-            try { return String(u || ""); } catch (e) { return ""; }
-        }
-
-        function parseHost(href) {
-            href = safeUrl(href);
-            if (!href) return { host: "unknown", proto: "", pathname: "" };
-            try {
-                var u = new URL(href, window.location.href);
-                return { host: u.host || (u.protocol === "file:" ? "local" : "unknown"), proto: u.protocol || "", pathname: u.pathname || "" };
-            } catch (e) {
-                return { host: "unknown", proto: "", pathname: "" };
-            }
-        }
-
-        function groupKeyForItem(item) {
-            var href = safeUrl(item && item.href);
-            var p = parseHost(href);
-            if (p.proto === "file:") return "local";
-            if (p.host && p.host !== "unknown") return p.host;
-            return "other";
-        }
-
-        function groupSubtitle(key, sampleHref) {
-            if (key === "local") return "file://…";
-            if (key === "other") return "misc";
-            return sampleHref ? safeUrl(sampleHref).replace(/^https?:\/\//, "").split("/")[0] : key;
-        }
-
-        function truncateMiddle(s, max) {
-            s = safeUrl(s);
-            if (s.length <= max) return s;
-            var a = Math.floor((max - 1) * 0.62);
-            var b = (max - 1) - a;
-            return s.slice(0, a) + "…" + s.slice(s.length - b);
-        }
-
-        function iconImg(url, alt) {
-            var wrap = el("div", { class: "favicon", "aria-hidden": "true" });
-            var img = el("img", { src: safeUrl(url), alt: alt || "" });
-            img.loading = "lazy";
-            img.decoding = "async";
-            img.referrerPolicy = "no-referrer";
-            img.addEventListener("error", function () {
-                wrap.innerHTML = "";
-                wrap.style.background = "var(--dim)";
+        function make_icon(url, alt) {
+            const wrap = make_elem('div', {class: 'favicon', 'aria-hidden': 'true'});
+            const img = make_elem('img', {src: text_from_value(url), alt: alt || ''});
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.referrerPolicy = 'no-referrer';
+            img.addEventListener('error', function () {
+                wrap.innerHTML = '';
+                wrap.style.background = 'var(--dim)';
             });
             wrap.appendChild(img);
             return wrap;
         }
 
-        function thumbImg(url) {
-            var wrap = el("div", { class: "thumb is-on", "aria-hidden": "true" });
-            var img = el("img", { src: safeUrl(url), alt: "" });
-            img.loading = "lazy";
-            img.decoding = "async";
-            img.referrerPolicy = "no-referrer";
-            img.addEventListener("error", function () {
-                wrap.classList.remove("is-on");
-                wrap.innerHTML = "";
+        function make_thumb(url) {
+            const wrap = make_elem('div', {class: 'thumb is-on', 'aria-hidden': 'true'});
+            const img = make_elem('img', {src: text_from_value(url), alt: ''});
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.referrerPolicy = 'no-referrer';
+            img.addEventListener('error', function () {
+                wrap.classList.remove('is-on');
+                wrap.innerHTML = '';
             });
             wrap.appendChild(img);
             return wrap;
         }
 
-        function makeRow(item, indexGlobal) {
-            var href = safeUrl(item.href);
-            var label = safeUrl(item.label) || truncateMiddle(href, 64) || "(untitled)";
-            var iconUrl = safeUrl(item.icon_url);
-            var imageUrl = safeUrl(item.image_url);
+        function make_row(item, index) {
+            const href = text_from_value(item.href);
+            const label = text_from_value(item.label) || text_truncate_middle(href, 64) || '(untitled)';
+            const icon_url = text_from_value(item.icon_url);
+            const image_url = text_from_value(item.image_url);
 
-            var row = el("div", {
-                class: "row",
-                role: "option",
-                tabindex: "-1",
-                "data-index": String(indexGlobal),
-                "data-href": href
-            });
+            const row = make_elem('div', {class: 'row', role: 'option', tabindex: '-1', 'data-index': String(index), 'data-href': href});
+            row.appendChild(make_icon(icon_url, ''));
+            if (image_url) {
+                row.appendChild(make_thumb(image_url));
+            }
 
-            row.appendChild(iconImg(iconUrl, ""));
-            if (imageUrl) row.appendChild(thumbImg(imageUrl));
-
-            var text = el("div", { class: "text" });
-            text.appendChild(el("div", { class: "label", text: label }));
-            text.appendChild(el("div", { class: "href", text: truncateMiddle(href, 110) }));
+            const text = make_elem('div', {class: 'text'});
+            text.appendChild(make_elem('div', {class: 'label', text: label}));
+            text.appendChild(make_elem('div', {class: 'href', text: text_truncate_middle(href, 110)}));
             row.appendChild(text);
 
-            var actions = el("div", { class: "actions" });
+            const actions = make_elem('div', {class: 'actions'});
 
-            var btnGo = el("button", { class: "btn btn--go", type: "button", title: "Open", "aria-label": "Open" });
-            btnGo.textContent = "Open";
-            btnGo.addEventListener("click", function (ev) {
-                ev.preventDefault();
-                ev.stopPropagation();
-                openHref(href);
+            const button_open = make_elem('button', {class: 'btn btn--go', type: 'button', title: 'Open', 'aria-label': 'Open'});
+            button_open.textContent = 'Open';
+            button_open.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                href_open(href);
             });
 
-            var btnCopy = el("button", { class: "btn", type: "button", title: "Copy URL", "aria-label": "Copy URL" });
-            btnCopy.textContent = "Copy";
-            btnCopy.addEventListener("click", function (ev) {
-                ev.preventDefault();
-                ev.stopPropagation();
-                copyText(href);
-                flashStatus("copied");
+            const button_copy = make_elem('button', {class: 'btn', type: 'button', title: 'Copy URL', 'aria-label': 'Copy URL'});
+            button_copy.textContent = 'Copy';
+            button_copy.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                text_copy(href);
+                status_flash('copied');
             });
 
-            actions.appendChild(btnGo);
-            actions.appendChild(btnCopy);
+            actions.appendChild(button_open);
+            actions.appendChild(button_copy);
             row.appendChild(actions);
 
-            row.addEventListener("click", function () {
-                setActiveRow(row);
-                openHref(href);
+            row.addEventListener('click', function () {
+                active_row_set(row);
+                href_open(href);
             });
 
             return row;
         }
 
-        function openHref(href) {
-            href = safeUrl(href);
-            if (!href) return;
-            try {
-                window.open(href, "_blank", "noopener,noreferrer");
-            } catch (e) {
-                try { window.location.href = href; } catch (e2) {}
-            }
-        }
-
-        function copyText(t) {
-            t = safeUrl(t);
-            if (!t) return;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(t).catch(function () {});
+        function href_open(href) {
+            const url = text_from_value(href);
+            if (!url) {
                 return;
             }
-            var ta = el("textarea");
-            ta.value = t;
-            ta.setAttribute("readonly", "");
-            ta.style.position = "fixed";
-            ta.style.opacity = "0";
-            ta.style.left = "-9999px";
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand("copy"); } catch (e) {}
-            document.body.removeChild(ta);
-        }
-
-        var _activeRow = null;
-        function setActiveRow(row) {
-            if (_activeRow && _activeRow !== row) _activeRow.setAttribute("aria-selected", "false");
-            _activeRow = row;
-            if (_activeRow) {
-                _activeRow.setAttribute("aria-selected", "true");
-                _activeRow.focus({ preventScroll: true });
-                ensureInView(_activeRow, list);
+            try {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+            catch {
+                try {
+                    window.location.href = url;
+                }
+                catch {
+                    // Nowhere left to open it
+                }
             }
         }
 
-        function ensureInView(node, container) {
-            if (!node || !container) return;
-            var r = node.getBoundingClientRect();
-            var c = container.getBoundingClientRect();
-            if (r.top < c.top + 4) container.scrollTop -= (c.top + 4 - r.top);
-            else if (r.bottom > c.bottom - 4) container.scrollTop += (r.bottom - (c.bottom - 4));
-        }
-
-        function moveActive(delta) {
-            var rows = list.querySelectorAll('.row[role="option"]');
-            if (!rows.length) return;
-
-            var idx = 0;
-            if (_activeRow) idx = Math.max(0, Math.min(rows.length - 1, parseInt(_activeRow.getAttribute("data-index"), 10) || 0));
-            idx = idx + delta;
-            idx = Math.max(0, Math.min(rows.length - 1, idx));
-
-            var row = null;
-            for (var i = 0; i < rows.length; i++) {
-                if ((parseInt(rows[i].getAttribute("data-index"), 10) || 0) === idx) { row = rows[i]; break; }
+        function active_row_set(row) {
+            if (active_row && (active_row !== row)) {
+                active_row.setAttribute('aria-selected', 'false');
             }
-            if (!row) row = rows[idx];
-            if (row) setActiveRow(row);
+            active_row = row;
+            if (active_row) {
+                active_row.setAttribute('aria-selected', 'true');
+                active_row.focus({preventScroll: true});
+                node_scroll_into_view(active_row, list);
+            }
         }
 
-        function flashStatus(txt) {
-            status.textContent = txt;
+        function active_row_move(delta) {
+            const rows = list.querySelectorAll('.row[role="option"]');
+            if (!rows.length) {
+                return;
+            }
+
+            let index = 0;
+            if (active_row) {
+                index = Math.max(0, Math.min(rows.length - 1, parseInt(active_row.getAttribute('data-index'), 10) || 0));
+            }
+            index = Math.max(0, Math.min(rows.length - 1, index + delta));
+
+            let found = null;
+            for (const row of rows) {
+                if ((parseInt(row.getAttribute('data-index'), 10) || 0) === index) {
+                    found = row;
+                    break;
+                }
+            }
+            if (!found) {
+                found = rows[index];
+            }
+            if (found) {
+                active_row_set(found);
+            }
+        }
+
+        function node_scroll_into_view(node, container) {
+            if (!node || !container) {
+                return;
+            }
+            const node_rect = node.getBoundingClientRect();
+            const container_rect = container.getBoundingClientRect();
+            if (node_rect.top < container_rect.top + 4) {
+                container.scrollTop -= (container_rect.top + 4 - node_rect.top);
+            }
+            else if (node_rect.bottom > container_rect.bottom - 4) {
+                container.scrollTop += (node_rect.bottom - (container_rect.bottom - 4));
+            }
+        }
+
+        function status_flash(text) {
+            status.textContent = text;
             status.dataset.flash = String(Date.now());
-            setTimeout(function () {
-                if (status.dataset.flash && (Date.now() - parseInt(status.dataset.flash, 10)) > 420) {
-                    status.textContent = "ready";
+            setTimeout(status_flash_clear, 520);
+
+            function status_flash_clear() {
+                if (status.dataset.flash && ((Date.now() - parseInt(status.dataset.flash, 10)) > 420)) {
+                    status.textContent = 'ready';
                 }
-            }, 520);
+            }
         }
 
-        function render(items) {
-            if (!Array.isArray(items)) items = [];
-            status.textContent = "rendering";
+        function refresh_list(items) {
+            let total = 0;
 
-            var groups = {};
-            var groupOrder = [];
-            var total = 0;
+            const list_items = Array.isArray(items) ? items : [];
+            const group_by_key = {};
+            const group_keys = [];
 
-            for (var i = 0; i < items.length; i++) {
-                var it = items[i] || {};
-                var key = groupKeyForItem(it);
-                if (!groups[key]) {
-                    groups[key] = { key: key, items: [], sampleHref: safeUrl(it.href) };
-                    groupOrder.push(key);
+            status.textContent = 'rendering';
+            for (const list_item of list_items) {
+                const item = list_item || {};
+                const key = group_key_from_item(item);
+                if (!group_by_key[key]) {
+                    group_by_key[key] = {key, items: [], sample_href: text_from_value(item.href)};
+                    group_keys.push(key);
                 }
-                groups[key].items.push(it);
+                group_by_key[key].items.push(item);
                 total++;
             }
 
-            groupOrder.sort(function (a, b) {
-                function rank(k) {
-                    if (k === "local") return 0;
-                    if (k === "other") return 9;
-                    return 1;
+            group_keys.sort(function (a, b) {
+                const rank_a = group_rank(a);
+                const rank_b = group_rank(b);
+                if (rank_a !== rank_b) {
+                    return rank_a - rank_b;
                 }
-                var ra = rank(a), rb = rank(b);
-                if (ra !== rb) return ra - rb;
                 return a.localeCompare(b);
             });
 
-            list.innerHTML = "";
-            _activeRow = null;
+            list.innerHTML = '';
+            active_row = null;
 
-            counts.textContent = total + " items · " + groupOrder.length + " groups";
-            meta.textContent = "renderer-only · grouped by host · " + (app.getAttribute("data-theme-mode") || "system");
+            const items_text = plural(total, '# item', '# items');
+            const groups_text = plural(group_keys.length, '# group', '# groups');
+            counts.textContent = `${items_text} · ${groups_text}`;
+            meta.textContent = `renderer-only · grouped by host · ${app.getAttribute('data-theme-mode') || 'system'}`;
 
             if (!total) {
-                list.appendChild(el("div", { class: "empty", text: "No items." }));
-                status.textContent = "ready";
+                list.appendChild(make_elem('div', {class: 'empty', text: 'No items.'}));
+                status.textContent = 'ready';
                 return;
             }
 
-            var indexGlobal = 0;
+            let index = 0;
+            for (const key of group_keys) {
+                const group = group_by_key[key];
+                const section = make_elem('section', {class: 'group'});
+                const header = make_elem('div', {class: 'group__hdr'});
+                const left = make_elem('div', {class: 'group__name'});
 
-            for (var gi = 0; gi < groupOrder.length; gi++) {
-                var key = groupOrder[gi];
-                var g = groups[key];
+                let host;
+                if (key === 'other') {
+                    host = 'Other';
+                }
+                else if (key === 'local') {
+                    host = 'Local';
+                }
+                else {
+                    host = key;
+                }
+                left.appendChild(make_elem('div', {class: 'group__host', text: host}));
 
-                var gEl = el("section", { class: "group" });
+                const sub = format_group_subtitle(key, group.sample_href);
+                left.appendChild(make_elem('div', {class: 'group__sub', text: sub}));
 
-                var hdr = el("div", { class: "group__hdr" });
-                var left = el("div", { class: "group__name" });
+                header.appendChild(left);
+                header.appendChild(make_elem('div', {class: 'group__count', text: String(group.items.length)}));
 
-                var host = key === "other" ? "Other" : (key === "local" ? "Local" : key);
-                left.appendChild(el("div", { class: "group__host", text: host }));
-
-                var sub = groupSubtitle(key, g.sampleHref);
-                left.appendChild(el("div", { class: "group__sub", text: sub }));
-
-                hdr.appendChild(left);
-                hdr.appendChild(el("div", { class: "group__count", text: String(g.items.length) }));
-
-                var rows = el("div", { class: "rows" });
-                for (var j = 0; j < g.items.length; j++) {
-                    rows.appendChild(makeRow(g.items[j], indexGlobal));
-                    indexGlobal++;
+                const rows = make_elem('div', {class: 'rows'});
+                for (const item of group.items) {
+                    rows.appendChild(make_row(item, index));
+                    index++;
                 }
 
-                gEl.appendChild(hdr);
-                gEl.appendChild(rows);
-                list.appendChild(gEl);
+                section.appendChild(header);
+                section.appendChild(rows);
+                list.appendChild(section);
             }
 
-            var first = list.querySelector('.row[role="option"]');
-            if (first) setActiveRow(first);
+            // The first row is marked, not focused: typing stays in the search
+            const first = list.querySelector('.row[role="option"]');
+            if (first) {
+                active_row = first;
+                active_row.setAttribute('aria-selected', 'true');
+            }
 
-            status.textContent = "ready";
+            status.textContent = 'ready';
         }
 
-        list.addEventListener("keydown", function (ev) {
-            if (ev.key === "ArrowDown") { ev.preventDefault(); moveActive(+1); return; }
-            if (ev.key === "ArrowUp") { ev.preventDefault(); moveActive(-1); return; }
-            if (ev.key === "Home") { ev.preventDefault(); moveActive(-999999); return; }
-            if (ev.key === "End") { ev.preventDefault(); moveActive(+999999); return; }
-            if (ev.key === "Enter") {
-                ev.preventDefault();
-                if (_activeRow) openHref(_activeRow.getAttribute("data-href"));
+        function navplace_bind() {
+            const input = document.getElementById('navplace-search') || document.querySelector('input[type="search"]');
+            if (!input) {
                 return;
             }
-        });
 
-        list.addEventListener("mousemove", function (ev) {
-            var row = ev.target && ev.target.closest ? ev.target.closest(".row") : null;
-            if (row && row !== _activeRow) setActiveRow(row);
-        });
-
-        function bindNavplace() {
-            var input = $("#navplaceSearch") || document.querySelector('input[type="search"]');
-            if (!input) return;
-
-            input.addEventListener("keydown", function (ev) {
-                if (ev.key === "ArrowDown") { ev.preventDefault(); list.focus(); moveActive(+1); return; }
-                if (ev.key === "ArrowUp") { ev.preventDefault(); list.focus(); moveActive(-1); return; }
-                if (ev.key === "Enter") {
-                    if (_activeRow) {
-                        ev.preventDefault();
-                        openHref(_activeRow.getAttribute("data-href"));
-                    }
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    list.focus();
+                    active_row_move(1);
+                    return;
+                }
+                if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    list.focus();
+                    active_row_move(-1);
+                    return;
+                }
+                if ((event.key === 'Enter') && active_row) {
+                    event.preventDefault();
+                    href_open(active_row.getAttribute('data-href'));
                 }
             });
 
             try {
-                if (typeof window.navplace === "function") {
+                if (typeof window.navplace === 'function') {
                     window.navplace({
-                        input: input,
-                        update: function (items) { render(items); },
+                        input,
+                        update: refresh_list,
                         // Enter is handled above: it opens the active row
-                        navigate: function () {}
+                        navigate: function () {},
                     });
-                    flashStatus("bound");
-                } else {
-                    status.textContent = "navplace missing";
+                    status_flash('bound');
                 }
-            } catch (e) {
-                status.textContent = "bind error";
+                else {
+                    status.textContent = 'navplace missing';
+                }
+            }
+            catch {
+                status.textContent = 'bind error';
             }
         }
-
-        bindNavplace();
-        status.textContent = status.textContent === "idle" ? "ready" : status.textContent;
-    })();
+    }
 </script>
 </body>
 </html>

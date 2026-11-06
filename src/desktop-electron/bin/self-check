@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+RED="\e[31m" GREEN="\e[32m" RESET="\e[0m"
+
+EXIT_MESSAGE="${RED}bin/self-check failed${RESET}"
+
+# http://redsymbol.net/articles/bash-exit-traps/
+trap 'echo -e "$EXIT_MESSAGE"' EXIT
+cd $scriptdir/..
+
+# Each probe runs in its own strict shell; its lines carry its name.
+(
+    set -o nounset -o errexit -o pipefail
+    node --version
+) 2>&1 | sed 's/^/[node] /'
+
+(
+    set -o nounset -o errexit -o pipefail
+    file=`find build -maxdepth 1 -type f -name '*.AppImage' -print -quit 2>/dev/null`
+    if [ -z "$file" ] || [ ! -x "$file" ]; then
+        echo "build/*.AppImage: missing, run bin/build"
+        exit 1
+    fi
+    echo $file
+) 2>&1 | sed 's/^/[appimage] /'
+
+EXIT_MESSAGE="${GREEN}bin/self-check succeeded${RESET}"

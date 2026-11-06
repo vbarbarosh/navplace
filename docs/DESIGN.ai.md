@@ -338,7 +338,7 @@ See `designs/showcase/index.html` for a working pattern: three buttons, `localSt
 ## Testing a new design
 
 1. Drop the folder in `designs/<your-name>/`.
-2. Build the site and open it in the Playground: `bin/build-www`, then `python3 -m http.server -d build/www` and visit `http://localhost:8000/playground.html`, or open `http://localhost:8000/designs/<your-name>/index.html` directly. The runtime falls back to a built-in demo source (`ChatGPT / GitHub / Gmail`) so you'll see real items right away.
+2. Build the site and open it in the Playground: `bin/build`, then `python3 -m http.server -d build/www` and visit `http://localhost:8000/playground.html`, or open `http://localhost:8000/designs/<your-name>/index.html` directly. The runtime falls back to a built-in demo source (`ChatGPT / GitHub / Gmail`) so you'll see real items right away.
 3. To test with real items, create `~/.navplace/README.md` with `% design: <your-name>` and a few link lines, then `npm start` to open it in the desktop app.
 4. To test the embed surface, paste into any HTML page:
    ```html

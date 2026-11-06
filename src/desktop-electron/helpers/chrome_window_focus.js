@@ -1,5 +1,5 @@
+const chrome_wm_class_by_desktop_file = require('./chrome_wm_class_by_desktop_file');
 const shell = require('@vbarbarosh/node-helpers/src/shell');
-const chrome_wm_class_from_desktop_file = require('./chrome_wm_class_from_desktop_file');
 
 // Chrome opens external URLs in the window it last saw active. On Wayland this
 // window is often on another workspace: https://issues.chromium.org/issues/491801534
@@ -9,11 +9,11 @@ const chrome_wm_class_from_desktop_file = require('./chrome_wm_class_from_deskto
 // extension (https://extensions.gnome.org/extension/4724/window-calls/).
 // Without it every gdbus call fails, the caller ignores the error, and the URL
 // opens with Chrome's own window choice. See docs/wayland-chrome-window.md.
-async function focus_chrome_window(scheme)
+async function chrome_window_focus(scheme)
 {
     // shell.openExternal uses the configured URL-scheme handler. Do not steal
     // focus to Chrome when the URL will actually open somewhere else.
-    const chrome_wm_class = await get_default_chrome_wm_class(scheme);
+    const chrome_wm_class = await chrome_wm_class_find(scheme);
     if (!chrome_wm_class) {
         return;
     }
@@ -26,10 +26,10 @@ async function focus_chrome_window(scheme)
     }
 }
 
-async function get_default_chrome_wm_class(scheme)
+async function chrome_wm_class_find(scheme)
 {
     const desktop_file = await shell(['xdg-settings', 'get', 'default-url-scheme-handler', scheme]);
-    return chrome_wm_class_from_desktop_file(desktop_file.trim());
+    return chrome_wm_class_by_desktop_file.get(desktop_file.trim()) ?? null;
 }
 
 function is_chrome_window(win, chrome_wm_class)
@@ -64,4 +64,4 @@ function gnome_windows_call(method, args)
     ]);
 }
 
-module.exports = focus_chrome_window;
+module.exports = chrome_window_focus;

@@ -5,10 +5,11 @@ on:
     branches:
       - master
     paths:
-      - 'www/**'
+      - 'src/www/**'
       - 'lib/**'
       - 'designs/**'
-      - 'bin/build-www'
+      - 'bin/build'
+      - 'bin/self-check'
       - 'bin/deploy-www'
       - 'src/cloudflare/**'
       - '.github/workflows/deploy-www.yml'

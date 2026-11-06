@@ -11,7 +11,7 @@ scriptname=`basename $script`
 BLACK="\e[30m" RED="\e[31m" GREEN="\e[32m" YELLOW="\e[33m" BLUE="\e[34m"
 PURPLE="\e[35m" CYAN="\e[36m" WHITE="\e[37m" RESET="\e[0m"
 
-EXIT_MESSAGE="${RED}bin/build-www failed${RESET}"
+EXIT_MESSAGE="${RED}bin/build failed${RESET}"
 
 # http://redsymbol.net/articles/bash-exit-traps/
 # http://redsymbol.net/articles/unofficial-bash-strict-mode/#essential-cleanup
@@ -22,7 +22,7 @@ cd $scriptdir/..
 rm -rf build/www
 mkdir -p build
 
-cp -r www/ build/
+cp -r src/www/ build/
 cp -r lib/ build/www/
 cp -r designs/ build/www/
 rm build/www/lib/*.cli.js
@@ -36,4 +36,7 @@ const options = names.map(v => ({value: v, label: v, files: fs.readdirSync(`buil
 fs.writeFileSync("build/www/designs/index.json", JSON.stringify(options, null, 4) + "\n");
 '
 
-EXIT_MESSAGE="${GREEN}bin/build-www succeeded${RESET}"
+# A build that fails its own check ships nothing
+bin/self-check
+
+EXIT_MESSAGE="${GREEN}bin/build succeeded${RESET}"
