@@ -121,6 +121,14 @@
             box-shadow: 0 8px 24px var(--shadow);
         }
 
+        /* The link ↑ and ↓ move to (lib/navplace.js): lifted like a card under the mouse, its border in the text colour */
+        .item-card.np-current {
+            outline: none;
+            transform: translateY(-4px);
+            border-color: var(--text);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
         .item-icon {
             width: 48px;
             height: 48px;
@@ -232,7 +240,7 @@
         // Initial empty state
         refresh_items([]);
 
-        function refresh_items(items) {
+        function refresh_items(items, {current} = {}) {
             if (!items || (items.length === 0)) {
                 container.innerHTML = `
                         <div class="empty-state">
@@ -242,9 +250,9 @@
                 return;
             }
 
-            container.innerHTML = items.map(render_item_html).join('');
+            container.innerHTML = items.map((item, i) => render_item_html(item, i === current)).join('');
 
-            function render_item_html(item) {
+            function render_item_html(item, is_current) {
                 const icon_html = item.icon_url ? `
                             <img src="${item.icon_url}"
                                  alt="${item.label} icon"
@@ -263,7 +271,7 @@
                                  onerror="this.style.display='none'">
                         ` : '';
                 return `
-                    <a href="${item.href}" class="item-card" target="_blank" rel="noopener">
+                    <a href="${item.href}" class="item-card ${is_current ? 'np-current' : ''}" target="_blank" rel="noopener">
                         ${icon_html}
 
                         <div class="item-content">

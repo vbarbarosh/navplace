@@ -10,7 +10,7 @@ Two existing designs are the canonical, battle-tested references. When generatin
 
 - **`designs/showcase/`** — the canonical **presentation-style** reference. Powers https://vbarbarosh.com in production. Vanilla JS, no framework. Uses `meta` mapping to bind `% title:` / `% email:` / `% subtitle:` into the page chrome. Shows the shared light/dark switch (`/lib/theme_switch.js`) in its topbar. Uses `navplace.navigate(item, e)` on click so multi-open works.
 
-- **`designs/github/`** — the canonical **launcher-style** reference. Default fallback in `desktop-electron/main.js` when `% design:` is missing or unknown. Vanilla JS, no framework. Search input + dense table of rows (icon / label / href). Implements its own arrow-key navigation (Up/Down/Enter/Escape) on top of the runtime; opens via `navplace.navigate(item)` to preserve multi-open. Explicit "No matches." empty state.
+- **`designs/github/`** — the canonical **launcher-style** reference. Default fallback in `desktop-electron/main.js` when `% design:` is missing or unknown. Vanilla JS, no framework. Search input + dense table of rows (icon / label / href). Marks the current link (`np-current`) that the runtime's Up/Down move; opens via `navplace.navigate(item)` to preserve multi-open. Explicit "No matches." empty state.
 
 Both are single-HTML-file plus a single `theme.css`, with no build step and no external dependencies — match that shape for new designs.
 
@@ -52,7 +52,7 @@ Load `/lib/navplace.js`. It exposes a global function `navplace(...)` and a help
 ```js
 navplace({
   input: '#search',                 // string selector OR HTMLElement (required)
-  update: (items) => { /* … */ },   // called every time the filtered list changes (required)
+  update: (items, {current}) => { /* … */ },   // called every time the list or the current link changes (required)
   meta: {                           // optional: map directive keys → CSS selectors
     title: '.identity h1',
     email: '.identity a',
@@ -63,7 +63,7 @@ navplace({
 ```
 
 - `input` — the search `<input>` element. The runtime listens to its `input` event, re-runs the filter, and calls `update(items)` with the new list. The runtime also auto-focuses this element when the user starts typing anywhere on the page.
-- `update(items)` — called once on init (with the full list) and again on every filter change. The design re-renders from this list. Items are sorted: `search1` matches (label + tags) first, then `search2` matches (href) not already included.
+- `update(items, {current})` — called once on init (with the full list), again on every filter change, and on every Up/Down. The design re-renders from this list and puts the class `np-current` on the element of `items[current]`. The runtime owns Up, Down and Enter: Up/Down move `current` (0 after each new search) and scroll `.np-current` into view; Enter opens `items[current]`. A default ring styles `.np-current`; restyle it in the design, for both themes. Items are sorted: `search1` matches (label + tags) first, then `search2` matches (href) not already included.
 - `meta` — optional. Maps directive keys from the collection's `% key: value` lines to CSS selectors in your template. When the source has `% title: Vladimir Barbarosh`, the runtime writes `Vladimir Barbarosh` into the `innerText` of the element matched by `.identity h1`. Useful for designs with author / contact / section labels in the chrome. Only `title`, `email`, `subtitle` are wired in the existing designs, but any key works — and `email` on an `<a>` also updates its `href`.
 - `navigate(item)` — optional. Called for each selected link when the user presses Enter. If omitted, the default behavior is `navplace.navigate(item)` (which respects the multi-open selection — see below).
 
@@ -136,7 +136,7 @@ So `%` is for document-wide directives; `#` and `@` are always per-item or per-s
 A design **must**:
 
 1. Render a search `<input>` element and pass it to `navplace({...})`.
-2. Render items received via `update(items)`. Empty list at start is normal — render nothing or an empty state.
+2. Render items received via `update(items, {current})`, the current one with the class `np-current`. Empty list at start is normal — render nothing or an empty state.
 3. Make item clicks call `navplace.navigate(item, e)` (not just rely on `<a href>`).
 4. Work without network access (see "Desktop network gate" below).
 5. Be a single `index.html` plus a `theme.css` (plus any local assets). No build step.
@@ -412,22 +412,20 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
 
 <script src="/lib/navplace.js"></script>
 <script>
-(function () {
+main();
 
+function main()
+{
     navplace({
         input: '#search',
-        meta: {
-            title: '.identity h1',
-            email: '.identity a',
-            subtitle: '.section-title',
-        },
-        update: items => render(items),
+        meta: {title: '.identity h1', email: '.identity a', subtitle: '.section-title'},
+        update: (v, {current = 0} = {}) => refresh_grid(v, current),
     });
 
-    function render(items)
-    {
+    // `current`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
+    function refresh_grid(items, current) {
         const grid = document.getElementById('grid');
-        grid.replaceChildren(...items.map(function (item) {
+        grid.replaceChildren(...items.map(function (item, i) {
             const templ = document.createElement('template');
             templ.innerHTML = `
                 <a href="${item.href}" class="tile">
@@ -441,12 +439,14 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
                 </a>
             `;
             const out = templ.content.firstElementChild;
-            out.onclick = e => navplace.navigate(item, e);
+            out.classList.toggle('np-current', i === current);
+            out.onclick = function (event) {
+                navplace.navigate(item, event);
+            };
             return out;
         }));
     }
-
-})();
+}
 </script>
 </body>
 </html>
@@ -469,11 +469,17 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
     --max: 1100px;
     --accent: #5b2fd6;
     --input-bg: #f6f6f6;
-    --focus-ring: rgba(0, 0, 0, 0.25);
+    --focus-ring: rgba(0, 0, 0, 0.25); /* light mode */
     --focus-bg: rgba(0, 0, 0, 0.03);
+    /* /lib/theme_switch.js: its button and the scrollbars */
+    --np-switch-bg: var(--card-bg);
+    --np-switch-fg: var(--muted);
+    --np-switch-border: var(--border);
+    --np-scrollbar-thumb: #c9c9cf;
+    --np-scrollbar-track: var(--bg);
 }
 
-[data-theme="dark"] {
+:root[data-theme="dark"] {
     --bg: #0f1115;
     --fg: #f4f5f7;
     --muted: #a7abb3;
@@ -484,74 +490,195 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
     --shadow-hover: 0 10px 26px rgba(0, 0, 0, .45);
     --accent: #8a6dff;
     --input-bg: #141824;
-    --focus-ring: rgba(255, 255, 255, 0.25);
+    --focus-ring: rgba(255, 255, 255, 0.25); /* dark mode */
     --focus-bg: rgba(255, 255, 255, 0.05);
+    --np-scrollbar-thumb: #343a48;
 }
 
-html, body {
+html,
+body {
     margin: 0;
     background: var(--bg);
     color: var(--fg);
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial, sans-serif;
 }
 
-a { color: inherit; text-decoration: none; }
-a:hover { text-decoration: underline; }
+a {
+    color: inherit;
+    text-decoration: none;
+}
 
-.page { max-width: var(--max); margin: 0 auto; padding: 28px 18px 60px; }
+a:hover {
+    text-decoration: underline;
+}
 
-.topbar { display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+.page {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 28px 18px 60px;
+}
 
-.identity h1 { margin: 0; font-size: 36px; letter-spacing: -0.02em; }
-.identity a  { color: var(--muted); font-size: 14px; }
+/* Header */
 
-/* /lib/theme_switch.js puts its one sun/moon button in [data-theme-switch] */
-.np-theme-switch { width: 38px; height: 38px; }
-.np-theme-switch:hover { color: var(--accent); border-color: var(--accent); }
+.topbar {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+}
 
-.search { margin: 18px 0 26px; }
+.identity h1 {
+    margin: 0;
+    font-size: 36px;
+    letter-spacing: -0.02em;
+}
+
+.identity a {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+/* Theme switch: /lib/theme_switch.js puts its button in [data-theme-switch] */
+
+.np-theme-switch {
+    width: 38px;
+    height: 38px;
+}
+
+.np-theme-switch:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Search */
+
+.search {
+    margin: 18px 0 26px;
+}
+
 .search input {
-    width: 100%; padding: 14px 16px; font-size: 15px;
-    border-radius: 999px; border: 1px solid var(--border);
-    background: var(--input-bg); color: var(--fg);
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 15px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--fg);
 }
+
 .search input:focus {
-    caret-color: var(--accent); outline: none; border-color: var(--border);
-    box-shadow: 0 0 0 2px var(--focus-ring), inset 0 0 0 1px var(--focus-bg);
+    caret-color: var(--accent);
+    outline: none;
+    border-color: var(--border);
+    box-shadow: 0 0 0 2px var(--focus-ring),
+    inset 0 0 0 1px var(--focus-bg);
 }
-.search input:focus-visible { transition: box-shadow 80ms ease; }
-.search input::placeholder { color: var(--muted); }
+
+.search input:focus-visible {
+    transition: box-shadow 80ms ease;
+}
+
+.search input::placeholder {
+    color: var(--muted);
+}
+
+/* Section */
 
 .section-title {
-    margin: 0 0 12px; font-size: 14px; color: var(--muted);
-    letter-spacing: .08em; text-transform: uppercase;
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
 }
 
-.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap); }
-@media (max-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 420px) { .grid { grid-template-columns: 1fr; } }
+/* Grid */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--gap);
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 420px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
 
 .tile {
-    display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px;
-    padding: 14px; border-radius: var(--radius);
-    border: 1px solid var(--border); background: var(--card-bg);
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--card-bg);
     transition: .12s ease;
 }
-.tile:hover { background: var(--card-bg-hover); box-shadow: var(--shadow-hover); }
 
-.icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(127, 127, 127, .15); display: grid; place-items: center; }
-.icon img { width: 26px; height: 26px; }
+.tile:hover {
+    background: var(--card-bg-hover);
+    box-shadow: var(--shadow-hover);
+}
 
-.label { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sub   { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it */
+.tile.np-current {
+    border-color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    background: var(--card-bg-hover);
+}
+
+.icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(127, 127, 127, .15);
+    display: grid;
+    place-items: center;
+}
+
+.icon img {
+    width: 26px;
+    height: 26px;
+}
+
+.label {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sub {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 ```
 
 ---
 
 ## Appendix B: Reference design — `github` (launcher style)
 
-The canonical launcher-style design. Default fallback in `desktop-electron/main.js`. Vanilla JS, no framework, no build step. Implements arrow-key navigation (Up / Down / Enter / Escape) on top of the runtime; opens via `navplace.navigate(item)` to preserve the multi-open behavior. Has an explicit empty state. Use this as the direct template for launcher-style design briefs.
+The canonical launcher-style design. Default fallback in `desktop-electron/main.js`. Vanilla JS, no framework, no build step. Marks the current link that the runtime's Up / Down move; opens via `navplace.navigate(item)` to preserve the multi-open behavior. Has an explicit empty state. Use this as the direct template for launcher-style design briefs.
 
 ### `designs/github/index.html`
 
@@ -562,6 +689,7 @@ The canonical launcher-style design. Default fallback in `desktop-electron/main.
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>GitHub Theme | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
     <link rel="stylesheet" href="theme.css">
 </head>
 <body>
@@ -571,6 +699,7 @@ The canonical launcher-style design. Default fallback in `desktop-electron/main.
         <div class="search">
             <input id="q" type="search" autocomplete="off" spellcheck="false"
                    placeholder="Search… (Enter to open first match)" />
+            <span data-theme-switch></span>
         </div>
         <div class="hint">
             <span class="kbd">↑</span>/<span class="kbd">↓</span> to move, <span class="kbd">Enter</span> to open,
@@ -595,115 +724,97 @@ The canonical launcher-style design. Default fallback in `desktop-electron/main.
 
 <script src="/lib/navplace.js"></script>
 <script>
-    const ITEMS = [];
+    // The runtime keeps the current link (↑ ↓ Enter); this design draws it as .np-current
+    let current_index = 0;
 
-    navplace({
-        input: 'input[type=search]',
-        update: function (items) {
-            ITEMS.splice(0, ITEMS.length, ...items);
-            refresh();
-        },
-        navigate: function () {
-            // Arrow keys required our own mechanics
-        },
-    });
+    const matches = [];
 
-    init();
+    main();
 
-    function escapeHtml(s) {
-        return String(s)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    function main()
+    {
+        navplace({
+            input: 'input[type=search]',
+            update: function (items, {current} = {}) {
+                matches.splice(0, matches.length, ...items);
+                current_index = current ?? 0;
+                refresh();
+            },
+        });
+
+        const search_input = document.getElementById('q');
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                search_input.value = '';
+                search_input.dispatchEvent(new Event('input', {bubbles: true}));
+            }
+        });
+        refresh();
     }
 
-    function render(items, selectedIndex) {
-        var tbody = document.getElementById("rows");
-        var empty = document.getElementById("empty");
+    function html_escape(s)
+    {
+        let escaped = String(s);
+        escaped = escaped.replace(/&/g, '&amp;');
+        escaped = escaped.replace(/</g, '&lt;');
+        escaped = escaped.replace(/>/g, '&gt;');
+        escaped = escaped.replace(/"/g, '&quot;');
+        escaped = escaped.replace(/'/g, '&#039;');
+        return escaped;
+    }
 
-        tbody.innerHTML = "";
+    function refresh_rows(items, current)
+    {
+        const tbody = document.getElementById('rows');
+        const empty = document.getElementById('empty');
+        tbody.innerHTML = '';
         if (!items.length) {
-            empty.style.display = "block";
+            empty.style.display = 'block';
             return;
         }
-        empty.style.display = "none";
+        empty.style.display = 'none';
 
-        for (var i = 0; i < items.length; i++) {
-            var it = items[i];
-
-            var tr = document.createElement("tr");
-            tr.setAttribute("data-index", String(i));
+        for (const [i, item] of items.entries()) {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-index', String(i));
             tr.tabIndex = -1;
-            if (i === selectedIndex) tr.style.background = "rgba(255,255,255,.06)";
+            if (i === current) {
+                tr.classList.add('np-current');
+            }
 
-            var tdIcon = document.createElement("td");
-            tdIcon.className = "col-icon";
-            tdIcon.innerHTML = '<span class="icon"><img alt="" src="' + escapeHtml(it.icon_url || "") + '"></span>';
+            const td_icon = document.createElement('td');
+            td_icon.className = 'col-icon';
+            td_icon.innerHTML = `<span class="icon"><img alt="" src="${html_escape(item.icon_url || '')}"></span>`;
 
-            var tdLabel = document.createElement("td");
-            tdLabel.className = "label";
-            tdLabel.textContent = it.label || "";
+            const td_label = document.createElement('td');
+            td_label.className = 'label';
+            td_label.textContent = item.label || '';
 
-            var tdHref = document.createElement("td");
-            tdHref.className = "href";
-            tdHref.textContent = it.href || "";
+            const td_href = document.createElement('td');
+            td_href.className = 'href';
+            td_href.textContent = item.href || '';
 
-            tr.appendChild(tdIcon);
-            tr.appendChild(tdLabel);
-            tr.appendChild(tdHref);
+            tr.appendChild(td_icon);
+            tr.appendChild(td_label);
+            tr.appendChild(td_href);
 
-            tr.addEventListener("click", (function (it2) {
-                return function () { openHref(it2); };
-            })(it));
+            tr.addEventListener('click', function () {
+                item_open(item);
+            });
 
             tbody.appendChild(tr);
         }
     }
 
-    function openHref(item) {
+    function item_open(item)
+    {
         navplace.navigate(item);
     }
 
-    function clamp(n, a, b) {
-        return Math.max(a, Math.min(b, n));
-    }
-
-    var selected = 0;
-    function refresh() {
-        selected = clamp(selected, 0, Math.max(0, ITEMS.length - 1));
-        render(ITEMS, selected);
-    }
-
-    function init() {
-        const q = document.getElementById("q");
-        document.addEventListener("keydown", function (e) {
-            if (e.key === "ArrowDown") {
-                e.preventDefault();
-                selected = clamp(selected + 1, 0, Math.max(0, ITEMS.length - 1));
-                refresh();
-                return;
-            }
-            if (e.key === "ArrowUp") {
-                e.preventDefault();
-                selected = clamp(selected - 1, 0, Math.max(0, ITEMS.length - 1));
-                refresh();
-                return;
-            }
-            if (e.key === "Enter") {
-                e.preventDefault();
-                if (ITEMS[selected]) openHref(ITEMS[selected]);
-                return;
-            }
-            if (e.key === "Escape") {
-                e.preventDefault();
-                q.value = "";
-                selected = 0;
-                refresh();
-            }
-        });
-        refresh();
+    function refresh()
+    {
+        refresh_rows(matches, current_index);
     }
 </script>
 </body>
@@ -713,14 +824,30 @@ The canonical launcher-style design. Default fallback in `desktop-electron/main.
 ### `designs/github/theme.css`
 
 ```css
+
+/* Light on :root, dark on :root[data-theme="dark"]: /lib/theme_switch.js sets it and shows the switch */
 :root {
-    --bg: #1a1d23;
-    --panel: #20242c;
-    --text: #e5e7eb;
-    --muted: #9aa3b2;
-    --line: rgba(255,255,255,.08);
-    --hover: rgba(255,255,255,.05);
-    --focus: rgba(255,255,255,.16);
+    --bg: #f6f8fa;          /* main background */
+    --panel: #ffffff;       /* inputs */
+    --text: #1f2328;        /* primary text */
+    --muted: #59636e;       /* secondary text */
+    --line: rgba(31,35,40,.12);
+    --hover: rgba(31,35,40,.04);
+    --focus: rgba(9,105,218,.45);
+    --focus-glow: rgba(9,105,218,.12);
+    --surface: #ffffff;     /* the table */
+    --head-bg: #f6f8fa;
+    --icon-bg: rgba(31,35,40,.04);
+    --icon-border: rgba(31,35,40,.10);
+    --kbd-bg: rgba(31,35,40,.04);
+    --row-outline: rgba(9,105,218,.35);
+    --selected: rgba(9,105,218,.08);
+    --current-bar: #0969da;
+    --np-scrollbar-thumb: rgba(31,35,40,.28);
+    --np-scrollbar-track: var(--bg);
+    --np-switch-bg: var(--panel);
+    --np-switch-fg: var(--muted);
+    --np-switch-border: var(--line);
 
     --radius: 12px;
     --gap: 10px;
@@ -728,11 +855,34 @@ The canonical launcher-style design. Default fallback in `desktop-electron/main.
     --rowh: 44px;
 
     --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
-            Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+}
+
+:root[data-theme="dark"] {
+    --bg: #1a1d23;          /* main background (dark gray, not black) */
+    --panel: #20242c;       /* inputs */
+    --text: #e5e7eb;
+    --muted: #9aa3b2;
+    --line: rgba(255,255,255,.08);
+    --hover: rgba(255,255,255,.05);
+    --focus: rgba(255,255,255,.16);
+    --focus-glow: rgba(255,255,255,.05);
+    --surface: rgba(255,255,255,.02);
+    --head-bg: rgba(255,255,255,.02);
+    --icon-bg: rgba(255,255,255,.06);
+    --icon-border: rgba(255,255,255,.08);
+    --kbd-bg: rgba(255,255,255,.04);
+    --row-outline: rgba(255,255,255,.10);
+    --selected: rgba(255,255,255,.07);
+    --current-bar: #6cb6ff;
+    --np-scrollbar-thumb: rgba(255,255,255,.22);
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
+
+html,
+body { height: 100%; }
+
 body {
     margin: 0;
     background: var(--bg);
@@ -742,15 +892,19 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-.app { max-width: var(--w); margin: 0 auto; padding: 18px 14px 28px; }
+.app {
+    max-width: var(--w);
+    margin: 0 auto;
+    padding: 18px 14px 28px;
+}
 
 .topbar {
     position: sticky;
     top: 0;
     background: linear-gradient(
-        to bottom,
-        color-mix(in srgb, var(--bg) 92%, transparent),
-        color-mix(in srgb, var(--bg) 78%, transparent)
+            to bottom,
+            color-mix(in srgb, var(--bg) 92%, transparent),
+            color-mix(in srgb, var(--bg) 78%, transparent)
     );
     backdrop-filter: blur(10px);
     padding: 10px 0 12px;
@@ -758,9 +912,15 @@ body {
     z-index: 2;
 }
 
-.search { display: flex; gap: 10px; align-items: center; }
+.search {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
 .search input {
-    width: 100%; height: 42px;
+    width: 100%;
+    height: 42px;
     border-radius: var(--radius);
     border: 1px solid var(--line);
     background: var(--panel);
@@ -769,59 +929,124 @@ body {
     outline: none;
     font-size: 14px;
 }
-.search input::placeholder { color: var(--muted); }
-.search input:focus { border-color: var(--focus); box-shadow: 0 0 0 4px rgba(255,255,255,.05); }
 
-.hint { margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.3; user-select: none; }
+.search input::placeholder { color: var(--muted); }
+
+.search input:focus {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 4px var(--focus-glow);
+}
+
+.hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.3;
+    user-select: none;
+}
 
 .table {
     margin-top: 14px;
     border: 1px solid var(--line);
     border-radius: var(--radius);
     overflow: hidden;
-    background: rgba(255,255,255,.02);
+    background: var(--surface);
 }
-table { width: 100%; border-collapse: collapse; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
 thead th {
-    text-align: left; font-weight: 600; font-size: 12px;
-    color: var(--muted); letter-spacing: .02em;
-    padding: 10px 12px; border-bottom: 1px solid var(--line);
-    background: rgba(255,255,255,.02);
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: .02em;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--head-bg);
 }
 
 tbody td {
-    padding: 0 12px; height: var(--rowh);
+    padding: 0 12px;
+    height: var(--rowh);
     border-top: 1px solid var(--line);
-    vertical-align: middle; font-size: 14px;
+    vertical-align: middle;
+    font-size: 14px;
 }
+
 tbody tr:first-child td { border-top: none; }
 
-tbody tr { cursor: pointer; }
+tbody tr {
+    cursor: pointer;
+}
+
 tbody tr:hover { background: var(--hover); }
-tbody tr:focus-within { outline: 2px solid rgba(255,255,255,.10); outline-offset: -2px; }
+
+/* The link ↑ ↓ moved to: Enter opens it */
+tbody tr.np-current { background: var(--selected); outline: none; }
+tbody tr.np-current td:first-child { box-shadow: inset 3px 0 0 var(--current-bar); }
+
+tbody tr:focus-within { outline: 2px solid var(--row-outline); outline-offset: -2px; }
 
 .col-icon { width: 44px; }
+
 .icon {
-    width: 22px; height: 22px;
+    width: 22px;
+    height: 22px;
     border-radius: 6px;
-    display: inline-flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--icon-bg);
+    border: 1px solid var(--icon-border);
     overflow: hidden;
 }
-.icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.label { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 1px; }
-.href  { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 1px; }
+.icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
 
-.empty { padding: 16px 12px; color: var(--muted); font-size: 13px; display: none; }
+.label {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 1px; /* helps ellipsis in table cells */
+}
+
+.href {
+    color: var(--muted);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 1px; /* helps ellipsis in table cells */
+}
+
+.rowlink {
+    color: inherit;
+    text-decoration: none;
+    display: contents; /* make link cover row cells while keeping table layout */
+}
+
+.empty {
+    padding: 16px 12px;
+    color: var(--muted);
+    font-size: 13px;
+    display: none;
+}
 
 .kbd {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 12px;
     border: 1px solid var(--line);
-    background: rgba(255,255,255,.04);
+    background: var(--kbd-bg);
     border-radius: 8px;
     padding: 2px 6px;
     color: var(--text);

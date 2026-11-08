@@ -35,12 +35,13 @@ function main()
     navplace({
         input: '#search',
         meta: {title: '.identity h1', email: '.identity a', subtitle: '.section-title'},
-        update: v => refresh_grid(v),
+        update: (v, {current = 0} = {}) => refresh_grid(v, current),
     });
 
-    function refresh_grid(items) {
+    // `current`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
+    function refresh_grid(items, current) {
         const grid = document.getElementById('grid');
-        grid.replaceChildren(...items.map(function (item) {
+        grid.replaceChildren(...items.map(function (item, i) {
             const templ = document.createElement('template');
             templ.innerHTML = `
                 <a href="${item.href}" class="tile">
@@ -54,6 +55,7 @@ function main()
                 </a>
             `;
             const out = templ.content.firstElementChild;
+            out.classList.toggle('np-current', i === current);
             out.onclick = function (event) {
                 navplace.navigate(item, event);
             };

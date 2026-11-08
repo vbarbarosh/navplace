@@ -144,8 +144,14 @@
             cursor: pointer;
         }
 
-        .row.on {
+        /* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it */
+        .row.np-current {
+            outline: none;
             background: var(--row-on);
+        }
+
+        .row:hover:not(.np-current) {
+            background: color-mix(in srgb, var(--row-on) 50%, transparent);
         }
 
         .icon {
@@ -187,7 +193,7 @@
             white-space: nowrap;
         }
 
-        .row.on .domain {
+        .row.np-current .domain {
             color: var(--text-soft);
         }
 
@@ -290,7 +296,8 @@
 <script src="/lib/navplace.js"></script>
 <script src="/lib/plural.js"></script>
 <script>
-    let selected_index = 0;
+    // The runtime's current link: ↑ ↓ and Enter are its own
+    let current = 0;
 
     const input = document.querySelector('input[type=search]');
     const rows = document.querySelector('.rows');
@@ -306,28 +313,18 @@
         navplace({
             input: input,
             meta: {title: '#title'},
-            update: function (filtered) {
+            update: function (filtered, {current: index = 0} = {}) {
                 items.splice(0, items.length, ...filtered);
-                selected_index = 0;
+                current = index;
                 refresh_rows();
             },
-            // Enter is ours: it opens the row the arrows chose, once
-            navigate: function () {},
         });
 
         document.addEventListener('keydown', function (event) {
             if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) {
                 return;
             }
-            if ((event.key === 'ArrowDown') || (event.key === 'ArrowUp')) {
-                event.preventDefault();
-                selection_move((event.key === 'ArrowDown') ? 1 : -1);
-            }
-            else if (event.key === 'Enter') {
-                event.preventDefault();
-                item_open(selected_index);
-            }
-            else if (event.key === 'Escape') {
+            if (event.key === 'Escape') {
                 event.preventDefault();
                 input.value = '';
                 input.dispatchEvent(new Event('input'));
@@ -347,8 +344,8 @@
     function refresh_opens()
     {
         const list = navplace.selected_items.slice();
-        if (items[selected_index]) {
-            list.splice(-1, 1, items[selected_index]);
+        if (items[current]) {
+            list.splice(-1, 1, items[current]);
         }
         opens.hidden = list.length < 2;
         opens.replaceChildren('Enter opens ', ...list.flatMap(function (item, i) {
@@ -361,18 +358,16 @@
     function make_row(item, i)
     {
         const li = document.createElement('li');
-        li.className = (i === selected_index) ? 'row on' : 'row';
+        li.className = (i === current) ? 'row np-current' : 'row';
         li.setAttribute('role', 'option');
-        li.setAttribute('aria-selected', String(i === selected_index));
+        li.setAttribute('aria-selected', String(i === current));
         li.append(make_icon(item), make_text('label', item.label), make_text('domain', domain_of(item.href)));
-        li.addEventListener('mousemove', function () {
-            if (selected_index !== i) {
-                selected_index = i;
-                refresh_selection();
-            }
-        });
         li.addEventListener('click', function () {
             item_open(i);
+        });
+        // The mouse picks a row as ↑ ↓ do: the runtime makes it the current one
+        li.addEventListener('mousemove', function () {
+            navplace.current_set?.(i);
         });
         return li;
     }
@@ -408,25 +403,6 @@
         catch {
             return href;
         }
-    }
-
-    function selection_move(delta)
-    {
-        if (!items.length) {
-            return;
-        }
-        selected_index = (selected_index + delta + items.length) % items.length;
-        refresh_selection();
-    }
-
-    function refresh_selection()
-    {
-        for (const [i, li] of Array.from(rows.children).entries()) {
-            li.classList.toggle('on', i === selected_index);
-            li.setAttribute('aria-selected', String(i === selected_index));
-        }
-        rows.children[selected_index]?.scrollIntoView({block: 'nearest'});
-        refresh_opens();
     }
 
     function item_open(i)

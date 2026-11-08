@@ -178,6 +178,14 @@ a:hover {
     box-shadow: var(--shadow-hover);
 }
 
+/* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it */
+.tile.np-current {
+    border-color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    background: var(--card-bg-hover);
+}
+
 .icon {
     width: 44px;
     height: 44px;

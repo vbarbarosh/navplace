@@ -53,4 +53,16 @@ cd $scriptdir/..
     echo "every design has the theme switch"
 ) 2>&1 | sed 's/^/[designs] /'
 
+# Every design marks the link the runtime's Up/Down move to: the class np-current
+(
+    set -o nounset -o errexit -o pipefail
+    missing=`for d in designs/*/; do grep -rqs 'np-current' $d || echo $d; done`
+    if [ -n "$missing" ]; then
+        echo "$missing"
+        echo "the designs above do not mark the current link (np-current)"
+        exit 1
+    fi
+    echo "every design marks the current link"
+) 2>&1 | sed 's/^/[designs] /'
+
 EXIT_MESSAGE="${GREEN}bin/self-check succeeded${RESET}"

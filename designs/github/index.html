@@ -39,7 +39,8 @@
 
 <script src="/lib/navplace.js"></script>
 <script>
-    let selected_index = 0;
+    // The runtime keeps the current link (↑ ↓ Enter); this design draws it as .np-current
+    let current_index = 0;
 
     const matches = [];
 
@@ -49,42 +50,19 @@
     {
         navplace({
             input: 'input[type=search]',
-            update: function (items) {
+            update: function (items, {current} = {}) {
                 matches.splice(0, matches.length, ...items);
-                selected_index = 0;
+                current_index = current ?? 0;
                 refresh();
-            },
-            navigate: function () {
-                // Arrow keys required our own mechanics
             },
         });
 
         const search_input = document.getElementById('q');
         document.addEventListener('keydown', function (event) {
-            if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                selected_index = clamp(selected_index + 1, 0, Math.max(0, matches.length - 1));
-                refresh();
-                return;
-            }
-            if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                selected_index = clamp(selected_index - 1, 0, Math.max(0, matches.length - 1));
-                refresh();
-                return;
-            }
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                if (matches[selected_index]) {
-                    item_open(matches[selected_index]);
-                }
-                return;
-            }
             if (event.key === 'Escape') {
                 event.preventDefault();
                 search_input.value = '';
-                selected_index = 0;
-                refresh();
+                search_input.dispatchEvent(new Event('input', {bubbles: true}));
             }
         });
         refresh();
@@ -101,7 +79,7 @@
         return escaped;
     }
 
-    function refresh_rows(items, selected_index)
+    function refresh_rows(items, current)
     {
         const tbody = document.getElementById('rows');
         const empty = document.getElementById('empty');
@@ -116,8 +94,8 @@
             const tr = document.createElement('tr');
             tr.setAttribute('data-index', String(i));
             tr.tabIndex = -1;
-            if (i === selected_index) {
-                tr.classList.add('selected');
+            if (i === current) {
+                tr.classList.add('np-current');
             }
 
             const td_icon = document.createElement('td');
@@ -149,15 +127,9 @@
         navplace.navigate(item);
     }
 
-    function clamp(n, a, b)
-    {
-        return Math.max(a, Math.min(b, n));
-    }
-
     function refresh()
     {
-        selected_index = clamp(selected_index, 0, Math.max(0, matches.length - 1));
-        refresh_rows(matches, selected_index);
+        refresh_rows(matches, current_index);
     }
 </script>
 </body>

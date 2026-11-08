@@ -16,6 +16,7 @@
     --kbd-bg: rgba(31,35,40,.04);
     --row-outline: rgba(9,105,218,.35);
     --selected: rgba(9,105,218,.08);
+    --current-bar: #0969da;
     --np-scrollbar-thumb: rgba(31,35,40,.28);
     --np-scrollbar-track: var(--bg);
     --np-switch-bg: var(--panel);
@@ -46,7 +47,8 @@
     --icon-border: rgba(255,255,255,.08);
     --kbd-bg: rgba(255,255,255,.04);
     --row-outline: rgba(255,255,255,.10);
-    --selected: rgba(255,255,255,.06);
+    --selected: rgba(255,255,255,.07);
+    --current-bar: #6cb6ff;
     --np-scrollbar-thumb: rgba(255,255,255,.22);
 }
 
@@ -157,7 +159,9 @@ tbody tr {
 
 tbody tr:hover { background: var(--hover); }
 
-tbody tr.selected { background: var(--selected); }
+/* The link ↑ ↓ moved to: Enter opens it */
+tbody tr.np-current { background: var(--selected); outline: none; }
+tbody tr.np-current td:first-child { box-shadow: inset 3px 0 0 var(--current-bar); }
 
 tbody tr:focus-within { outline: 2px solid var(--row-outline); outline-offset: -2px; }
 

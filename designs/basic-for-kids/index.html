@@ -21,6 +21,7 @@
             --np-switch-border: #87ceeb;
             --np-scrollbar-thumb: #87ceeb;
             --np-scrollbar-track: #f0f8ff;
+            --current-ring: #ff8c00;
         }
 
         :root[data-theme="dark"] {
@@ -38,6 +39,7 @@
             --np-switch-border: #5fa8d3;
             --np-scrollbar-thumb: #3d6a8f;
             --np-scrollbar-track: #14213d;
+            --current-ring: #ffd700;
         }
 
         body {
@@ -97,6 +99,13 @@
             transform: scale(1.05);
         }
 
+        /* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it */
+        .card.np-current {
+            outline: 5px solid var(--current-ring);
+            outline-offset: 4px;
+            transform: scale(1.05);
+        }
+
         .card img {
             width: 120px;
             height: 120px;
@@ -135,13 +144,14 @@
         navplace({input, update: refresh_results});
     }
 
-    function refresh_results(items)
+    // `current`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
+    function refresh_results(items, {current = 0} = {})
     {
         container.innerHTML = '';
-        for (const item of items) {
+        for (const [i, item] of items.entries()) {
             const card = document.createElement('a');
             card.href = item.href;
-            card.className = 'card';
+            card.className = (i === current) ? 'card np-current' : 'card';
             const img = document.createElement('img');
             img.src = item.image_url || item.icon_url;
             img.alt = item.label;

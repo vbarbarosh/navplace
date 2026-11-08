@@ -114,6 +114,13 @@
             box-shadow: 0 12px 24px rgba(92, 77, 61, 0.12);
         }
 
+        /* The link ↑ and ↓ move to (lib/navplace.js): lifted like a card under the mouse, in a warm ring */
+        .recipe-card.np-current {
+            outline: none;
+            transform: translateY(-8px);
+            box-shadow: 0 0 0 3px var(--accent-warm), 0 12px 24px rgba(92, 77, 61, 0.12);
+        }
+
         .image-container {
             position: relative;
             padding-top: 66.67%; /* 3:2 aspect ratio */
@@ -269,7 +276,7 @@
             refresh_items(items);
         };
 
-        function refresh_items(items) {
+        function refresh_items(items, {current} = {}) {
             if (!items || (items.length === 0)) {
                 items_container.innerHTML = `
                         <div class="empty-state">
@@ -285,11 +292,11 @@
                 return !!item.image_url && (!!window.ElectronApp || !item.image_url.startsWith('private://'));
             }
 
-            items_container.innerHTML = items.map(render_item_html).join('');
+            items_container.innerHTML = items.map((item, i) => render_item_html(item, i === current)).join('');
 
-            function render_item_html(item) {
+            function render_item_html(item, is_current) {
                 return `
-                    <a href="${item.href}" class="recipe-card" target="_blank">
+                    <a href="${item.href}" class="recipe-card ${is_current ? 'np-current' : ''}" target="_blank">
                         ${has_image(item) ? `<div class="image-container"><img src="${item.image_url}" alt="${item.label}" class="recipe-image"></div>` : ''}
                         <div class="recipe-content">
                             <div class="recipe-header">

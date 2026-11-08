@@ -366,7 +366,12 @@
 
         .row:focus-within { background: color-mix(in srgb, var(--hover) 65%, transparent); }
 
-        .row[aria-selected="true"] { background: color-mix(in srgb, var(--hover) 65%, transparent); }
+        /* The link ↑ ↓ moved to (the runtime keeps it): Enter opens it */
+        .row.np-current {
+            outline: none;
+            background: color-mix(in srgb, var(--accent) 12%, transparent);
+            box-shadow: inset 3px 0 0 var(--accent);
+        }
 
         .favicon {
             width: var(--icon);
@@ -544,48 +549,10 @@
 
     function main()
     {
-        let active_row = null;
-
         const list = document.getElementById('list');
         const counts = document.getElementById('counts');
         const status = document.getElementById('status');
         const meta = document.getElementById('meta');
-
-        list.addEventListener('keydown', function (event) {
-            if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                active_row_move(1);
-                return;
-            }
-            if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                active_row_move(-1);
-                return;
-            }
-            if (event.key === 'Home') {
-                event.preventDefault();
-                active_row_move(-999999);
-                return;
-            }
-            if (event.key === 'End') {
-                event.preventDefault();
-                active_row_move(999999);
-                return;
-            }
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                if (active_row) {
-                    href_open(active_row.getAttribute('data-href'));
-                }
-            }
-        });
-
-        list.addEventListener('mousemove', function (event) {
-            const row = (event.target && event.target.closest) ? event.target.closest('.row') : null;
-            if (row && (row !== active_row)) {
-                active_row_set(row);
-            }
-        });
 
         navplace_bind();
         status.textContent = (status.textContent === 'idle') ? 'ready' : status.textContent;
@@ -771,7 +738,6 @@
             row.appendChild(actions);
 
             row.addEventListener('click', function () {
-                active_row_set(row);
                 href_open(href);
             });
 
@@ -796,59 +762,6 @@
             }
         }
 
-        function active_row_set(row) {
-            if (active_row && (active_row !== row)) {
-                active_row.setAttribute('aria-selected', 'false');
-            }
-            active_row = row;
-            if (active_row) {
-                active_row.setAttribute('aria-selected', 'true');
-                active_row.focus({preventScroll: true});
-                node_scroll_into_view(active_row, list);
-            }
-        }
-
-        function active_row_move(delta) {
-            const rows = list.querySelectorAll('.row[role="option"]');
-            if (!rows.length) {
-                return;
-            }
-
-            let index = 0;
-            if (active_row) {
-                index = Math.max(0, Math.min(rows.length - 1, parseInt(active_row.getAttribute('data-index'), 10) || 0));
-            }
-            index = Math.max(0, Math.min(rows.length - 1, index + delta));
-
-            let found = null;
-            for (const row of rows) {
-                if ((parseInt(row.getAttribute('data-index'), 10) || 0) === index) {
-                    found = row;
-                    break;
-                }
-            }
-            if (!found) {
-                found = rows[index];
-            }
-            if (found) {
-                active_row_set(found);
-            }
-        }
-
-        function node_scroll_into_view(node, container) {
-            if (!node || !container) {
-                return;
-            }
-            const node_rect = node.getBoundingClientRect();
-            const container_rect = container.getBoundingClientRect();
-            if (node_rect.top < container_rect.top + 4) {
-                container.scrollTop -= (container_rect.top + 4 - node_rect.top);
-            }
-            else if (node_rect.bottom > container_rect.bottom - 4) {
-                container.scrollTop += (node_rect.bottom - (container_rect.bottom - 4));
-            }
-        }
-
         function status_flash(text) {
             status.textContent = text;
             status.dataset.flash = String(Date.now());
@@ -861,7 +774,10 @@
             }
         }
 
-        function refresh_list(items) {
+        // `current`: the link ↑ ↓ moved to, an index into `items`. The links are drawn grouped by host,
+        // and `items` (the runtime's own list) is put in that same order first, so ↑ ↓ and Enter follow
+        // the rows as they stand on screen
+        function refresh_list(items, {current} = {}) {
             let total = 0;
 
             const list_items = Array.isArray(items) ? items : [];
@@ -889,8 +805,11 @@
                 return a.localeCompare(b);
             });
 
+            if (Array.isArray(items)) {
+                items.splice(0, items.length, ...group_keys.flatMap(key => group_by_key[key].items));
+            }
+
             list.innerHTML = '';
-            active_row = null;
 
             const items_text = plural(total, '# item', '# items');
             const groups_text = plural(group_keys.length, '# group', '# groups');
@@ -930,20 +849,18 @@
 
                 const rows = make_elem('div', {class: 'rows'});
                 for (const item of group.items) {
-                    rows.appendChild(make_row(item, index));
+                    const row = make_row(item, index);
+                    if (index === (current ?? 0)) {
+                        row.classList.add('np-current');
+                        row.setAttribute('aria-selected', 'true');
+                    }
+                    rows.appendChild(row);
                     index++;
                 }
 
                 section.appendChild(header);
                 section.appendChild(rows);
                 list.appendChild(section);
-            }
-
-            // The first row is marked, not focused: typing stays in the search
-            const first = list.querySelector('.row[role="option"]');
-            if (first) {
-                active_row = first;
-                active_row.setAttribute('aria-selected', 'true');
             }
 
             status.textContent = 'ready';
@@ -955,32 +872,13 @@
                 return;
             }
 
-            input.addEventListener('keydown', function (event) {
-                if (event.key === 'ArrowDown') {
-                    event.preventDefault();
-                    list.focus();
-                    active_row_move(1);
-                    return;
-                }
-                if (event.key === 'ArrowUp') {
-                    event.preventDefault();
-                    list.focus();
-                    active_row_move(-1);
-                    return;
-                }
-                if ((event.key === 'Enter') && active_row) {
-                    event.preventDefault();
-                    href_open(active_row.getAttribute('data-href'));
-                }
-            });
-
             try {
                 if (typeof window.navplace === 'function') {
                     window.navplace({
                         input,
                         update: refresh_list,
-                        // Enter is handled above: it opens the active row
-                        navigate: function () {},
+                        // Enter opens the current link in a new tab, as a click on its row does
+                        navigate: item => href_open(item.href),
                     });
                     status_flash('bound');
                 }

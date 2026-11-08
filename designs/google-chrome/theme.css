@@ -9,6 +9,7 @@
     --search-shadow: 0 1px 6px rgba(32, 33, 36, 0.18);
     --tile-bg: #f1f3f4;
     --tile-bg-hover: #e8eaed;
+    --current-ring: #1a73e8;
     --np-scrollbar-thumb: rgba(60, 64, 67, 0.35);
     --np-scrollbar-track: var(--bg);
 }
@@ -23,6 +24,7 @@
     --search-shadow: none;
     --tile-bg: #4a4a4a;
     --tile-bg-hover: #5a5a5a;
+    --current-ring: #8ab4f8;
     --np-scrollbar-thumb: rgba(234, 234, 234, 0.3);
 }
 
@@ -135,6 +137,16 @@ body {
 
 .tile:hover .tile-inner {
     background: var(--tile-bg-hover);
+}
+
+/* The link ↑ ↓ moved to: Enter opens it */
+.tile.np-current {
+    outline: none;
+}
+
+.tile.np-current .tile-inner {
+    background: var(--tile-bg-hover);
+    box-shadow: 0 0 0 3px var(--current-ring);
 }
 
 .tile-label {

@@ -32,7 +32,7 @@ function main()
     <div class="flex-fluid ma container">
         <a v-for="(item, i) in items"
            v-bind:href="item.href"
-           v-bind:class="{break: row_starts(i)}"
+           v-bind:class="{break: row_starts(i), 'np-current': (i === current)}"
            target="_blank"
            style="height:112px;"
            class="rel flex-col w200 bs10 bg-bookmark">
@@ -53,6 +53,8 @@ function main()
         data: function () {
             return {
                 items: [],
+                // The link ↑ ↓ moved to, which Enter opens: navplace.js keeps it
+                current: 0,
                 // Pictures that did not load: their links show the site's icon instead
                 failed: {},
             };
@@ -72,7 +74,10 @@ function main()
         mounted: function () {
             navplace({
                 input: this.$refs.search,
-                update: v => this.items.splice(0, this.items.length, ...v),
+                update: (v, {current = 0} = {}) => {
+                    this.items.splice(0, this.items.length, ...v);
+                    this.current = current;
+                },
             });
         },
     });

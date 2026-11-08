@@ -126,6 +126,17 @@
             filter: none;
         }
 
+        /* The link ↑ and ↓ move to (lib/navplace.js): the hover look, with an accent bar on its left */
+        .nav-item.np-current {
+            outline: none;
+            background-color: var(--hover);
+            box-shadow: inset 3px 0 0 var(--accent);
+        }
+
+        .nav-item.np-current .nav-icon {
+            filter: none;
+        }
+
         .nav-content {
             display: flex;
             flex-direction: column;
@@ -202,18 +213,18 @@
         }
     }
 
-    function refresh_items(items)
+    function refresh_items(items, {current} = {})
     {
         if (!items || (items.length === 0)) {
             results_container.innerHTML = '<div class="empty-state">No matching operational records found.</div>';
             return;
         }
 
-        results_container.innerHTML = items.map(render_item_html).join('');
+        results_container.innerHTML = items.map((item, i) => render_item_html(item, i === current)).join('');
 
-        function render_item_html(item) {
+        function render_item_html(item, is_current) {
             return `
-            <a href="${item.href}" class="nav-item" target="_blank" rel="noopener noreferrer">
+            <a href="${item.href}" class="nav-item ${is_current ? 'np-current' : ''}" target="_blank" rel="noopener noreferrer">
                 <img src="${item.icon_url}" class="nav-icon" onerror="this.style.display='none'">
                 <div class="nav-content">
                     <span class="nav-label">${item.label}</span>

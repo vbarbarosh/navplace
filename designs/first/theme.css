@@ -102,6 +102,13 @@ a {
     box-shadow: 0 0 0 3px var(--search-focus-ring), 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
+/* The link ↑ ↓ moved to: lifted, with a ring in the search box's colour */
+.np-current {
+    outline: 3px solid var(--search-focus);
+    outline-offset: 3px;
+    transform: translateY(-2px);
+}
+
 .container > .break {
     grid-column: 1 / 1;
 }
