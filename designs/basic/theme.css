@@ -64,10 +64,22 @@ a {
     justify-content: center;
 }
 
-/* Up to 600 px, narrower on a small screen; the theme switch beside it */
+/* The search in the middle, up to 600 px; the gear and the theme switch at the right edge. The
+   left column gives way first: on a narrow screen the search moves left, never under the buttons */
+.search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 600px) minmax(max-content, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.search-row [data-theme-switch] {
+    justify-self: end;
+}
+
 .search {
     box-sizing: border-box;
-    flex: 0 1 600px;
+    width: 100%;
     min-width: 0;
     height: 44px;
     padding: 0 18px;
