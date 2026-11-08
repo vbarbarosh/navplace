@@ -8,7 +8,7 @@ const worker = {
             return env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
         }
         if (url.pathname.startsWith('/icon/')) {
-            return serve_icon(request, {cache: caches.default});
+            return serve_icon(request, {cache: caches.default, assets: env.ASSETS});
         }
         // navplace.com is its files and /icon/: there is no server behind it
         return new Response('Not found', {status: 404});

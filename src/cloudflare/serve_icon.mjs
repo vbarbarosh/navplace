@@ -4,10 +4,11 @@
 // service. A request can fake its headers; this keeps honest pages out.
 
 import icon_find from '../../lib/icon_find.js';
+import icon_library_file from '../../lib/icon_library_file.js';
 
 const DAY = 86400;
 // A new value drops every icon kept at the edge: what it keeps under the old one is never asked again
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 
 // What any icon answer carries: same-origin only, and an SVG opened as a page runs nothing
 const ICON_HEADERS = {
@@ -18,7 +19,7 @@ const ICON_HEADERS = {
 
 // `cache` is caches.default in the Worker; `fetch_fn` is fetch, a fake in the tests
 // GET /icon/<domain> (header:sec-fetch-site, header:referer)
-async function serve_icon(request, {cache = null, fetch_fn = fetch} = {})
+async function serve_icon(request, {cache = null, fetch_fn = fetch, assets = null} = {})
 {
     const url = new URL(request.url);
     if (!is_own_page(request, url.origin)) {
@@ -37,7 +38,7 @@ async function serve_icon(request, {cache = null, fetch_fn = fetch} = {})
         return kept;
     }
 
-    const icon = await icon_find(domain, fetch_fn);
+    const icon = await icon_find(domain, fetch_fn, assets ? library_from_assets(assets, url.origin) : null);
     const response = icon
         ? make_icon_response(icon.bytes, icon.type, 30*DAY)
         : make_icon_response(render_tile_svg(domain), 'image/svg+xml', DAY);
@@ -86,6 +87,26 @@ function render_tile_svg(domain)
     const name = domain.replace(/^www\./, '');
     const letter = (name.match(/[a-z0-9]/i)?.[0] ?? '?').toUpperCase();
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#286445"/><text x="32" y="43" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#fff" text-anchor="middle">${letter}</text></svg>`;
+}
+
+// navplace's own icons, from the site's files (lib/icons/, its index read once per request)
+function library_from_assets(assets, origin)
+{
+    return async function (domain) {
+        const index_response = await assets.fetch(new Request(`${origin}/lib/icons/index.json`));
+        if (!index_response.ok) {
+            return null;
+        }
+        const file = icon_library_file(domain, await index_response.json());
+        if (!file) {
+            return null;
+        }
+        const response = await assets.fetch(new Request(`${origin}/lib/icons/${file}`));
+        if (!response.ok) {
+            return null;
+        }
+        return {bytes: new Uint8Array(await response.arrayBuffer()), type: file.endsWith('.svg') ? 'image/svg+xml' : 'image/png'};
+    };
 }
 
 export default serve_icon;

@@ -19,6 +19,7 @@ const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const gnome_configure = require('./helpers/gnome_configure');
 const gnome_hotkey_set = require('./helpers/gnome_hotkey_set');
 const icon_find = require('../../lib/icon_find');
+const icon_library_file = require('../../lib/icon_library_file');
 const letter_tile_svg = require('./helpers/letter_tile_svg');
 const make = require('@vbarbarosh/type-helpers');
 const make_socket_server = require('./helpers/make_socket_server');
@@ -148,8 +149,8 @@ async function main()
         // app://favicon/<domain>?letter=<the link's first letter>
         const url = new URL(request.url);
         const domain = decodeURIComponent(url.pathname.slice(1));
-        // favicons-v2/: icons from the site itself; favicons/ held Google's 32 px ones
-        const file = fs_path_resolve(electron.app.getPath('userData'), `favicons-v2/${sanitize_filename(domain)}.json`);
+        // favicons-v3/: navplace's own icons first, then the site's; favicons/ and favicons-v2/ held older ones
+        const file = fs_path_resolve(electron.app.getPath('userData'), `favicons-v3/${sanitize_filename(domain)}.json`);
         // The site has no icon anywhere: kept a day, so a summon does not ask again
         const missing_file = `${file}.missing`;
         const tile = new Response(letter_tile_svg(url.searchParams.get('letter'), domain), {
@@ -169,7 +170,7 @@ async function main()
                 get: async () => JSON.parse(await fs_read_utf8(file)),
                 put: v => fs_write(file, JSON.stringify(v)),
                 refresh: async function () {
-                    const found = await icon_find(domain, fetch);
+                    const found = await icon_find(domain, fetch, icon_library_read);
                     if (!found) {
                         // Offline, nothing is found either: only a miss while online is kept
                         if (await is_online()) {
@@ -555,6 +556,23 @@ async function is_online()
     catch {
         return false;
     }
+}
+
+// navplace's own icon for a domain, from the app's lib/icons/; null when it has none
+async function icon_library_read(domain)
+{
+    let index;
+    try {
+        index = JSON.parse(await fs_read_utf8(fs_path_resolve(config.lib_dir, 'icons/index.json')));
+    }
+    catch {
+        return null;
+    }
+    const file = icon_library_file(domain, index);
+    if (!file) {
+        return null;
+    }
+    return {bytes: await fs_read(fs_path_resolve(config.lib_dir, 'icons', file)), type: file.endsWith('.svg') ? 'image/svg+xml' : 'image/png'};
 }
 
 async function file_is_younger(file, ms)

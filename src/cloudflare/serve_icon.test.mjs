@@ -69,6 +69,16 @@ describe('serve_icon', function () {
         assert.equal(response.headers.get('Cross-Origin-Resource-Policy'), 'same-origin');
         assert.match(response.headers.get('Content-Security-Policy'), /sandbox/);
     });
+    it("takes navplace's own icon from the site's files before asking the site", async function () {
+        const files = {
+            'https://navplace.com/lib/icons/index.json': new Response(JSON.stringify({'sentry.io': 'sentry.io.svg'})),
+            'https://navplace.com/lib/icons/sentry.io.svg': new Response('<svg/>'),
+        };
+        const assets = {fetch: async request => files[request.url]?.clone() ?? new Response('', {status: 404})};
+        const response = await serve_icon(make_request('acme.sentry.io'), {fetch_fn: fail_fetch, assets});
+        assert.equal(response.headers.get('Content-Type'), 'image/svg+xml');
+        assert.equal(await response.text(), '<svg/>');
+    });
 });
 
 function make_request(domain, headers = {'Sec-Fetch-Site': 'same-origin'})

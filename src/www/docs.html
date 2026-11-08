@@ -676,7 +676,7 @@
 <h3 id="network-gate">What a design can reach</h3>
 <p>The window cancels every request except these: <code>app://favicon/</code>, <code>blob:</code>, <code>chrome://</code>, <code>chrome-devtools://</code>, <code>data:</code>, <code>devtools://</code>, <code>file://</code>, <code>private://</code>. Remote fonts, scripts and images do not load in the desktop app.</p>
 <ul>
-    <li><code>app://favicon/&lt;host&gt;?letter=&lt;L&gt;</code>: the app finds the site's own icon once, as navplace.com's <code>/icon/</code> does (<code>lib/icon_find.js</code>: the page's icon links, <code>/apple-touch-icon.png</code>, <code>/favicon.ico</code>, then Google's), and keeps it in its user data folder; for a site with none, a tile of the link's first letter on a colour of that site.</li>
+    <li><code>app://favicon/&lt;host&gt;?letter=&lt;L&gt;</code>: the app finds the icon once, as navplace.com's <code>/icon/</code> does (<code>lib/icon_find.js</code>: navplace's own in <code>lib/icons/</code>, then the page's icon links, <code>/apple-touch-icon.png</code>, <code>/favicon.ico</code>, then Google's), and keeps it in its user data folder; for a site with none, a tile of the link's first letter on a colour of that site.</li>
     <li><code>private://&lt;path&gt;</code>: a file under <code>~/.navplace/</code>, nothing outside it. <code>.svg</code> is sent as <code>image/svg+xml</code>, anything else as <code>image/png</code>.</li>
 </ul>
 
@@ -951,7 +951,8 @@ Gmail   https://mail.google.com/
         <tr><td><code>parse.js</code></td><td>The parser: text in, <code>{meta, items}</code> out. A Node module and a browser global. Its options <code>{prefix, suffix, tags, ns}</code> serve <code>% include:</code>.</td></tr>
         <tr><td><code>filter1_from_spec.js</code></td><td>Compiles one search expression (<code>^</code>, <code>$</code>, <code>!</code>, <code>/</code>) into a test; a copy from <a href="https://github.com/vbarbarosh/node-helpers">node-helpers</a>.</td></tr>
         <tr><td><code>plural.js</code></td><td>The phrase for a count, <code>plural(n, '# link', '# links')</code>; a copy from <a href="https://github.com/vbarbarosh/node-helpers">node-helpers</a>, loaded by the playground and the designs that count.</td></tr>
-        <tr><td><code>navplace.js</code></td><td>The runtime every design loads: the search box, filtering, the selection, Enter and clicks, the embed messages, and the items from <code>window.ElectronApp</code> in the desktop app. It loads the two files above from its own folder.</td></tr>
+        <tr><td><code>icons/</code>, <code>icon_find.js</code>, <code>icon_library_file.js</code></td><td>A link's icon, for navplace.com's <code>/icon/</code> and the desktop app: navplace's own icons first (<code>icons/</code>, 120 sites, an SVG or a picture of 96 px and more, <code>icons/index.json</code> by domain; a subdomain takes its parent's), then the site's own, then Google's.</td></tr>
+        <tr><td><code>navplace.js</code></td><td>The runtime every design loads: the search box, filtering, the selection, ↑ ↓, Enter and clicks, the embed messages, and the items from <code>window.ElectronApp</code> in the desktop app. It loads the two files above from its own folder.</td></tr>
         <tr><td><code>embed.js</code></td><td>The <a href="#embed">embed widget</a>.</td></tr>
         <tr><td><code>parse.test.js</code></td><td>The parser's tests (mocha, <code>npm test</code>).</td></tr>
         <tr><td><code>parse.cli.js</code></td><td>Parses a sample and prints the result.</td></tr>
