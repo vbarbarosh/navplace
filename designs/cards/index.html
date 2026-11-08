@@ -335,9 +335,9 @@
         navplace({
             input: input,
             meta: {title: '#title', subtitle: '#subtitle'},
-            update: function (filtered, {current = 0} = {}) {
+            update: function (filtered, {item = null} = {}) {
                 matches.splice(0, matches.length, ...filtered);
-                current_item = matches[current] ?? null;
+                current_item = item;
                 refresh_grid();
             },
         });
@@ -360,6 +360,8 @@
         shown = section ? matches.filter(v => v.namespaces.includes(section)) : matches.slice();
         grid.replaceChildren(...shown.map(make_card));
         empty.hidden = shown.length > 0;
+        // ↑ ↓ and Enter walk the cards of the section picked, not the hidden ones
+        navplace.order_set?.(shown);
     }
 
     // One chip per section of the links, in the order they first appear;

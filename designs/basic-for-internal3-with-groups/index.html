@@ -774,10 +774,9 @@
             }
         }
 
-        // `current`: the link ↑ ↓ moved to, an index into `items`. The links are drawn grouped by host,
-        // and `items` (the runtime's own list) is put in that same order first, so ↑ ↓ and Enter follow
-        // the rows as they stand on screen
-        function refresh_list(items, {current} = {}) {
+        // `item`: the link ↑ ↓ moved to. The links are drawn grouped by host, and the runtime is told that
+        // order (navplace.order_set), so ↑ ↓ and Enter follow the rows as they stand on screen
+        function refresh_list(items, {item: current_item = null} = {}) {
             let total = 0;
 
             const list_items = Array.isArray(items) ? items : [];
@@ -805,9 +804,7 @@
                 return a.localeCompare(b);
             });
 
-            if (Array.isArray(items)) {
-                items.splice(0, items.length, ...group_keys.flatMap(key => group_by_key[key].items));
-            }
+            const shown = group_keys.flatMap(key => group_by_key[key].items);
 
             list.innerHTML = '';
 
@@ -850,7 +847,7 @@
                 const rows = make_elem('div', {class: 'rows'});
                 for (const item of group.items) {
                     const row = make_row(item, index);
-                    if (index === (current ?? 0)) {
+                    if (item === current_item) {
                         row.classList.add('np-current');
                         row.setAttribute('aria-selected', 'true');
                     }
@@ -864,6 +861,7 @@
             }
 
             status.textContent = 'ready';
+            navplace.order_set?.(shown);
         }
 
         function navplace_bind() {
