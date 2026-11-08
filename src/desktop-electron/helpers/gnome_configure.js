@@ -10,14 +10,15 @@ const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const shell_spawn = require('@vbarbarosh/node-helpers/src/shell_spawn');
 
 // Install the GNOME hotkey for the AppImage build, invoked as
-// `NavPlace.AppImage --configure-gnome`.
+// `NavPlace.AppImage --configure-gnome`; and start the app at login, hidden, so the
+// hotkey finds it running instead of booting the AppImage.
 //
 // The launcher must live on disk OUTSIDE the bundle: the whole point of the
 // socket architecture is that summoning the app never mounts/boots the AppImage.
 // So we extract the (dependency-free) launcher next to the socket and bind the
 // hotkey to it; the .desktop's Exec points back at the AppImage for cold start.
 //
-// Returns {launcher_file, appimage_file, node_bin}; the caller reports success.
+// Returns {launcher_file, appimage_file, node_bin, autostart_file}; the caller reports success.
 async function gnome_configure()
 {
     const appimage_file = config.appimage_file;
@@ -34,6 +35,8 @@ async function gnome_configure()
 
     const launcher_file = fs_path_join(config.user_data_dir, 'launcher.js');
     const desktop_file = fs_path_join(config.data_home_dir, 'applications', 'navplace.desktop');
+    // XDG autostart: GNOME starts every .desktop of $XDG_CONFIG_HOME/autostart at login
+    const autostart_file = fs_path_join(fs_path_dirname(config.user_data_dir), 'autostart', 'navplace.desktop');
 
     await fs_mkdirp(config.user_data_dir);
 
@@ -60,7 +63,21 @@ async function gnome_configure()
         '',
     ].join('\n'));
 
-    return {launcher_file, appimage_file, node_bin};
+    // 4. at login: the AppImage with --background, its window hidden until the hotkey
+    await fs_mkdirp(fs_path_dirname(autostart_file));
+    await fs_write(autostart_file, [
+        '[Desktop Entry]',
+        'Type=Application',
+        'Name=NavPlace',
+        'Comment=Waits in the background for Ctrl+Shift+Alt+N',
+        `Icon=${icon}`,
+        `Exec=${appimage_file} --background`,
+        'NoDisplay=true',
+        'X-GNOME-Autostart-enabled=true',
+        '',
+    ].join('\n'));
+
+    return {launcher_file, appimage_file, node_bin, autostart_file};
 }
 
 async function icon_extract()

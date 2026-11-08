@@ -46,6 +46,7 @@ async function main()
         console.log(`  launcher:   ${info.launcher_file}`);
         console.log(`  cold start: ${info.appimage_file}`);
         console.log(`  node:       ${info.node_bin}`);
+        console.log(`  at login:   ${info.autostart_file} (starts hidden; log out and in, or run it with --background now)`);
         electron.app.exit(0);
         return;
     }
@@ -201,7 +202,13 @@ async function main()
 
     const design = make(parsed_collection.meta.design, {type: 'enum', options: ['github', ...await fs_readdir(config.designs_dir)]});
     await win.loadURL(`navplace://app/designs/${encodeURIComponent(design)}/index.html`);
-    win.show();
+    // Started at login (`--background`, from ~/.config/autostart): it waits hidden for the hotkey
+    if (process.argv.includes('--background')) {
+        console.log(`[${app_uid}][window_waits_hidden]`);
+    }
+    else {
+        win.show();
+    }
     refresh_collection_in_background();
 
     win.on('blur', function () {

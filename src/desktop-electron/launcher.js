@@ -28,6 +28,10 @@ function main()
         }
         // ~/.local/share/applications/navplace.desktop
         child_process.spawn('gtk-launch', ['navplace'], {detached: true, stdio: 'ignore'}).unref();
+        // Booting the AppImage takes a few seconds: say so, or the hotkey seems to do nothing
+        const notify = child_process.spawn('notify-send', ['--app-name=NavPlace', '--expire-time=4000', 'NavPlace is starting…', 'It opens in a few seconds. Next time it starts with your login.'], {detached: true, stdio: 'ignore'});
+        notify.on('error', () => {});
+        notify.unref();
     });
 
     client.setTimeout(150);
