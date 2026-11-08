@@ -256,6 +256,11 @@ async function main()
         await electron.shell.openPath(config.readme_file);
     }));
     electron.ipcMain.handle('settings_updates_check', settings_only(updates_check));
+    // Back to the links: the settings window closes and the app's window comes up
+    electron.ipcMain.handle('settings_back', settings_only(async function () {
+        settings_win.close();
+        await window_show();
+    }));
     electron.ipcMain.handle('settings_url_open', settings_only(async function (event, url) {
         if (/^https:\/\/github\.com\/vbarbarosh\/navplace\//.test(url)) {
             await electron.shell.openExternal(url);

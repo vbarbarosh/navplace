@@ -13,5 +13,6 @@ function main()
         links_open: () => electron.ipcRenderer.invoke('settings_links_open'),
         updates_check: () => electron.ipcRenderer.invoke('settings_updates_check'),
         url_open: url => electron.ipcRenderer.invoke('settings_url_open', url),
+        back: () => electron.ipcRenderer.invoke('settings_back'),
     });
 }

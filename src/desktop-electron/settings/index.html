@@ -74,9 +74,41 @@
             background: var(--panel);
         }
 
-        h1 {
-            margin: 0;
-            font-size: 16px;
+        header > div {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        /* Two tabs: the links file, and the app's own settings */
+        .tabs {
+            display: inline-flex;
+            padding: 2px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+        }
+
+        .tabs button {
+            height: 28px;
+            padding: 0 14px;
+            border: 0;
+            border-radius: 6px;
+            background: none;
+            color: var(--text-soft);
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .tabs button[aria-selected="true"] {
+            background: var(--panel);
+            color: var(--text);
+            font-weight: 600;
+            box-shadow: 0 0 0 1px var(--border-strong);
+        }
+
+        [data-panel][hidden] {
+            display: none;
         }
 
         code,
@@ -125,7 +157,6 @@
             flex: 1;
             flex-direction: column;
             min-height: 0;
-            border-bottom: 1px solid var(--border);
         }
 
         .links-bar {
@@ -290,8 +321,10 @@
 
         /* The app's own settings, a row each */
         .rows {
+            flex: 1;
             margin: 0;
-            padding: 4px 16px 10px;
+            padding: 8px 24px 16px;
+            overflow: auto;
             background: var(--panel);
             list-style: none;
         }
@@ -355,11 +388,17 @@
 <body>
 
 <header>
-    <h1>Settings</h1>
+    <div>
+        <button class="btn" type="button" data-action="back" title="Back to the links (Esc)">← Back</button>
+        <span class="tabs" role="tablist" aria-label="Settings">
+            <button type="button" role="tab" data-tab="links" aria-selected="true">Links</button>
+            <button type="button" role="tab" data-tab="app" aria-selected="false">Settings</button>
+        </span>
+    </div>
     <span data-theme-switch></span>
 </header>
 
-<section class="links" aria-label="Links file">
+<section class="links" data-panel="links" aria-label="Links file">
     <div class="links-bar">
         <code data-links-file></code>
         <span class="links-state" role="status"></span>
@@ -373,7 +412,7 @@
     <ul class="errors"></ul>
 </section>
 
-<ul class="rows">
+<ul class="rows" data-panel="app" hidden>
     <li>
         <span class="row-label">Design</span>
         <span class="row-value"><select data-setting="design" aria-label="Design"></select><span class="row-note">writes <code>% design:</code> in the links file</span></span>
@@ -435,9 +474,18 @@ async function main()
             editor_render();
         }
     });
+    for (const tab of document.querySelectorAll('[data-tab]')) {
+        tab.addEventListener('click', () => tab_show(tab.dataset.tab));
+    }
+    document.querySelector('[data-action="back"]').addEventListener('click', back);
     document.addEventListener('keydown', function (event) {
         if (hotkey_listening) {
             hotkey_key(event);
+            return;
+        }
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            back();
             return;
         }
         if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === 's')) {
@@ -468,6 +516,26 @@ async function main()
             const value = (event.target.type === 'checkbox') ? event.target.checked : Number(event.target.value);
             await setting_set({[name]: value}, (name === 'autostart') ? 'autostart' : null);
         });
+    }
+
+    function tab_show(name) {
+        for (const tab of document.querySelectorAll('[data-tab]')) {
+            tab.setAttribute('aria-selected', String(tab.dataset.tab === name));
+        }
+        for (const panel of document.querySelectorAll('[data-panel]')) {
+            panel.hidden = (panel.dataset.panel !== name);
+        }
+        if (name === 'links') {
+            editor.focus();
+        }
+    }
+
+    // Back to the app's window; the links file not saved is kept only when asked
+    function back() {
+        if ((editor.value !== saved_text) && !window.confirm('The links file has changes that are not saved. Leave them?')) {
+            return;
+        }
+        api.back();
     }
 
     function editor_render() {
