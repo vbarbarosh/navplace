@@ -11,11 +11,13 @@ function make_config(settings)
         appimage_mount_dir: {type: 'str', nullable: true},
         is_wayland: {type: 'bool'},
         designs_dir: {type: 'null'},
+        lib_dir: {type: 'null'},
         readme_file: {type: 'null'},
         socket_file: {type: 'null'},
     });
 
     out.designs_dir = fs_path_resolve(__dirname, '../../../designs');
+    out.lib_dir = fs_path_resolve(__dirname, '../../../lib');
     out.readme_file = fs_path_resolve(out.config_dir, 'README.md');
     out.socket_file = fs_path_resolve(out.user_data_dir, 'navplace.sock');
 

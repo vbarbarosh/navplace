@@ -21,6 +21,7 @@ const make = require('@vbarbarosh/type-helpers');
 const make_socket_server = require('./helpers/make_socket_server');
 const parse = require('../../lib/parse');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
+const url_from_path = require('url').pathToFileURL;
 const urlmod = require('@vbarbarosh/node-helpers/src/urlmod');
 
 const DEFAULT_README = `% design: github
@@ -56,6 +57,13 @@ async function main()
 
     const app_uid = crypto.randomUUID();
     console.log(`[${app_uid}][group_spawn]`);
+
+    // Designs load their libraries from /lib/…: on a navplace://app/ page that is
+    // the app's own lib/, where on a file:// page it would be the root of the disk.
+    // Only before the app is ready.
+    electron.protocol.registerSchemesAsPrivileged([
+        {scheme: 'navplace', privileges: {standard: true, secure: true, supportFetchAPI: true}},
+    ]);
 
     await electron.app.whenReady();
 
@@ -146,6 +154,31 @@ async function main()
         });
     });
 
+    // navplace://app/designs/… and navplace://app/lib/…, from the app's own folders
+    electron.protocol.handle('navplace', async function (request) {
+        let root = null;
+        let abs = null;
+
+        const url = new URL(request.url);
+        const path = decodeURIComponent(url.pathname);
+        const dir_by_prefix = {'/designs/': config.designs_dir, '/lib/': config.lib_dir};
+        const prefix = Object.keys(dir_by_prefix).find(v => path.startsWith(v)) ?? null;
+        if ((url.host !== 'app') || !prefix) {
+            return new Response('Not found', {status: 404});
+        }
+        try {
+            root = `${await fs.promises.realpath(dir_by_prefix[prefix])}/`;
+            abs = await fs.promises.realpath(fs_path_resolve(root, path.slice(prefix.length)));
+        }
+        catch {
+            return new Response('Not found', {status: 404});
+        }
+        if (!abs.startsWith(root)) {
+            return new Response('Forbidden', {status: 403});
+        }
+        return electron.net.fetch(url_from_path(abs).href);
+    });
+
     electron.session.defaultSession.webRequest.onBeforeRequest(function (params, callback) {
         const prefixes = [
             'app://favicon/',
@@ -155,6 +188,7 @@ async function main()
             'data:',
             'devtools://',
             'file://',
+            'navplace://app/',
             'private://',
         ];
         callback({cancel: !prefixes.some(v => params.url.startsWith(v))});
@@ -166,7 +200,7 @@ async function main()
     });
 
     const design = make(parsed_collection.meta.design, {type: 'enum', options: ['github', ...await fs_readdir(config.designs_dir)]});
-    await win.loadFile(fs_path_resolve(__dirname, `../../designs/${design}/index.html`));
+    await win.loadURL(`navplace://app/designs/${encodeURIComponent(design)}/index.html`);
     win.show();
     refresh_collection_in_background();
 

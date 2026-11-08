@@ -33,4 +33,14 @@ cd $scriptdir/..
     echo "`node -p 'require("./build/www/designs/index.json").length'` designs, the pages and lib/"
 ) 2>&1 | sed 's/^/[build\/www] /'
 
+# A design loads the shared libraries from /lib/…, never ../../lib/…
+(
+    set -o nounset -o errexit -o pipefail
+    if grep -rl '\.\./\.\./lib/' designs/; then
+        echo "the files above load ../../lib/…: make it /lib/…"
+        exit 1
+    fi
+    echo "every design loads /lib/…"
+) 2>&1 | sed 's/^/[designs] /'
+
 EXIT_MESSAGE="${GREEN}bin/self-check succeeded${RESET}"

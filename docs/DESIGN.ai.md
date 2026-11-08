@@ -38,13 +38,14 @@ designs/<your-design-name>/
 ```
 
 - Folder name = design name (referenced as `% design: <your-design-name>`).
-- All file references inside `index.html` must be **relative to the design folder**.
-- The shared runtime lives at `../../lib/navplace.js` (two levels up).
-- Optional shared vendor libs (Vue, smcss) live under `../../lib/vendor/`, a folder per major: Vue at `vue-3/`, smcss at `smcss-2/` (an upgrade replaces the files; a new major gets a folder of its own) — two existing designs use these, but a design can equally well be vanilla JS with no deps.
+- The design's own files (`theme.css`, pictures) are referenced **relative to the design folder**.
+- The shared libraries are loaded from **`/lib/…`**, the site's root, never `../../lib/…` (`bin/self-check` fails the build on it). The desktop app shows designs at `navplace://app/designs/<name>/`, where `/lib` is its own copy.
+- The shared runtime lives at `/lib/navplace.js`.
+- Optional shared vendor libs (Vue, smcss) live under `/lib/vendor/`, a folder per major: Vue at `vue-3/`, smcss at `smcss-2/` (an upgrade replaces the files; a new major gets a folder of its own) — two existing designs use these, but a design can equally well be vanilla JS with no deps.
 
 ## Runtime API
 
-Load `../../lib/navplace.js`. It exposes a global function `navplace(...)` and a helper `navplace.navigate(...)`.
+Load `/lib/navplace.js`. It exposes a global function `navplace(...)` and a helper `navplace.navigate(...)`.
 
 ### `navplace(params)` — call this once on init
 
@@ -159,7 +160,7 @@ data:            devtools://   file://   private://
 This means:
 
 - ❌ **No Google Fonts**, no `@import url(https://…)` in CSS.
-- ❌ **No CDN libraries** loaded via `<script src="https://…">` (use the bundled `../../lib/vendor/...` paths or vanilla JS).
+- ❌ **No CDN libraries** loaded via `<script src="https://…">` (use the bundled `/lib/vendor/...` paths or vanilla JS).
 - ❌ **No remote images** in your design's chrome (decorative SVGs, background art). Inline them as `data:` URLs or local files.
 - ✅ **Item icons via `item.icon_url`** — these go through the allowed `app://favicon/` protocol.
 - ✅ **Item images via `item.image_url`** — these go through the allowed `private://` protocol.
@@ -189,7 +190,7 @@ Copy this and modify. It's a complete, working design with no dependencies — d
     <main id="list" class="list"></main>
 </div>
 
-<script src="../../lib/navplace.js"></script>
+<script src="/lib/navplace.js"></script>
 <script>
 (function () {
     navplace({
@@ -338,7 +339,7 @@ See `designs/showcase/index.html` for a working pattern: three buttons, `localSt
 ## Testing a new design
 
 1. Drop the folder in `designs/<your-name>/`.
-2. Build the site and open it in the Playground: `bin/build`, then `python3 -m http.server -d build/www` and visit `http://localhost:8000/playground.html`, or open `http://localhost:8000/designs/<your-name>/index.html` directly. The runtime falls back to a built-in demo source (`ChatGPT / GitHub / Gmail`) so you'll see real items right away.
+2. Build the site and open it in the Playground: `bin/build`, then `python3 -m http.server -d build/www` and visit `http://localhost:8000/playground.html`, or open `http://localhost:8000/designs/<your-name>/index.html` directly. Not from disk: on a `file://` page `/lib` is the root of the disk, and nothing loads. The runtime falls back to a built-in demo source (`ChatGPT / GitHub / Gmail`) so you'll see real items right away.
 3. To test with real items, create `~/.navplace/README.md` with `% design: <your-name>` and a few link lines, then `npm start` to open it in the desktop app.
 4. To test the embed surface, paste into any HTML page:
    ```html
@@ -402,7 +403,7 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
     <div id="grid" class="grid"></div>
 </div>
 
-<script src="../../lib/navplace.js"></script>
+<script src="/lib/navplace.js"></script>
 <script>
 (function () {
 
@@ -599,7 +600,7 @@ The canonical launcher-style design. Default fallback in `desktop-electron/main.
     </div>
 </div>
 
-<script src="../../lib/navplace.js"></script>
+<script src="/lib/navplace.js"></script>
 <script>
     const ITEMS = [];
 
