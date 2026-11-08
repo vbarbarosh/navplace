@@ -144,12 +144,6 @@
             height: 16px;
         }
 
-        .btn-primary {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: var(--bg);
-        }
-
         .btn:disabled {
             opacity: 0.5;
             cursor: default;
@@ -415,8 +409,6 @@
     <div class="links-bar">
         <code data-links-file></code>
         <span class="links-state" role="status"></span>
-        <button class="btn" type="button" data-action="links-open" title="Open the file in the system's editor">Open</button>
-        <button class="btn btn-primary" type="button" data-action="links-save" title="Ctrl+S">Save</button>
     </div>
     <div class="code">
         <pre aria-hidden="true"></pre>
@@ -473,14 +465,24 @@ async function main()
     let state = await api.state();
     let saved_text = state.links_text;
     let hotkey_listening = false;
+    // The text saves itself a moment after the last keystroke
+    let save_timer = null;
+    let saving = null;
+    // Where the Links tab was, scroll and cursor, to come back to from the Settings tab
+    let editor_view = {top: 0, left: 0, start: 0, end: 0};
 
     editor.value = state.links_text;
+    editor.setSelectionRange(0, 0);
     document.querySelector('[data-links-file]').textContent = state.links_file;
     document.querySelector('[data-version]').textContent = `v${state.version}`;
     rows_render();
     editor_render();
 
-    editor.addEventListener('input', editor_render);
+    editor.addEventListener('input', function () {
+        editor_render();
+        clearTimeout(save_timer);
+        save_timer = setTimeout(links_save, 700);
+    });
     editor.addEventListener('scroll', editor_scroll_sync);
     document.addEventListener('selectionchange', function () {
         if (document.activeElement === editor) {
@@ -506,8 +508,6 @@ async function main()
             links_save();
         }
     });
-    document.querySelector('[data-action="links-save"]').addEventListener('click', links_save);
-    document.querySelector('[data-action="links-open"]').addEventListener('click', () => api.links_open());
     document.querySelector('[data-action="updates-check"]').addEventListener('click', updates_check);
     hotkey_button.addEventListener('click', function () {
         hotkey_listening = true;
@@ -517,6 +517,8 @@ async function main()
     });
     // The `% design:` line of the text in the editor, saved with the rest of it
     document.querySelector('[data-setting="design"]').addEventListener('change', async function (event) {
+        clearTimeout(save_timer);
+        await saving;
         const result = await api.design_set(event.target.value, editor.value);
         editor.value = result.links_text;
         saved_text = result.links_text;
@@ -531,7 +533,13 @@ async function main()
         });
     }
 
+    // A hidden textarea forgets its scroll, and focus() scrolls to the cursor: the Links tab keeps both
+    // itself, and comes back where it was
     function tab_show(name) {
+        const links = document.querySelector('[data-panel="links"]');
+        if (!links.hidden && (name !== 'links')) {
+            editor_view = {top: editor.scrollTop, left: editor.scrollLeft, start: editor.selectionStart, end: editor.selectionEnd};
+        }
         for (const tab of document.querySelectorAll('[data-tab]')) {
             tab.setAttribute('aria-selected', String(tab.dataset.tab === name));
         }
@@ -539,14 +547,20 @@ async function main()
             panel.hidden = (panel.dataset.panel !== name);
         }
         if (name === 'links') {
-            editor.focus();
+            editor.focus({preventScroll: true});
+            editor.setSelectionRange(editor_view.start, editor_view.end);
+            editor.scrollTop = editor_view.top;
+            editor.scrollLeft = editor_view.left;
+            editor_render();
         }
     }
 
-    // Back to the app's window; the links file not saved is kept only when asked
-    function back() {
-        if ((editor.value !== saved_text) && !window.confirm('The links file has changes that are not saved. Leave them?')) {
-            return;
+    // Back to the app's window, the text saved first
+    async function back() {
+        clearTimeout(save_timer);
+        await saving;
+        if (editor.value !== saved_text) {
+            await links_save();
         }
         api.back();
     }
@@ -557,7 +571,7 @@ async function main()
         colours.innerHTML = render_links_html(text, line);
         editor_scroll_sync();
         const dirty = (text !== saved_text);
-        links_state.textContent = dirty ? 'not saved' : 'saved';
+        links_state.textContent = saving ? 'saving…' : (dirty ? 'not saved yet' : 'saved');
         links_state.toggleAttribute('data-dirty', dirty);
         errors_render(text);
     }
@@ -587,10 +601,21 @@ async function main()
     }
 
     async function links_save() {
+        clearTimeout(save_timer);
         const text = editor.value;
-        const result = await api.links_write(text);
-        saved_text = text;
-        state = result.state;
+        if (text === saved_text) {
+            return;
+        }
+        saving = api.links_write(text);
+        editor_render();
+        try {
+            const result = await saving;
+            saved_text = text;
+            state = result.state;
+        }
+        finally {
+            saving = null;
+        }
         editor_render();
         rows_render();
     }

@@ -274,10 +274,6 @@ async function main()
         await settings_patch(patch);
         return settings_state();
     }));
-    electron.ipcMain.handle('settings_links_open', settings_only(async function () {
-        await readme_ensure_default();
-        await electron.shell.openPath(config.readme_file);
-    }));
     electron.ipcMain.handle('settings_updates_check', settings_only(updates_check));
     // Back to the links: the settings window closes and the app's window comes up
     electron.ipcMain.handle('settings_back', settings_only(async function () {
