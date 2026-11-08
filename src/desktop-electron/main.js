@@ -18,7 +18,7 @@ const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const gnome_configure = require('./helpers/gnome_configure');
 const gnome_hotkey_set = require('./helpers/gnome_hotkey_set');
-const http_get_buffer = require('@vbarbarosh/node-helpers/src/http_get_buffer');
+const icon_find = require('../../lib/icon_find');
 const letter_tile_svg = require('./helpers/letter_tile_svg');
 const make = require('@vbarbarosh/type-helpers');
 const make_socket_server = require('./helpers/make_socket_server');
@@ -26,7 +26,6 @@ const parse = require('../../lib/parse');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
 const settings_from_raw = require('./helpers/settings_from_raw');
 const url_from_path = require('url').pathToFileURL;
-const urlmod = require('@vbarbarosh/node-helpers/src/urlmod');
 
 const DEFAULT_README = `% design: github
 
@@ -149,8 +148,9 @@ async function main()
         // app://favicon/<domain>?letter=<the link's first letter>
         const url = new URL(request.url);
         const domain = decodeURIComponent(url.pathname.slice(1));
-        const file = fs_path_resolve(electron.app.getPath('userData'), `favicons/${sanitize_filename(domain)}.png`);
-        // Google has no icon for the site: its 404, kept a day, so a summon does not ask again
+        // favicons-v2/: icons from the site itself; favicons/ held Google's 32 px ones
+        const file = fs_path_resolve(electron.app.getPath('userData'), `favicons-v2/${sanitize_filename(domain)}.json`);
+        // The site has no icon anywhere: kept a day, so a summon does not ask again
         const missing_file = `${file}.missing`;
         const tile = new Response(letter_tile_svg(url.searchParams.get('letter'), domain), {
             headers: {
@@ -162,23 +162,31 @@ async function main()
         if (await file_is_younger(missing_file, 24*60*60*1000)) {
             return tile;
         }
-        let buf;
+        // {type, base64}: the site's own icon (lib/icon_find.js, as on navplace.com), or null
+        let icon;
         try {
-            buf = await cache_read({
-                get: () => fs_read(file),
-                put: v => fs_write(file, v),
-                refresh: () => http_get_buffer(urlmod('https://www.google.com/s2/favicons?domain=&sz=64', {domain})).then(v => Buffer.from(v)),
+            icon = await cache_read({
+                get: async () => JSON.parse(await fs_read_utf8(file)),
+                put: v => fs_write(file, JSON.stringify(v)),
+                refresh: async function () {
+                    const found = await icon_find(domain, fetch);
+                    if (!found) {
+                        // Offline, nothing is found either: only a miss while online is kept
+                        if (await is_online()) {
+                            await fs_write(missing_file, `${new Date().toISOString()}\n`);
+                        }
+                        throw new Error('no icon');
+                    }
+                    return {type: found.type, base64: Buffer.from(found.bytes).toString('base64')};
+                },
             });
         }
-        catch (error) {
-            if (error.response?.status === 404) {
-                await fs_write(missing_file, `${new Date().toISOString()}\n`);
-            }
+        catch {
             return tile;
         }
-        return new Response(buf, {
+        return new Response(Buffer.from(icon.base64, 'base64'), {
             headers: {
-                'Content-Type': 'image/png',
+                'Content-Type': icon.type,
                 'Cache-Control': 'max-age=86400',
             },
         });
@@ -536,6 +544,17 @@ async function emitter_once(emitter, handler_by_event)
             emitter.on(name, handler);
         }
     });
+}
+
+// Google's empty page answers: the network is up
+async function is_online()
+{
+    try {
+        return (await fetch('https://www.google.com/generate_204', {signal: AbortSignal.timeout(4000)})).status === 204;
+    }
+    catch {
+        return false;
+    }
 }
 
 async function file_is_younger(file, ms)

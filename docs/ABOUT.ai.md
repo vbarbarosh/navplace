@@ -98,7 +98,7 @@ IPC channels (`electron.ipcMain.handle`):
 
 Custom protocols registered in `desktop-electron/main.js`:
 - `private://<path>` → serves a file under `~/.navplace/`, sandboxed via `fs.realpath` prefix check. Used for `@image-name` references. Content-Type is `image/svg+xml` for `.svg`, otherwise `image/png`. Cache-Control: `max-age=86400`.
-- `app://favicon/<domain>?letter=<L>` → returns a Google favicon (`https://www.google.com/s2/favicons?domain=<domain>&sz=64`), cached on disk at `app.getPath('userData')/favicons/<sanitized-domain>.png`; when Google answers 404, an SVG tile of the letter (the 404 kept a day in `<…>.png.missing`).
+- `app://favicon/<domain>?letter=<L>` → the site's own icon from `lib/icon_find.js` (the same finder as navplace.com's `/icon/`: the page's icon links, `/apple-touch-icon.png`, `/favicon.ico`, then Google's), cached on disk at `app.getPath('userData')/favicons-v2/<sanitized-domain>.json`; when the site has none, an SVG tile of the letter (the miss kept a day in `<…>.json.missing`, only when online).
 
 Network gate (`electron.session.defaultSession.webRequest.onBeforeRequest`): only allows `app://favicon/`, `blob:`, `chrome://`, `chrome-devtools://`, `data:`, `devtools://`, `file://`, `private://`. All other requests (including normal HTTPS) are cancelled — the desktop window cannot make outbound web requests.
 

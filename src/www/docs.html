@@ -676,7 +676,7 @@
 <h3 id="network-gate">What a design can reach</h3>
 <p>The window cancels every request except these: <code>app://favicon/</code>, <code>blob:</code>, <code>chrome://</code>, <code>chrome-devtools://</code>, <code>data:</code>, <code>devtools://</code>, <code>file://</code>, <code>private://</code>. Remote fonts, scripts and images do not load in the desktop app.</p>
 <ul>
-    <li><code>app://favicon/&lt;host&gt;?letter=&lt;L&gt;</code>: the app fetches the icon once from Google's favicon service and keeps it in its user data folder; for a site Google has no icon for, a tile of the link's first letter on a colour of that site.</li>
+    <li><code>app://favicon/&lt;host&gt;?letter=&lt;L&gt;</code>: the app finds the site's own icon once, as navplace.com's <code>/icon/</code> does (<code>lib/icon_find.js</code>: the page's icon links, <code>/apple-touch-icon.png</code>, <code>/favicon.ico</code>, then Google's), and keeps it in its user data folder; for a site with none, a tile of the link's first letter on a colour of that site.</li>
     <li><code>private://&lt;path&gt;</code>: a file under <code>~/.navplace/</code>, nothing outside it. <code>.svg</code> is sent as <code>image/svg+xml</code>, anything else as <code>image/png</code>.</li>
 </ul>
 
