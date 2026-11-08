@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Settings | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
+    <style>
+        :root {
+            --bg: #fafaf9;
+            --panel: #ffffff;
+            --border: #e7e5e4;
+            --border-strong: #d6d3d1;
+            --text: #1c1917;
+            --text-soft: #57534e;
+            --text-mute: #a8a29e;
+            --accent: #0f766e;
+            --accent-soft: #f0fdfa;
+            --code-bg: #f5f5f4;
+            --danger: #b91c1c;
+            --warn: #b45309;
+            --c-tag: #15803d;
+            --c-image: #c2410c;
+            --c-url: #0369a1;
+            --c-key: #7c3aed;
+            --c-current: rgba(15, 118, 110, 0.09);
+            --np-scrollbar-thumb: rgba(87, 83, 78, 0.45);
+        }
+
+        :root[data-theme="dark"] {
+            --bg: #0c0c0e;
+            --panel: #161618;
+            --border: #27272a;
+            --border-strong: #3f3f46;
+            --text: #f4f4f5;
+            --text-soft: #a1a1aa;
+            --text-mute: #71717a;
+            --accent: #2dd4bf;
+            --accent-soft: #0f2926;
+            --code-bg: #111113;
+            --danger: #f87171;
+            --warn: #fbbf24;
+            --c-tag: #4ade80;
+            --c-image: #fb923c;
+            --c-url: #38bdf8;
+            --c-key: #c4b5fd;
+            --c-current: rgba(45, 212, 191, 0.10);
+            --np-scrollbar-thumb: rgba(161, 161, 170, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--panel);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        code,
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        .btn {
+            height: 28px;
+            padding: 0 12px;
+            border: 1px solid var(--border-strong);
+            border-radius: 7px;
+            background: var(--panel);
+            color: var(--text);
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            border-color: var(--text-mute);
+        }
+
+        .btn-primary {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        select {
+            height: 28px;
+            border: 1px solid var(--border-strong);
+            border-radius: 7px;
+            background: var(--panel);
+            color: var(--text);
+            font: inherit;
+        }
+
+        /* The links file: the Playground's coloured editor, a transparent textarea over its colours */
+        .links {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            min-height: 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .links-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: var(--panel);
+        }
+
+        .links-bar code {
+            flex: 1;
+            color: var(--text-soft);
+        }
+
+        .links-state {
+            color: var(--text-mute);
+        }
+
+        .links-state[data-dirty] {
+            color: var(--warn);
+        }
+
+        .code {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            background: var(--code-bg);
+        }
+
+        .code > pre,
+        .code > textarea {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 14px 16px;
+            border: 0;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            tab-size: 4;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .code > pre {
+            padding-right: 48px;
+            padding-bottom: 48px;
+            overflow: hidden;
+            color: var(--text);
+            pointer-events: none;
+        }
+
+        .code > textarea {
+            resize: none;
+            color: transparent;
+            background: transparent;
+            caret-color: var(--text);
+        }
+
+        .code > textarea::selection {
+            color: transparent;
+            background: color-mix(in srgb, var(--accent) 28%, transparent);
+        }
+
+        .code > textarea:focus {
+            outline: none;
+        }
+
+        .c-current {
+            display: inline-block;
+            min-width: calc(100% + 64px);
+            margin: 0 -16px;
+            padding: 0 16px;
+            background: var(--c-current);
+        }
+
+        .c-left-out {
+            opacity: 0.45;
+        }
+
+        .c-note {
+            color: var(--text-mute);
+            font-style: italic;
+        }
+
+        .c-tag {
+            color: var(--c-tag);
+        }
+
+        .c-image,
+        .c-value {
+            color: var(--c-image);
+        }
+
+        .c-url,
+        .c-word,
+        .c-number {
+            color: var(--c-url);
+        }
+
+        .c-directive,
+        .c-key {
+            color: var(--c-key);
+        }
+
+        .c-section {
+            font-weight: 650;
+        }
+
+        .c-ignored,
+        .c-mark,
+        .c-comment {
+            color: var(--text-mute);
+        }
+
+        .c-error {
+            color: var(--danger);
+            text-decoration: underline wavy var(--danger);
+            text-underline-offset: 4px;
+        }
+
+        .c-warn {
+            text-decoration: underline wavy var(--warn);
+            text-decoration-skip-ink: none;
+            text-underline-offset: 4px;
+        }
+
+        .c-warn .c-error {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .c-warn-note {
+            color: var(--warn);
+            font-style: italic;
+        }
+
+        .errors {
+            max-height: 72px;
+            margin: 0;
+            padding: 6px 16px;
+            overflow: auto;
+            background: var(--panel);
+            list-style: none;
+            font-size: 12px;
+        }
+
+        .errors:empty {
+            display: none;
+        }
+
+        .errors li {
+            color: var(--warn);
+        }
+
+        .errors li[data-error] {
+            color: var(--danger);
+        }
+
+        /* The app's own settings, a row each */
+        .rows {
+            margin: 0;
+            padding: 4px 16px 10px;
+            background: var(--panel);
+            list-style: none;
+        }
+
+        .rows li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 44px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .rows li:last-child {
+            border-bottom: 0;
+        }
+
+        .row-label {
+            width: 150px;
+            color: var(--text-soft);
+        }
+
+        .row-value {
+            display: flex;
+            flex: 1;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 16px;
+        }
+
+        .row-note {
+            color: var(--text-mute);
+            font-size: 12px;
+        }
+
+        .row-note[data-error] {
+            color: var(--danger);
+        }
+
+        .row-note[data-ok] {
+            color: var(--accent);
+        }
+
+        .row-value label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+        }
+
+        .hotkey[data-listening] {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Settings</h1>
+    <span data-theme-switch></span>
+</header>
+
+<section class="links" aria-label="Links file">
+    <div class="links-bar">
+        <code data-links-file></code>
+        <span class="links-state" role="status"></span>
+        <button class="btn" type="button" data-action="links-open" title="Open the file in the system's editor">Open</button>
+        <button class="btn btn-primary" type="button" data-action="links-save" title="Ctrl+S">Save</button>
+    </div>
+    <div class="code">
+        <pre aria-hidden="true"></pre>
+        <textarea aria-label="The links file" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+    </div>
+    <ul class="errors"></ul>
+</section>
+
+<ul class="rows">
+    <li>
+        <span class="row-label">Design</span>
+        <span class="row-value"><select data-setting="design" aria-label="Design"></select><span class="row-note">writes <code>% design:</code> in the links file</span></span>
+    </li>
+    <li>
+        <span class="row-label">Hotkey</span>
+        <span class="row-value"><button class="btn hotkey mono" type="button" data-action="hotkey" title="Click, then press the new keys; Esc keeps the old ones"></button><span class="row-note" data-note="hotkey"></span></span>
+    </li>
+    <li>
+        <span class="row-label">Start at login</span>
+        <span class="row-value"><input type="checkbox" data-setting="autostart" aria-label="Start at login"><span class="row-note" data-note="autostart"></span></span>
+    </li>
+    <li>
+        <span class="row-label">Zoom</span>
+        <span class="row-value"><select data-setting="zoom" aria-label="Zoom"></select></span>
+    </li>
+    <li>
+        <span class="row-label">Window</span>
+        <span class="row-value"><label><input type="checkbox" data-setting="on_top"> on top of other windows</label><label><input type="checkbox" data-setting="hide_on_blur"> hides when it loses focus</label></span>
+    </li>
+    <li>
+        <span class="row-label">Version</span>
+        <span class="row-value"><span class="mono" data-version></span><button class="btn" type="button" data-action="updates-check">Check for updates</button><span class="row-note" data-note="updates"></span></span>
+    </li>
+</ul>
+
+<script src="/lib/parse.js"></script>
+<script src="/lib/colours.js"></script>
+<script>
+main();
+
+async function main()
+{
+    const api = window.NavplaceSettings;
+    const editor = document.querySelector('.code textarea');
+    const colours = document.querySelector('.code pre');
+    const errors = document.querySelector('.errors');
+    const links_state = document.querySelector('.links-state');
+    const hotkey_button = document.querySelector('[data-action="hotkey"]');
+    const notes = {};
+    for (const element of document.querySelectorAll('[data-note]')) {
+        notes[element.dataset.note] = element;
+    }
+
+    let state = await api.state();
+    let saved_text = state.links_text;
+    let hotkey_listening = false;
+
+    editor.value = state.links_text;
+    document.querySelector('[data-links-file]').textContent = state.links_file;
+    document.querySelector('[data-version]').textContent = `v${state.version}`;
+    rows_render();
+    editor_render();
+
+    editor.addEventListener('input', editor_render);
+    editor.addEventListener('scroll', editor_scroll_sync);
+    document.addEventListener('selectionchange', function () {
+        if (document.activeElement === editor) {
+            editor_render();
+        }
+    });
+    document.addEventListener('keydown', function (event) {
+        if (hotkey_listening) {
+            hotkey_key(event);
+            return;
+        }
+        if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === 's')) {
+            event.preventDefault();
+            links_save();
+        }
+    });
+    document.querySelector('[data-action="links-save"]').addEventListener('click', links_save);
+    document.querySelector('[data-action="links-open"]').addEventListener('click', () => api.links_open());
+    document.querySelector('[data-action="updates-check"]').addEventListener('click', updates_check);
+    hotkey_button.addEventListener('click', function () {
+        hotkey_listening = true;
+        hotkey_button.toggleAttribute('data-listening', true);
+        hotkey_button.textContent = 'Press the keys…';
+        note_show('hotkey', 'Esc keeps the old ones');
+    });
+    // The `% design:` line of the text in the editor, saved with the rest of it
+    document.querySelector('[data-setting="design"]').addEventListener('change', async function (event) {
+        const result = await api.design_set(event.target.value, editor.value);
+        editor.value = result.links_text;
+        saved_text = result.links_text;
+        state = result.state;
+        editor_render();
+        rows_render();
+    });
+    for (const name of ['zoom', 'on_top', 'hide_on_blur', 'autostart']) {
+        document.querySelector(`[data-setting="${name}"]`).addEventListener('change', async function (event) {
+            const value = (event.target.type === 'checkbox') ? event.target.checked : Number(event.target.value);
+            await setting_set({[name]: value}, (name === 'autostart') ? 'autostart' : null);
+        });
+    }
+
+    function editor_render() {
+        const text = editor.value;
+        const line = text.slice(0, editor.selectionStart).split('\n').length;
+        colours.innerHTML = render_links_html(text, line);
+        editor_scroll_sync();
+        const dirty = (text !== saved_text);
+        links_state.textContent = dirty ? 'not saved' : 'saved';
+        links_state.toggleAttribute('data-dirty', dirty);
+        errors_render(text);
+    }
+
+    function editor_scroll_sync() {
+        colours.scrollTop = editor.scrollTop;
+        colours.scrollLeft = editor.scrollLeft;
+    }
+
+    // What the parser says of the text: its error, or the lines it skips
+    function errors_render(text) {
+        const items = [];
+        try {
+            for (const warning of parse(text).warnings ?? []) {
+                items.push({text: `line ${warning.line}: ${warning.message}`, error: false});
+            }
+        }
+        catch (error) {
+            items.push({text: error.message, error: true});
+        }
+        errors.replaceChildren(...items.map(function (item) {
+            const li = document.createElement('li');
+            li.textContent = item.text;
+            li.toggleAttribute('data-error', item.error);
+            return li;
+        }));
+    }
+
+    async function links_save() {
+        const text = editor.value;
+        const result = await api.links_write(text);
+        saved_text = text;
+        state = result.state;
+        editor_render();
+        rows_render();
+    }
+
+    function rows_render() {
+        const design = document.querySelector('[data-setting="design"]');
+        design.replaceChildren(...state.designs.map(v => new Option(v, v, false, v === state.design)));
+        const zoom = document.querySelector('[data-setting="zoom"]');
+        zoom.replaceChildren(...state.zooms.map(v => new Option(`${Math.round(v*100)}%`, String(v), false, v === state.settings.zoom)));
+        document.querySelector('[data-setting="on_top"]').checked = state.settings.on_top;
+        document.querySelector('[data-setting="hide_on_blur"]').checked = state.settings.hide_on_blur;
+        const autostart = document.querySelector('[data-setting="autostart"]');
+        autostart.checked = state.autostart.on;
+        autostart.disabled = !state.autostart.possible;
+        if (!state.autostart.possible) {
+            note_show('autostart', 'only the AppImage starts at login');
+        }
+        hotkey_button.textContent = hotkey_label(state.settings.hotkey);
+        hotkey_button.disabled = !state.hotkey_possible;
+        if (!state.hotkey_possible) {
+            note_show('hotkey', 'run the AppImage with --configure-gnome first');
+        }
+    }
+
+    async function setting_set(patch, note) {
+        try {
+            state = await api.set(patch);
+            if (note) {
+                note_show(note, '');
+            }
+        }
+        catch (error) {
+            note_show(note ?? 'hotkey', error_message(error), true);
+            state = await api.state();
+        }
+        rows_render();
+    }
+
+    // The keys pressed while the hotkey listens: modifiers and one key, GNOME's way, <Ctrl><Shift><Alt>N
+    async function hotkey_key(event) {
+        event.preventDefault();
+        if (event.key === 'Escape') {
+            hotkey_stop();
+            return;
+        }
+        if (['Control', 'Shift', 'Alt', 'Meta'].includes(event.key)) {
+            return;
+        }
+        const key = event.code.startsWith('Key') ? event.code.slice(3) : (event.code.startsWith('Digit') ? event.code.slice(5) : event.key);
+        if (!/^[A-Za-z0-9]+$/.test(key) || !(event.ctrlKey || event.altKey || event.metaKey)) {
+            note_show('hotkey', 'Ctrl, Alt or Super with a letter or a digit', true);
+            return;
+        }
+        const hotkey = `${event.ctrlKey ? '<Ctrl>' : ''}${event.shiftKey ? '<Shift>' : ''}${event.altKey ? '<Alt>' : ''}${event.metaKey ? '<Super>' : ''}${key}`;
+        hotkey_stop();
+        await setting_set({hotkey}, 'hotkey');
+        if (!notes.hotkey.hasAttribute('data-error')) {
+            note_show('hotkey', 'saved', false, true);
+        }
+    }
+
+    function hotkey_stop() {
+        hotkey_listening = false;
+        hotkey_button.toggleAttribute('data-listening', false);
+        hotkey_button.textContent = hotkey_label(state.settings.hotkey);
+        note_show('hotkey', '');
+    }
+
+    async function updates_check() {
+        note_show('updates', 'checking…');
+        try {
+            const result = await api.updates_check();
+            if (result.newer) {
+                note_show('updates', `v${result.latest} is out:`, false, true);
+                const link = document.createElement('a');
+                link.href = '#';
+                link.textContent = 'the release page';
+                link.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    api.url_open(result.url);
+                });
+                notes.updates.append(' ', link);
+            }
+            else {
+                note_show('updates', `v${state.version} is the newest`, false, true);
+            }
+        }
+        catch (error) {
+            note_show('updates', error_message(error), true);
+        }
+    }
+
+    function note_show(name, text, is_error = false, is_ok = false) {
+        notes[name].textContent = text;
+        notes[name].toggleAttribute('data-error', is_error);
+        notes[name].toggleAttribute('data-ok', is_ok);
+    }
+}
+
+function hotkey_label(hotkey)
+{
+    return hotkey.replace(/<(\w+)>/g, '$1+');
+}
+
+// Electron wraps an error thrown in the main process: `Error invoking remote method 'x': Error: why`
+function error_message(error)
+{
+    return String(error?.message ?? error).replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
+}
+</script>
+</body>
+</html>

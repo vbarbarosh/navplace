@@ -331,7 +331,7 @@ function render(items) {
 `/lib/theme_switch.js`, loaded in `<head>`, does it for every design, the same way:
 
 - It sets `data-theme="light"` or `"dark"` on `<html>` before the page shows: the choice saved in `localStorage` under `navplace.design.theme` (one for all designs), or the OS setting when nothing is saved yet. There is no System option: one button, sun for light, crescent for dark.
-- The button goes into the design's `<span data-theme-switch></span>` when it has one (a header or a footer); otherwise it sits in the page's top-right corner. Restyle it through `.np-theme-switch` or `--np-switch-bg`, `--np-switch-fg`, `--np-switch-border`.
+- The button goes into the design's `<span data-theme-switch></span>` when it has one (a header or a footer); otherwise it sits in the page's top-right corner. In the desktop app a gear goes before it, in the same place, and opens the app's settings; leave room for two buttons there. Restyle it through `.np-theme-switch` or `--np-switch-bg`, `--np-switch-fg`, `--np-switch-border`.
 - Scrollbars are thin and take `--np-scrollbar-thumb` and `--np-scrollbar-track` (transparent by default); set both for each theme.
 - Keep pictures readable in dark: a black logo on a transparent picture needs a muted plate behind it, not a near-black one.
 

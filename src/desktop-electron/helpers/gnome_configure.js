@@ -1,3 +1,5 @@
+const autostart_set = require('./autostart_set');
+const command_run = require('./command_run');
 const config = require('../config');
 const fs = require('fs');
 const fs_exists = require('@vbarbarosh/node-helpers/src/fs_exists');
@@ -7,7 +9,7 @@ const fs_path_join = require('@vbarbarosh/node-helpers/src/fs_path_join');
 const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_read = require('@vbarbarosh/node-helpers/src/fs_read');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
-const shell_spawn = require('@vbarbarosh/node-helpers/src/shell_spawn');
+const gnome_hotkey_set = require('./gnome_hotkey_set');
 
 // Install the GNOME hotkey for the AppImage build, invoked as
 // `NavPlace.AppImage --configure-gnome`; and start the app at login, hidden, so the
@@ -19,7 +21,7 @@ const shell_spawn = require('@vbarbarosh/node-helpers/src/shell_spawn');
 // hotkey to it; the .desktop's Exec points back at the AppImage for cold start.
 //
 // Returns {launcher_file, appimage_file, node_bin, autostart_file}; the caller reports success.
-async function gnome_configure()
+async function gnome_configure({hotkey})
 {
     const appimage_file = config.appimage_file;
     if (!appimage_file) {
@@ -33,10 +35,9 @@ async function gnome_configure()
         throw new Error('node was not found in PATH — the hotkey launcher needs Node.js. Install it (or add it to PATH) and run --configure-gnome again.');
     }
 
-    const launcher_file = fs_path_join(config.user_data_dir, 'launcher.js');
+    const launcher_file = config.launcher_file;
     const desktop_file = fs_path_join(config.data_home_dir, 'applications', 'navplace.desktop');
-    // XDG autostart: GNOME starts every .desktop of $XDG_CONFIG_HOME/autostart at login
-    const autostart_file = fs_path_join(fs_path_dirname(config.user_data_dir), 'autostart', 'navplace.desktop');
+    const autostart_file = config.autostart_file;
 
     await fs_mkdirp(config.user_data_dir);
 
@@ -47,7 +48,7 @@ async function gnome_configure()
     // 2. extract the app icon (best-effort; the AppImage runtime exposes APPDIR)
     const icon = await icon_extract();
 
-    await keybinding_register(launcher_file);
+    await gnome_hotkey_set(launcher_file, hotkey);
 
     // 3. .desktop -> the AppImage; `gtk-launch navplace` (the launcher's cold path) lands here
     await fs_mkdirp(fs_path_dirname(desktop_file));
@@ -64,18 +65,7 @@ async function gnome_configure()
     ].join('\n'));
 
     // 4. at login: the AppImage with --background, its window hidden until the hotkey
-    await fs_mkdirp(fs_path_dirname(autostart_file));
-    await fs_write(autostart_file, [
-        '[Desktop Entry]',
-        'Type=Application',
-        'Name=NavPlace',
-        'Comment=Waits in the background for Ctrl+Shift+Alt+N',
-        `Icon=${icon}`,
-        `Exec=${appimage_file} --background`,
-        'NoDisplay=true',
-        'X-GNOME-Autostart-enabled=true',
-        '',
-    ].join('\n'));
+    await autostart_set(true, {appimage_file, icon});
 
     return {launcher_file, appimage_file, node_bin, autostart_file};
 }
@@ -108,57 +98,5 @@ async function node_bin_find()
     }
 }
 
-async function keybinding_register(launcher_file)
-{
-    const base = '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings';
-    const slot = `${base}/navplace/`;
-
-    const raw = (await command_run(['dconf', 'read', base])).trim().replace(/^@as\s+/, '');
-    const slots = raw ? JSON.parse(raw.replaceAll("'", '"')) : [];
-    if (!slots.includes(slot)) {
-        slots.push(slot);
-        await command_run(['dconf', 'write', base, JSON.stringify(slots).replaceAll('"', "'")]);
-    }
-
-    await command_run(['dconf', 'load', '/'], [
-        '[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/navplace]',
-        "binding='<Ctrl><Shift><Alt>N'",
-        `command='${launcher_file}'`,
-        "name='navplace'",
-        '',
-    ].join('\n'));
-}
-
-async function command_run(args, input)
-{
-    let stdout = '';
-    let stderr = '';
-
-    const proc = shell_spawn(args, {stdio: ['pipe', 'pipe', 'pipe']});
-    proc.stdout.on('data', v => stdout = `${stdout}${v}`);
-    proc.stderr.on('data', v => stderr = `${stderr}${v}`);
-
-    // shell_spawn rejects BOTH init() and promise() on a spawn error — keep a
-    // handler on promise() so ENOENT (node/dconf missing) doesn't leak.
-    const exited = proc.promise();
-    exited.catch(() => {});
-
-    try {
-        await proc.init();
-        if (input) {
-            proc.stdin.end(input);
-        }
-        else {
-            proc.stdin.end();
-        }
-        await exited;
-    }
-    catch (error) {
-        error.message = stderr ? `${error.message}\n${stderr}` : error.message;
-        throw error;
-    }
-
-    return stdout;
-}
 
 module.exports = gnome_configure;

@@ -342,7 +342,7 @@
             overflow-wrap: normal;
         }
 
-        /* Code in colour: the classes playground-colours.js writes, in the Playground's colours */
+        /* Code in colour: the classes lib/colours.js writes, in the Playground's colours */
         .c-tag {
             color: var(--c-tag);
         }
@@ -957,7 +957,7 @@ Gmail   https://mail.google.com/
         <tr><td><code>parse.cli.js</code></td><td>Parses a sample and prints the result.</td></tr>
     </tbody>
 </table>
-<p>In the desktop app, <code>window.ElectronApp</code> (from <code>src/desktop-electron/renderer.js</code>) gives a design <code>api_items_all()</code>, the collection now, and <code>api_items_changed(callback)</code>, called with each new one; it returns a function that stops the calls. <code>api_ping()</code> answers <code>pong &lt;time&gt;</code>.</p>
+<p>In the desktop app, <code>window.ElectronApp</code> (from <code>src/desktop-electron/renderer.js</code>) gives a design <code>api_items_all()</code>, the collection now, and <code>api_items_changed(callback)</code>, called with each new one; it returns a function that stops the calls. <code>api_ping()</code> answers <code>pong &lt;time&gt;</code>. <code>settings_open()</code> opens the app's settings: <code>/lib/theme_switch.js</code> calls it from the gear it puts beside the theme switch, in the app only.</p>
 
 <!-- ============================================================ -->
 <h2 id="architecture">How it's built</h2>
@@ -1050,7 +1050,7 @@ src/desktop-electron/bin/build    # the AppImage, into src/desktop-electron/buil
 </footer>
 
 <script src="lib/parse.js"></script>
-<script src="playground-colours.js"></script>
+<script src="lib/colours.js"></script>
 <script>
 main();
 

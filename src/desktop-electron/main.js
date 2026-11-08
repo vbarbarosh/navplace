@@ -1,4 +1,5 @@
 const Promise = require('bluebird');
+const autostart_set = require('./helpers/autostart_set');
 const chrome_window_focus = require('./helpers/chrome_window_focus');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
 const collection_resolve_includes = require('./helpers/collection_resolve_includes');
@@ -16,11 +17,13 @@ const fs_read_utf8 = require('@vbarbarosh/node-helpers/src/fs_read_utf8');
 const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const gnome_configure = require('./helpers/gnome_configure');
+const gnome_hotkey_set = require('./helpers/gnome_hotkey_set');
 const http_get_buffer = require('@vbarbarosh/node-helpers/src/http_get_buffer');
 const make = require('@vbarbarosh/type-helpers');
 const make_socket_server = require('./helpers/make_socket_server');
 const parse = require('../../lib/parse');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
+const settings_from_raw = require('./helpers/settings_from_raw');
 const url_from_path = require('url').pathToFileURL;
 const urlmod = require('@vbarbarosh/node-helpers/src/urlmod');
 
@@ -40,9 +43,19 @@ cli(main);
 
 async function main()
 {
+    // Designs load their libraries from /lib/…: on a navplace://app/ page that is
+    // the app's own lib/, where on a file:// page it would be the root of the disk.
+    // Only before the app is ready, so before anything is awaited.
+    electron.protocol.registerSchemesAsPrivileged([
+        {scheme: 'navplace', privileges: {standard: true, secure: true, supportFetchAPI: true}},
+    ]);
+
+    // What the settings window changed, kept between runs
+    let settings = await settings_load();
+
     if (process.argv.includes('--configure-gnome')) {
-        const info = await gnome_configure();
-        console.log('✓ Ctrl+Shift+Alt+N successfully registered — NavPlace will summon instantly.');
+        const info = await gnome_configure({hotkey: settings.hotkey});
+        console.log(`✓ ${hotkey_label(settings.hotkey)} successfully registered — NavPlace will summon instantly.`);
         console.log(`  launcher:   ${info.launcher_file}`);
         console.log(`  cold start: ${info.appimage_file}`);
         console.log(`  node:       ${info.node_bin}`);
@@ -59,13 +72,6 @@ async function main()
     const app_uid = crypto.randomUUID();
     console.log(`[${app_uid}][group_spawn]`);
 
-    // Designs load their libraries from /lib/…: on a navplace://app/ page that is
-    // the app's own lib/, where on a file:// page it would be the root of the disk.
-    // Only before the app is ready.
-    electron.protocol.registerSchemesAsPrivileged([
-        {scheme: 'navplace', privileges: {standard: true, secure: true, supportFetchAPI: true}},
-    ]);
-
     await electron.app.whenReady();
 
     let parsed_collection = await collection_load();
@@ -80,13 +86,13 @@ async function main()
     const win = new electron.BrowserWindow({
         show: false,
         autoHideMenuBar: true,
-        alwaysOnTop: true,
+        alwaysOnTop: settings.on_top,
         width: 1200,
         height: 1000,
         center: true,
         backgroundColor: '#bec2bd',
         webPreferences: {
-            zoomFactor: 1.25,
+            zoomFactor: settings.zoom,
             contextIsolation: true,
             nodeIntegration: false,
             preload: fs_path_resolve(__dirname, 'renderer.js'),
@@ -155,13 +161,17 @@ async function main()
         });
     });
 
-    // navplace://app/designs/… and navplace://app/lib/…, from the app's own folders
+    // navplace://app/designs/…, navplace://app/lib/… and navplace://app/settings/…, from the app's own folders
     electron.protocol.handle('navplace', async function (request) {
         let root = null;
         let abs = null;
 
         const url = new URL(request.url);
         const path = decodeURIComponent(url.pathname);
+        // The settings page sits inside app.asar: the URL is already normalized, and the archive has no links
+        if ((url.host === 'app') && path.startsWith('/settings/')) {
+            return electron.net.fetch(url_from_path(fs_path_resolve(config.settings_page_dir, path.slice('/settings/'.length))).href);
+        }
         const dir_by_prefix = {'/designs/': config.designs_dir, '/lib/': config.lib_dir};
         const prefix = Object.keys(dir_by_prefix).find(v => path.startsWith(v)) ?? null;
         if ((url.host !== 'app') || !prefix) {
@@ -200,8 +210,8 @@ async function main()
         return {action: 'deny'};
     });
 
-    const design = make(parsed_collection.meta.design, {type: 'enum', options: ['github', ...await fs_readdir(config.designs_dir)]});
-    await win.loadURL(`navplace://app/designs/${encodeURIComponent(design)}/index.html`);
+    let design = await design_of_collection(parsed_collection);
+    await win.loadURL(design_url(design));
     // Started at login (`--background`, from ~/.config/autostart): it waits hidden for the hotkey
     if (process.argv.includes('--background')) {
         console.log(`[${app_uid}][window_waits_hidden]`);
@@ -212,14 +222,131 @@ async function main()
     refresh_collection_in_background();
 
     win.on('blur', function () {
-        win.hide();
+        if (settings.hide_on_blur) {
+            win.hide();
+        }
     });
+
+    // The settings window: the gear beside the theme switch opens it, one at a time
+    let settings_win = null;
+    electron.ipcMain.handle('settings_open', function () {
+        settings_window_show();
+    });
+    electron.ipcMain.handle('settings_state', settings_only(settings_state));
+    electron.ipcMain.handle('settings_links_write', settings_only(async function (event, text) {
+        await links_write(text);
+        return {state: await settings_state()};
+    }));
+    electron.ipcMain.handle('settings_design_set', settings_only(async function (event, name, text) {
+        const links_text = text_design_set(text, name);
+        await links_write(links_text);
+        return {links_text, state: await settings_state()};
+    }));
+    electron.ipcMain.handle('settings_set', settings_only(async function (event, patch) {
+        await settings_patch(patch);
+        return settings_state();
+    }));
+    electron.ipcMain.handle('settings_links_open', settings_only(async function () {
+        await readme_ensure_default();
+        await electron.shell.openPath(config.readme_file);
+    }));
+    electron.ipcMain.handle('settings_updates_check', settings_only(updates_check));
+    electron.ipcMain.handle('settings_url_open', settings_only(async function (event, url) {
+        if (/^https:\/\/github\.com\/vbarbarosh\/navplace\//.test(url)) {
+            await electron.shell.openExternal(url);
+        }
+    }));
 
     await emitter_once(win, {
         closed: function () {
             console.log(`[${app_uid}][window_closed]`);
         },
     });
+
+    function settings_window_show() {
+        if (settings_win) {
+            settings_win.show();
+            settings_win.focus();
+            return;
+        }
+        settings_win = new electron.BrowserWindow({
+            width: 980,
+            height: 860,
+            center: true,
+            autoHideMenuBar: true,
+            title: 'NavPlace settings',
+            backgroundColor: '#fafaf9',
+            webPreferences: {
+                contextIsolation: true,
+                nodeIntegration: false,
+                preload: fs_path_resolve(__dirname, 'settings_preload.js'),
+            },
+        });
+        settings_win.on('closed', function () {
+            settings_win = null;
+        });
+        settings_win.loadURL('navplace://app/settings/index.html');
+    }
+
+    // A settings handler answers the settings window only
+    function settings_only(handler) {
+        return function (event, ...args) {
+            if (!settings_win || (event.sender !== settings_win.webContents)) {
+                throw new Error('only the settings window may ask this');
+            }
+            return handler(event, ...args);
+        };
+    }
+
+    async function settings_state() {
+        await readme_ensure_default();
+        return {
+            links_file: config.readme_file,
+            links_text: await fs_read_utf8(config.readme_file),
+            design,
+            designs: ['github', ...(await fs_readdir(config.designs_dir)).filter(v => v !== 'github').sort()],
+            settings,
+            zooms: settings_from_raw.ZOOMS,
+            autostart: {on: await fs_exists(config.autostart_file), possible: !!config.appimage_file},
+            hotkey_possible: await fs_exists(config.launcher_file),
+            version: electron.app.getVersion(),
+        };
+    }
+
+    // The links file written; the window takes its links, and its design when `% design:` changed
+    async function links_write(text) {
+        await fs_mkdirp(config.config_dir);
+        await fs_write(config.readme_file, text);
+        let next = design;
+        try {
+            next = await design_of_collection(parse(text));
+        }
+        catch {
+        }
+        if (next !== design) {
+            design = next;
+            await win.loadURL(design_url(design));
+        }
+        refresh_collection_in_background();
+    }
+
+    // {zoom, on_top, hide_on_blur, hotkey, autostart}: each one given applied to the app and kept
+    async function settings_patch(patch) {
+        const next = settings_from_raw({...settings, ...patch});
+        if (('hotkey' in patch) && (next.hotkey !== patch.hotkey)) {
+            throw new Error('Ctrl, Alt or Super with a letter or a digit');
+        }
+        if (next.hotkey !== settings.hotkey) {
+            await gnome_hotkey_set(config.launcher_file, next.hotkey);
+        }
+        if ('autostart' in patch) {
+            await autostart_set(!!patch.autostart, {appimage_file: config.appimage_file, icon: await icon_file_find()});
+        }
+        win.webContents.setZoomFactor(next.zoom);
+        win.setAlwaysOnTop(next.on_top);
+        settings = next;
+        await settings_save(settings);
+    }
 
     async function refresh_collection() {
         parsed_collection = await collection_resolve_includes(await collection_load(), app_uid);
@@ -284,6 +411,80 @@ async function readme_ensure_default()
 
     await fs_mkdirp(config.config_dir);
     await fs_write(config.readme_file, DEFAULT_README, {encoding: 'utf8', flag: 'wx'});
+}
+
+async function settings_load()
+{
+    try {
+        return settings_from_raw(JSON.parse(await fs_read_utf8(config.settings_file)));
+    }
+    catch {
+        return settings_from_raw({});
+    }
+}
+
+async function settings_save(settings)
+{
+    await fs_mkdirp(config.user_data_dir);
+    await fs_write(config.settings_file, `${JSON.stringify(settings, null, 4)}\n`);
+}
+
+// The design a collection names with `% design:`, github when it names none or one the app has not
+async function design_of_collection(collection)
+{
+    return make(collection.meta.design, {type: 'enum', options: ['github', ...await fs_readdir(config.designs_dir)]});
+}
+
+function design_url(design)
+{
+    return `navplace://app/designs/${encodeURIComponent(design)}/index.html`;
+}
+
+// The text with `% design: <design>` in place of the line it had, or as a first line
+function text_design_set(text, design)
+{
+    const line = `% design: ${design}`;
+    const re = /^[ \t]*%[ \t]*design[ \t]*:.*$/m;
+    return re.test(text) ? text.replace(re, line) : `${line}\n${text}`;
+}
+
+// GNOME's <Ctrl><Shift><Alt>N as people write it, Ctrl+Shift+Alt+N
+function hotkey_label(hotkey)
+{
+    return hotkey.replace(/<(\w+)>/g, '$1+');
+}
+
+// The icon --configure-gnome took out of the AppImage, or the system's own
+async function icon_file_find()
+{
+    const file = fs_path_resolve(config.user_data_dir, 'navplace.png');
+    return (await fs_exists(file)) ? file : 'application-x-executable';
+}
+
+// The newest release on GitHub (electron-v1.2.3): {latest, url, newer}; Node's fetch, which the
+// window's network gate does not see
+async function updates_check()
+{
+    const response = await fetch('https://api.github.com/repos/vbarbarosh/navplace/releases/latest', {headers: {Accept: 'application/vnd.github+json'}});
+    if (!response.ok) {
+        throw new Error(`GitHub answered ${response.status}`);
+    }
+    const release = await response.json();
+    const latest = String(release.tag_name ?? '').replace(/^electron-v/, '');
+    return {latest, url: release.html_url, newer: version_compare(latest, electron.app.getVersion()) > 0};
+}
+
+// Like a.localeCompare(b) for versions: 1.10.0 after 1.9.0
+function version_compare(a, b)
+{
+    const pa = a.split('.').map(Number);
+    const pb = b.split('.').map(Number);
+    for (let i = 0; i < 3; ++i) {
+        if ((pa[i] ?? 0) !== (pb[i] ?? 0)) {
+            return ((pa[i] ?? 0) > (pb[i] ?? 0)) ? 1 : -1;
+        }
+    }
+    return 0;
 }
 
 async function emitter_once(emitter, handler_by_event)
