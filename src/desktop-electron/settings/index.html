@@ -131,6 +131,19 @@
             border-color: var(--text-mute);
         }
 
+        /* The arrow drawn, not a ← glyph: a glyph sits on the text's baseline, below the middle */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding-left: 9px;
+        }
+
+        .btn-back svg {
+            width: 16px;
+            height: 16px;
+        }
+
         .btn-primary {
             border-color: var(--accent);
             background: var(--accent);
@@ -389,7 +402,7 @@
 
 <header>
     <div>
-        <button class="btn" type="button" data-action="back" title="Back to the links (Esc)">← Back</button>
+        <button class="btn btn-back" type="button" data-action="back" title="Back to the links (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M11 6l-6 6 6 6"/></svg>Back</button>
         <span class="tabs" role="tablist" aria-label="Settings">
             <button type="button" role="tab" data-tab="links" aria-selected="true">Links</button>
             <button type="button" role="tab" data-tab="app" aria-selected="false">Settings</button>
