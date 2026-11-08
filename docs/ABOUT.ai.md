@@ -51,7 +51,7 @@ Parser output shape per item:
 
 - `search1` = transliterated `label + tags` (lowercased, Cyrillic→Latin).
 - `search2` = transliterated `href`.
-- `icon_url` = `app://favicon/<host>` inside Electron, `/icon/<host>` on navplace.com (its Worker, `src/cloudflare/serve_icon.mjs`), `https://icon.horse/icon/<host>` elsewhere.
+- `icon_url` = `app://favicon/<host>?letter=<L>` inside Electron, `/icon/<host>` on navplace.com (its Worker, `src/cloudflare/serve_icon.mjs`), `https://icon.horse/icon/<host>` elsewhere.
 
 ## Filter language
 
@@ -98,7 +98,7 @@ IPC channels (`electron.ipcMain.handle`):
 
 Custom protocols registered in `desktop-electron/main.js`:
 - `private://<path>` → serves a file under `~/.navplace/`, sandboxed via `fs.realpath` prefix check. Used for `@image-name` references. Content-Type is `image/svg+xml` for `.svg`, otherwise `image/png`. Cache-Control: `max-age=86400`.
-- `app://favicon/<domain>` → returns a Google favicon (`https://www.google.com/s2/favicons?domain=<domain>&sz=64`), cached on disk at `app.getPath('userData')/favicons/<sanitized-domain>.png`.
+- `app://favicon/<domain>?letter=<L>` → returns a Google favicon (`https://www.google.com/s2/favicons?domain=<domain>&sz=64`), cached on disk at `app.getPath('userData')/favicons/<sanitized-domain>.png`; when Google answers 404, an SVG tile of the letter (the 404 kept a day in `<…>.png.missing`).
 
 Network gate (`electron.session.defaultSession.webRequest.onBeforeRequest`): only allows `app://favicon/`, `blob:`, `chrome://`, `chrome-devtools://`, `data:`, `devtools://`, `file://`, `private://`. All other requests (including normal HTTPS) are cancelled — the desktop window cannot make outbound web requests.
 

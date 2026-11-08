@@ -91,7 +91,7 @@ Every item passed to `update(items)` has this shape:
 {
   label:      'node-helpers',                           // string — user-visible name
   href:       'https://vbarbarosh.github.io/node-helpers',
-  icon_url:   'app://favicon/vbarbarosh.github.io',     // see "icons" section
+  icon_url:   'app://favicon/vbarbarosh.github.io?letter=V',     // see "icons" section
   image_url:  null,                                     // string|null — set if source had `@image-name`
   tags:       ['frontend'],                             // string[] — from inline `#tag` (no equals)
   meta:       { padding: '1' },                         // object — from inline `#tag=value` (tag-with-value)
@@ -123,7 +123,7 @@ So `%` is for document-wide directives; `#` and `@` are always per-item or per-s
 
 ### Icons
 
-- `item.icon_url` is always set. Inside Electron, it's `app://favicon/<host>` (served by the desktop app's protocol handler with a disk cache). On navplace.com it's `/icon/<host>`, answered by the site's Worker for navplace pages only; anywhere else it's `https://icon.horse/icon/<host>`.
+- `item.icon_url` is always set. Inside Electron, it's `app://favicon/<host>?letter=<L>` (served by the desktop app's protocol handler with a disk cache; a letter tile when Google has no icon for the site). On navplace.com it's `/icon/<host>`, answered by the site's Worker for navplace pages only; anywhere else it's `https://icon.horse/icon/<host>`.
 - Use it directly as `<img src="…">`. Don't construct your own favicon URL — you'd break the desktop favicon cache.
 
 ### Images

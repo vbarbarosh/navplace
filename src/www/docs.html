@@ -676,7 +676,7 @@
 <h3 id="network-gate">What a design can reach</h3>
 <p>The window cancels every request except these: <code>app://favicon/</code>, <code>blob:</code>, <code>chrome://</code>, <code>chrome-devtools://</code>, <code>data:</code>, <code>devtools://</code>, <code>file://</code>, <code>private://</code>. Remote fonts, scripts and images do not load in the desktop app.</p>
 <ul>
-    <li><code>app://favicon/&lt;host&gt;</code>: the app fetches the icon once from Google's favicon service and keeps it in its user data folder.</li>
+    <li><code>app://favicon/&lt;host&gt;?letter=&lt;L&gt;</code>: the app fetches the icon once from Google's favicon service and keeps it in its user data folder; for a site Google has no icon for, a tile of the link's first letter on a colour of that site.</li>
     <li><code>private://&lt;path&gt;</code>: a file under <code>~/.navplace/</code>, nothing outside it. <code>.svg</code> is sent as <code>image/svg+xml</code>, anything else as <code>image/png</code>.</li>
 </ul>
 
@@ -818,7 +818,7 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
     <tbody>
         <tr><td><code>label</code></td><td>What is left of the line after the url, tags and image are removed.</td></tr>
         <tr><td><code>href</code></td><td>The url.</td></tr>
-        <tr><td><code>icon_url</code></td><td><code>app://favicon/&lt;host&gt;</code> in the desktop app, <code>/icon/&lt;host&gt;</code> on navplace.com (its own icons, for its own pages only), <code>https://icon.horse/icon/&lt;host&gt;</code> elsewhere.</td></tr>
+        <tr><td><code>icon_url</code></td><td><code>app://favicon/&lt;host&gt;?letter=&lt;L&gt;</code> in the desktop app, <code>/icon/&lt;host&gt;</code> on navplace.com (its own icons, for its own pages only), <code>https://icon.horse/icon/&lt;host&gt;</code> elsewhere.</td></tr>
         <tr><td><code>image_url</code></td><td>From <code>@name</code>: the url of <code>% picture name:</code> when the file has one, else <code>private://&lt;name&gt;</code>; <code>null</code> without <code>@name</code>.</td></tr>
         <tr><td><code>tags</code></td><td>Every <code>#tag</code> on the line.</td></tr>
         <tr><td><code>meta</code></td><td>Every <code>#key=value</code> on the line.</td></tr>

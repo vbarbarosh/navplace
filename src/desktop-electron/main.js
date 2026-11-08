@@ -19,6 +19,7 @@ const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const gnome_configure = require('./helpers/gnome_configure');
 const gnome_hotkey_set = require('./helpers/gnome_hotkey_set');
 const http_get_buffer = require('@vbarbarosh/node-helpers/src/http_get_buffer');
+const letter_tile_svg = require('./helpers/letter_tile_svg');
 const make = require('@vbarbarosh/type-helpers');
 const make_socket_server = require('./helpers/make_socket_server');
 const parse = require('../../lib/parse');
@@ -145,14 +146,36 @@ async function main()
         if (!request.url.startsWith('app://favicon/')) {
             return new Response('Not found', {status: 404});
         }
-        const domain = decodeURIComponent(request.url.slice('app://favicon/'.length));
+        // app://favicon/<domain>?letter=<the link's first letter>
+        const url = new URL(request.url);
+        const domain = decodeURIComponent(url.pathname.slice(1));
         const file = fs_path_resolve(electron.app.getPath('userData'), `favicons/${sanitize_filename(domain)}.png`);
-        await fs_mkdirp(fs_path_dirname(file));
-        const buf = await cache_read({
-            get: () => fs_read(file),
-            put: v => fs_write(file, v),
-            refresh: () => http_get_buffer(urlmod('https://www.google.com/s2/favicons?domain=&sz=64', {domain})).then(v => Buffer.from(v)),
+        // Google has no icon for the site: its 404, kept a day, so a summon does not ask again
+        const missing_file = `${file}.missing`;
+        const tile = new Response(letter_tile_svg(url.searchParams.get('letter'), domain), {
+            headers: {
+                'Content-Type': 'image/svg+xml',
+                'Cache-Control': 'max-age=3600',
+            },
         });
+        await fs_mkdirp(fs_path_dirname(file));
+        if (await file_is_younger(missing_file, 24*60*60*1000)) {
+            return tile;
+        }
+        let buf;
+        try {
+            buf = await cache_read({
+                get: () => fs_read(file),
+                put: v => fs_write(file, v),
+                refresh: () => http_get_buffer(urlmod('https://www.google.com/s2/favicons?domain=&sz=64', {domain})).then(v => Buffer.from(v)),
+            });
+        }
+        catch (error) {
+            if (error.response?.status === 404) {
+                await fs_write(missing_file, `${new Date().toISOString()}\n`);
+            }
+            return tile;
+        }
         return new Response(buf, {
             headers: {
                 'Content-Type': 'image/png',
@@ -517,6 +540,16 @@ async function emitter_once(emitter, handler_by_event)
             emitter.on(name, handler);
         }
     });
+}
+
+async function file_is_younger(file, ms)
+{
+    try {
+        return (Date.now() - (await fs.promises.stat(file)).mtimeMs) < ms;
+    }
+    catch {
+        return false;
+    }
 }
 
 async function cache_read({get, put, refresh})
