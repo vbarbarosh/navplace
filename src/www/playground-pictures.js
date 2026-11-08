@@ -1,11 +1,10 @@
 // The Playground's pictures made again in other formats, away from the page's thread: a module worker.
-// In: {id, blob} or {id, url} (a data url), with side_max and url_max. Out, for each format as it goes:
+// In: {id, blob} or {id, url} (a data url), with quality (0..1), side_max and url_max. Out, for each format as it goes:
 // {id, value, label, state: 'working' | 'done' | 'failed', url, width, height, note}; then {id, state: 'end'}.
 // The size that counts is the data url's length, the characters links.txt takes.
 
 // AVIF, when the browser draws none itself: Squoosh's libavif (@jsquash/avif 1.3.0), loaded on first use
 const AVIF_ENCODER_URL = '/lib/vendor/jsquash-avif-1/avif_enc.js';
-const QUALITY = 0.8;
 const FORMATS = [
     {value: 'webp', label: 'WebP', type: 'image/webp'},
     {value: 'avif', label: 'AVIF', type: 'image/avif'},
@@ -23,7 +22,7 @@ self.addEventListener('message', function (event) {
     });
 });
 
-async function formats_make({id, blob, url, side_max, url_max})
+async function formats_make({id, blob, url, quality, side_max, url_max})
 {
     const source = blob ?? await (await fetch(url)).blob();
     const original_url = url ?? new FileReaderSync().readAsDataURL(source);
@@ -53,7 +52,7 @@ async function formats_make({id, blob, url, side_max, url_max})
             continue;
         }
         try {
-            const out_url = new FileReaderSync().readAsDataURL(await blob_from_canvas(canvas, format));
+            const out_url = new FileReaderSync().readAsDataURL(await blob_from_canvas(canvas, format, quality));
             self.postMessage({id, value: format.value, label: format.label, state: 'done', url: out_url, width: canvas.width, height: canvas.height, note: ''});
             if (out_url.length < smallest.url.length) {
                 smallest = {url: out_url, format};
@@ -72,7 +71,7 @@ async function formats_make({id, blob, url, side_max, url_max})
     let side = Math.floor(Math.max(canvas.width, canvas.height)*0.75);
     while (side >= 32) {
         const smaller = canvas_from_bitmap(bitmap, side/Math.max(bitmap.width, bitmap.height));
-        const out_url = new FileReaderSync().readAsDataURL(await blob_from_canvas(smaller, format));
+        const out_url = new FileReaderSync().readAsDataURL(await blob_from_canvas(smaller, format, quality));
         if (out_url.length <= url_max) {
             self.postMessage({id, value: 'smaller', label: `${format.label} ${smaller.width}×${smaller.height}`, state: 'done', url: out_url, width: smaller.width, height: smaller.height, note: 'drawn smaller to fit'});
             return;
@@ -100,9 +99,9 @@ function canvas_is_transparent(canvas)
 }
 
 // The browser's own encoder; AVIF from libavif when the browser has none (it hands back a PNG instead)
-async function blob_from_canvas(canvas, format)
+async function blob_from_canvas(canvas, format, quality)
 {
-    const blob = await canvas.convertToBlob({type: format.type, quality: QUALITY});
+    const blob = await canvas.convertToBlob({type: format.type, quality});
     if (blob.type === format.type) {
         return blob;
     }
@@ -112,7 +111,7 @@ async function blob_from_canvas(canvas, format)
     const module = await avif_module_load();
     const image_data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
     // libavif's cqLevel: 0 is the best, 63 the worst
-    const options = {cqLevel: Math.round(63*(1 - QUALITY)), cqAlphaLevel: -1, denoiseLevel: 0, tileColsLog2: 0, tileRowsLog2: 0, speed: 6, subsample: 1, chromaDeltaQ: false, sharpness: 0, tune: 0};
+    const options = {cqLevel: Math.round(63*(1 - quality)), cqAlphaLevel: -1, denoiseLevel: 0, tileColsLog2: 0, tileRowsLog2: 0, speed: 6, subsample: 1, chromaDeltaQ: false, sharpness: 0, tune: 0};
     const out = module.encode(image_data.data, image_data.width, image_data.height, options);
     if (!out) {
         throw new Error('AVIF could not be made');

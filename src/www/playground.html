@@ -848,6 +848,31 @@
             color: var(--text);
         }
 
+        .pictures-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 18px;
+            padding: 6px 14px 0;
+            color: var(--text-soft);
+        }
+
+        .pictures-controls label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pictures-controls input {
+            width: 110px;
+            accent-color: var(--accent);
+        }
+
+        .pictures-controls output {
+            min-width: 52px;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+
         .pictures-list {
             margin: 0;
             padding: 6px 14px 8px;
@@ -1087,6 +1112,10 @@
             </div>
             <div class="pictures" hidden>
                 <div class="pictures-heading"><span class="pictures-title"></span><button type="button" class="pictures-close" data-action="pictures-close" title="Close" aria-label="Close">✕</button></div>
+                <div class="pictures-controls">
+                    <label title="Of WebP, AVIF and JPEG: lower is smaller and blurrier">Quality <input type="range" data-picture-quality min="10" max="100" step="5" value="80"><output>80</output></label>
+                    <label title="The longest side the formats are drawn at; the picture as it is keeps its own">Longest side <input type="range" data-picture-side min="64" max="2048" step="64" value="1024"><output>1024 px</output></label>
+                </div>
                 <ul class="pictures-list"></ul>
             </div>
         </section>
@@ -1231,6 +1260,10 @@ async function main()
     // label, state, url, width, height, note}, chosen, busy}
     let picture_rows = [];
     let picture_rows_title = '';
+    // What the formats are made with, set by the panel's sliders
+    let picture_quality = 0.8;
+    let picture_side_max = PICTURE_SIDE_MAX;
+    let picture_remake_timer;
     // The worker that makes the formats, started on first use; its requests by id
     let picture_worker = null;
     let picture_worker_next_id = 1;
@@ -1254,6 +1287,8 @@ async function main()
     const pictures_panel = document.querySelector('.pictures');
     const pictures_title = document.querySelector('.pictures-title');
     const pictures_list = document.querySelector('.pictures-list');
+    const picture_quality_input = document.querySelector('[data-picture-quality]');
+    const picture_side_input = document.querySelector('[data-picture-side]');
     const sizes = sizes_load();
     const design_editor = document.querySelector('.pane-design textarea');
     const design_colours = document.querySelector('.pane-design .code > pre:not(.gutter)');
@@ -1421,6 +1456,16 @@ async function main()
         picture_rows = [];
         pictures_render();
     });
+    // A slider moved: its value shown at once, the formats made again once it rests
+    for (const input of [picture_quality_input, picture_side_input]) {
+        input.addEventListener('input', function () {
+            picture_quality = Number(picture_quality_input.value)/100;
+            picture_side_max = Number(picture_side_input.value);
+            pictures_render();
+            clearTimeout(picture_remake_timer);
+            picture_remake_timer = setTimeout(pictures_remake, 300);
+        });
+    }
     // A format of a picture, clicked: it takes the place of the one the text has
     pictures_list.addEventListener('click', function (event) {
         const chip = event.target.closest('.chip');
@@ -2106,11 +2151,11 @@ async function main()
     // The formats are made first, in the worker, a row of the picture panel showing them as they come;
     // the smallest that fits PICTURE_URL_MAX goes in, and a click on another format puts that one in
     async function picture_paste(file, at) {
-        const row = {name: picture_name_from_file_name(file.name, picture_names_of_text(editor.value)), url: null, candidates: new Map(), chosen: null, busy: true};
+        const row = {name: picture_name_from_file_name(file.name, picture_names_of_text(editor.value)), source: {blob: file}, url: null, candidates: new Map(), chosen: null, busy: true};
         picture_rows = [row];
         picture_rows_title = 'Pasted picture: the smallest format goes in, a click takes another';
         pictures_render();
-        await picture_formats_make({blob: file}, row);
+        await picture_formats_make(row);
         const best = picture_smallest_of_row(row, PICTURE_URL_MAX);
         if (!best) {
             pictures_render();
@@ -2163,11 +2208,11 @@ async function main()
             editor_note_show('no pictures to shrink: only data: pictures other than SVG are');
             return;
         }
-        picture_rows = pictures.map(v => ({name: v.name, url: v.url, candidates: new Map(), chosen: 'original', busy: true}));
+        picture_rows = pictures.map(v => ({name: v.name, source: {url: v.url}, url: v.url, candidates: new Map(), chosen: 'original', busy: true}));
         picture_rows_title = `Shrinking ${plural(picture_rows.length, '# picture', '# pictures')}…`;
         pictures_render();
         for (const row of picture_rows) {
-            await picture_formats_make({url: row.url}, row);
+            await picture_formats_make(row);
         }
         const changes = [];
         for (const row of picture_rows) {
@@ -2195,6 +2240,48 @@ async function main()
         picture_rows_title = `${plural(changes.length, '# picture', '# pictures')} smaller: ${format_kb_fine(before)} → ${format_kb_fine(after)}; Ctrl+Z puts them back`;
         pictures_render();
         editor_note_show(picture_rows_title);
+    }
+
+    // The sliders moved: every row's formats made again from its picture as it first was, each row
+    // keeping the format it has in the text; all of them in one edit, so one Ctrl+Z takes it back
+    async function pictures_remake() {
+        if (!picture_rows.length || picture_rows.some(v => v.busy)) {
+            return;
+        }
+        const rows = picture_rows;
+        for (const row of rows) {
+            row.busy = true;
+            row.candidates = new Map();
+        }
+        pictures_render();
+        for (const row of rows) {
+            await picture_formats_make(row);
+        }
+        if (rows !== picture_rows) {
+            return;
+        }
+        const text = editor.value;
+        const changes = [];
+        for (const row of rows) {
+            const candidate = row.candidates.get(row.chosen) ?? picture_smallest_of_row(row, PICTURE_URL_MAX);
+            if (candidate?.state === 'done' && row.url && (candidate.url !== row.url) && text.includes(row.url)) {
+                changes.push({row, candidate});
+            }
+        }
+        const settings = `quality ${Math.round(picture_quality*100)}, longest side ${picture_side_max} px`;
+        if (changes.length && pictures_replace(changes.map(v => ({from: v.row.url, to: v.candidate.url})))) {
+            const before = changes.reduce((sum, v) => sum + v.row.url.length, 0);
+            const after = changes.reduce((sum, v) => sum + v.candidate.url.length, 0);
+            for (const {row, candidate} of changes) {
+                row.url = candidate.url;
+                row.chosen = candidate.value;
+            }
+            picture_rows_title = `${settings}: ${plural(changes.length, '# picture', '# pictures')} ${format_kb_fine(before)} → ${format_kb_fine(after)}; Ctrl+Z puts them back`;
+        }
+        else {
+            picture_rows_title = `${settings}: the text keeps its pictures`;
+        }
+        pictures_render();
     }
 
     // One format of a row's picture in place of the one the text has now
@@ -2242,8 +2329,9 @@ async function main()
         return true;
     }
 
-    // The worker makes the formats; each one fills the row's candidates and redraws the panel as it comes
-    function picture_formats_make(source, row) {
+    // The worker makes the formats of the row's picture as it first was; each one fills the row's
+    // candidates and redraws the panel as it comes
+    function picture_formats_make(row) {
         if (!picture_worker) {
             picture_worker = new Worker('playground-pictures.js', {type: 'module'});
             picture_worker.addEventListener('message', function (event) {
@@ -2274,13 +2362,18 @@ async function main()
         const id = picture_worker_next_id++;
         return new Promise(function (resolve) {
             picture_requests.set(id, {row, resolve});
-            picture_worker.postMessage({id, ...source, side_max: PICTURE_SIDE_MAX, url_max: PICTURE_URL_MAX});
+            picture_worker.postMessage({id, ...row.source, quality: picture_quality, side_max: picture_side_max, url_max: PICTURE_URL_MAX});
         });
     }
 
     function pictures_render() {
         pictures_panel.hidden = !picture_rows.length;
         pictures_title.textContent = picture_rows_title;
+        const busy = picture_rows.some(v => v.busy);
+        picture_quality_input.disabled = busy;
+        picture_side_input.disabled = busy;
+        picture_quality_input.nextElementSibling.textContent = picture_quality_input.value;
+        picture_side_input.nextElementSibling.textContent = `${picture_side_input.value} px`;
         pictures_list.replaceChildren(...picture_rows.map(function (row, i) {
             const li = document.createElement('li');
             const name = document.createElement('code');
