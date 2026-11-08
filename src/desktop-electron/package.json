@@ -1,7 +1,7 @@
 {
   "name": "navplace-desktop",
   "author": "Vladimir Barbarosh <hello@navplace.com>",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "The fastest way to open your links",
   "license": "MIT",
   "main": "main.js",
