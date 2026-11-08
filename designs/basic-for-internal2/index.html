@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NavPlace Operational Theme</title>
+    <script src="/lib/theme_switch.js"></script>
     <style>
         :root {
             --bg-primary: #ffffff;
@@ -14,36 +15,24 @@
             --accent: #2563eb;
             --hover: #f1f5f9;
             --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            --np-scrollbar-thumb: #a1a1aa;
+            --np-scrollbar-track: #f4f4f5;
+            --np-switch-bg: var(--bg-secondary);
+            --np-switch-fg: var(--text-primary);
+            --np-switch-border: var(--border);
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-primary: #09090b;
-                --bg-secondary: #18181b;
-                --text-primary: #fafafa;
-                --text-secondary: #a1a1aa;
-                --border: #27272a;
-                --accent: #3b82f6;
-                --hover: #1e1e21;
-            }
-        }
-
-        [data-theme="light"] {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f4f4f5;
-            --text-primary: #18181b;
-            --text-secondary: #71717a;
-            --border: #e4e4e7;
-            --hover: #f1f5f9;
-        }
-
-        [data-theme="dark"] {
+        /* The dark theme: /lib/theme_switch.js sets it and shows the switch */
+        :root[data-theme="dark"] {
             --bg-primary: #09090b;
             --bg-secondary: #18181b;
             --text-primary: #fafafa;
             --text-secondary: #a1a1aa;
             --border: #27272a;
+            --accent: #3b82f6;
             --hover: #1e1e21;
+            --np-scrollbar-thumb: #3f3f46;
+            --np-scrollbar-track: #09090b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -93,23 +82,14 @@
 
         .theme-toggle {
             display: flex;
-            gap: 4px;
             margin-left: 1rem;
         }
 
-        .btn-ui {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            padding: 4px 8px;
-            cursor: pointer;
-            font-size: 11px;
-            border-radius: 2px;
-            text-transform: uppercase;
-            font-weight: 600;
+        .theme-toggle .np-theme-switch {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
         }
-
-        .btn-ui:hover { background: var(--hover); color: var(--text-primary); }
 
         /* Grid Results */
         #navplace-results {
@@ -198,11 +178,7 @@
         <div class="search-wrapper">
             <input type="search" id="ops-search" placeholder="Filter operational nodes..." spellcheck="false">
         </div>
-        <div class="theme-toggle">
-            <button class="btn-ui" onclick="theme_set('light')">Light</button>
-            <button class="btn-ui" onclick="theme_set('dark')">Dark</button>
-            <button class="btn-ui" onclick="theme_set('system')">Auto</button>
-        </div>
+        <span class="theme-toggle" data-theme-switch></span>
     </header>
 
     <main id="navplace-results">
@@ -223,16 +199,6 @@
         }
         else {
             console.error('NavPlace runtime not detected.');
-        }
-    }
-
-    function theme_set(theme)
-    {
-        if (theme === 'system') {
-            document.documentElement.removeAttribute('data-theme');
-        }
-        else {
-            document.documentElement.setAttribute('data-theme', theme);
         }
     }
 

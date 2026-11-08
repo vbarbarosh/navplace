@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Palette | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
     <style>
+        /* Light on :root, dark on :root[data-theme="dark"]: /lib/theme_switch.js sets it */
         :root {
             color-scheme: light;
             --bg: #eef0f3;
@@ -17,22 +19,22 @@
             --row-on: #e8f0fd;
             --key-bg: #f3f4f6;
             --shadow: 0 24px 60px -24px rgba(20, 24, 31, 0.35), 0 0 0 1px rgba(20, 24, 31, 0.06);
+            --np-scrollbar-thumb: #c9ced6;
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                color-scheme: dark;
-                --bg: #111317;
-                --panel: #1b1e24;
-                --border: #2b2f37;
-                --text: #eceef2;
-                --text-soft: #a3a9b4;
-                --text-mute: #6c727d;
-                --accent: #6ea2ff;
-                --row-on: #233148;
-                --key-bg: #262a32;
-                --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
-            }
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #111317;
+            --panel: #1b1e24;
+            --border: #2b2f37;
+            --text: #eceef2;
+            --text-soft: #a3a9b4;
+            --text-mute: #6c727d;
+            --accent: #6ea2ff;
+            --row-on: #233148;
+            --key-bg: #262a32;
+            --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
+            --np-scrollbar-thumb: #3a3f4a;
         }
 
         * {
@@ -216,6 +218,30 @@
             gap: 12px;
         }
 
+        .foot-end {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        /* /lib/theme_switch.js puts its button here, small, like the keys beside it */
+        .foot [data-theme-switch] {
+            display: flex;
+            --np-switch-bg: var(--key-bg);
+            --np-switch-fg: var(--text-soft);
+            --np-switch-border: var(--border);
+        }
+
+        .foot .np-theme-switch {
+            width: 24px;
+            height: 24px;
+        }
+
+        .foot .np-theme-switch svg {
+            width: 14px;
+            height: 14px;
+        }
+
         kbd {
             display: inline-block;
             min-width: 20px;
@@ -257,7 +283,7 @@
     <div class="empty" hidden>No matches</div>
     <div class="foot">
         <span id="count"></span>
-        <span class="keys"><span><kbd>↑</kbd><kbd>↓</kbd>move</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>clear</span></span>
+        <span class="foot-end"><span class="keys"><span><kbd>↑</kbd><kbd>↓</kbd>move</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>clear</span></span><span data-theme-switch></span></span>
     </div>
 </div>
 

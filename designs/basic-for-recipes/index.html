@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NavPlace Recipes</title>
+    <script src="/lib/theme_switch.js"></script>
     <style>
         :root {
             --warm-white: #fefaf6;
@@ -16,6 +17,29 @@
             --radius-card: 16px;
             --radius-image: 12px;
             --transition-gentle: all 0.3s ease;
+            --card-bg: #ffffff;
+            --np-scrollbar-thumb: #c9b8a6;
+            --np-scrollbar-track: #f7f1eb;
+            --np-switch-bg: #f7f1eb;
+            --np-switch-fg: #5c4d3d;
+            --np-switch-border: #ede4d9;
+        }
+
+        /* The kitchen at night: /lib/theme_switch.js sets it and shows the switch */
+        :root[data-theme="dark"] {
+            --warm-white: #1d1814;
+            --cream: #2a231d;
+            --soft-beige: #3b3129;
+            --warm-gray: #a8998a;
+            --accent-warm: #e0937a;
+            --dark-warm: #f1e6da;
+            --shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.35);
+            --card-bg: #2a231d;
+            --np-scrollbar-thumb: #5a4b3e;
+            --np-scrollbar-track: #1d1814;
+            --np-switch-bg: #2a231d;
+            --np-switch-fg: #f1e6da;
+            --np-switch-border: #3b3129;
         }
 
         * {
@@ -60,7 +84,7 @@
 
         .search-input:focus {
             border-color: var(--accent-warm);
-            background: white;
+            background: var(--card-bg);
         }
 
         .search-input::placeholder {
@@ -75,7 +99,7 @@
         }
 
         .recipe-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: var(--radius-card);
             overflow: hidden;
             transition: var(--transition-gentle);

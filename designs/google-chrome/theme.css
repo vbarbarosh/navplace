@@ -1,3 +1,31 @@
+/* -------- COLOURS: light on :root, dark on :root[data-theme="dark"] (/lib/theme_switch.js) -------- */
+:root {
+    --bg: #ffffff;
+    --fg: #202124;
+    --label: #3c4043;
+    --search-bg: #ffffff;
+    --search-fg: #202124;
+    --search-border: #dfe1e5;
+    --search-shadow: 0 1px 6px rgba(32, 33, 36, 0.18);
+    --tile-bg: #f1f3f4;
+    --tile-bg-hover: #e8eaed;
+    --np-scrollbar-thumb: rgba(60, 64, 67, 0.35);
+    --np-scrollbar-track: var(--bg);
+}
+
+:root[data-theme="dark"] {
+    --bg: #3f3f3f;
+    --fg: #eaeaea;
+    --label: #e0e0e0;
+    --search-bg: #ffffff;
+    --search-fg: #202124;
+    --search-border: transparent;
+    --search-shadow: none;
+    --tile-bg: #4a4a4a;
+    --tile-bg-hover: #5a5a5a;
+    --np-scrollbar-thumb: rgba(234, 234, 234, 0.3);
+}
+
 /* -------- RESET -------- */
 * { box-sizing: border-box; }
 
@@ -11,8 +39,8 @@ body {
 
 /* -------- BACKGROUND -------- */
 body {
-    background: #3f3f3f;
-    color: #eaeaea;
+    background: var(--bg);
+    color: var(--fg);
 }
 
 /* -------- LAYOUT -------- */
@@ -38,7 +66,9 @@ body {
     width: 720px;
     max-width: calc(100% - 32px);
     height: 56px;
-    background: #ffffff;
+    background: var(--search-bg);
+    border: 1px solid var(--search-border);
+    box-shadow: var(--search-shadow);
     border-radius: 28px;
     display: flex;
     align-items: center;
@@ -55,6 +85,8 @@ body {
 .search input {
     border: none;
     outline: none;
+    background: transparent;
+    color: var(--search-fg);
     flex: 1;
     font-size: 16px;
 }
@@ -80,14 +112,14 @@ body {
 
 .tile:hover {
     text-decoration: underline;
-    text-decoration-color: white;
+    text-decoration-color: var(--label);
 }
 
 .tile-inner {
     width: 64px;
     height: 64px;
     /*border-radius: 50%;*/
-    background: #4a4a4a;
+    background: var(--tile-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -102,13 +134,13 @@ body {
 }
 
 .tile:hover .tile-inner {
-    background: #5a5a5a;
+    background: var(--tile-bg-hover);
 }
 
 .tile-label {
     display: block;
     font-size: 13px;
-    color: #e0e0e0;
+    color: var(--label);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

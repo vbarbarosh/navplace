@@ -1,12 +1,26 @@
 
+/* Light on :root, dark on :root[data-theme="dark"]: /lib/theme_switch.js sets it and shows the switch */
 :root {
-    --bg: #1a1d23;          /* main background (dark gray, not black) */
-    --panel: #20242c;       /* inputs / table surface */
-    --text: #e5e7eb;        /* primary text */
-    --muted: #9aa3b2;       /* secondary text */
-    --line: rgba(255,255,255,.08);
-    --hover: rgba(255,255,255,.05);
-    --focus: rgba(255,255,255,.16);
+    --bg: #f6f8fa;          /* main background */
+    --panel: #ffffff;       /* inputs */
+    --text: #1f2328;        /* primary text */
+    --muted: #59636e;       /* secondary text */
+    --line: rgba(31,35,40,.12);
+    --hover: rgba(31,35,40,.04);
+    --focus: rgba(9,105,218,.45);
+    --focus-glow: rgba(9,105,218,.12);
+    --surface: #ffffff;     /* the table */
+    --head-bg: #f6f8fa;
+    --icon-bg: rgba(31,35,40,.04);
+    --icon-border: rgba(31,35,40,.10);
+    --kbd-bg: rgba(31,35,40,.04);
+    --row-outline: rgba(9,105,218,.35);
+    --selected: rgba(9,105,218,.08);
+    --np-scrollbar-thumb: rgba(31,35,40,.28);
+    --np-scrollbar-track: var(--bg);
+    --np-switch-bg: var(--panel);
+    --np-switch-fg: var(--muted);
+    --np-switch-border: var(--line);
 
     --radius: 12px;
     --gap: 10px;
@@ -15,6 +29,25 @@
 
     --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
     Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+}
+
+:root[data-theme="dark"] {
+    --bg: #1a1d23;          /* main background (dark gray, not black) */
+    --panel: #20242c;       /* inputs */
+    --text: #e5e7eb;
+    --muted: #9aa3b2;
+    --line: rgba(255,255,255,.08);
+    --hover: rgba(255,255,255,.05);
+    --focus: rgba(255,255,255,.16);
+    --focus-glow: rgba(255,255,255,.05);
+    --surface: rgba(255,255,255,.02);
+    --head-bg: rgba(255,255,255,.02);
+    --icon-bg: rgba(255,255,255,.06);
+    --icon-border: rgba(255,255,255,.08);
+    --kbd-bg: rgba(255,255,255,.04);
+    --row-outline: rgba(255,255,255,.10);
+    --selected: rgba(255,255,255,.06);
+    --np-scrollbar-thumb: rgba(255,255,255,.22);
 }
 
 * { box-sizing: border-box; }
@@ -73,7 +106,7 @@ body {
 
 .search input:focus {
     border-color: var(--focus);
-    box-shadow: 0 0 0 4px rgba(255,255,255,.05);
+    box-shadow: 0 0 0 4px var(--focus-glow);
 }
 
 .hint {
@@ -89,7 +122,7 @@ body {
     border: 1px solid var(--line);
     border-radius: var(--radius);
     overflow: hidden;
-    background: rgba(255,255,255,.02);
+    background: var(--surface);
 }
 
 table {
@@ -105,7 +138,7 @@ thead th {
     letter-spacing: .02em;
     padding: 10px 12px;
     border-bottom: 1px solid var(--line);
-    background: rgba(255,255,255,.02);
+    background: var(--head-bg);
 }
 
 tbody td {
@@ -124,7 +157,9 @@ tbody tr {
 
 tbody tr:hover { background: var(--hover); }
 
-tbody tr:focus-within { outline: 2px solid rgba(255,255,255,.10); outline-offset: -2px; }
+tbody tr.selected { background: var(--selected); }
+
+tbody tr:focus-within { outline: 2px solid var(--row-outline); outline-offset: -2px; }
 
 .col-icon { width: 44px; }
 
@@ -135,8 +170,8 @@ tbody tr:focus-within { outline: 2px solid rgba(255,255,255,.10); outline-offset
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.08);
+    background: var(--icon-bg);
+    border: 1px solid var(--icon-border);
     overflow: hidden;
 }
 
@@ -181,7 +216,7 @@ tbody tr:focus-within { outline: 2px solid rgba(255,255,255,.10); outline-offset
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 12px;
     border: 1px solid var(--line);
-    background: rgba(255,255,255,.04);
+    background: var(--kbd-bg);
     border-radius: 8px;
     padding: 2px 6px;
     color: var(--text);

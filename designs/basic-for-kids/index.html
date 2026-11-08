@@ -4,10 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NavPlace Kids Theme</title>
+    <script src="/lib/theme_switch.js"></script>
     <style>
+        /* Light on :root, dark (a night sky) on :root[data-theme="dark"]: /lib/theme_switch.js sets it */
+        :root {
+            --page-bg: #f0f8ff;
+            --text: #333;
+            --search-bg: #ffffff;
+            --search-fg: #333;
+            --search-border: #87ceeb;
+            --placeholder: #a9a9a9;
+            --card-1: #b0e57c;
+            --card-2: #ffd700;
+            --card-3: #87cefa;
+            --picture-ring: #ffffff;
+            --np-switch-border: #87ceeb;
+            --np-scrollbar-thumb: #87ceeb;
+            --np-scrollbar-track: #f0f8ff;
+        }
+
+        :root[data-theme="dark"] {
+            --page-bg: #14213d;
+            --text: #fff8dc;
+            --search-bg: #1d2d52;
+            --search-fg: #fff8dc;
+            --search-border: #5fa8d3;
+            --placeholder: #8fa3c4;
+            --card-1: #3e6b2c;
+            --card-2: #806414;
+            --card-3: #2c5d86;
+            --picture-ring: #fff8dc;
+            --np-switch-bg: #1d2d52;
+            --np-switch-border: #5fa8d3;
+            --np-scrollbar-thumb: #3d6a8f;
+            --np-scrollbar-track: #14213d;
+        }
+
         body {
             font-family: 'Comic Sans MS', Arial, sans-serif;
-            background-color: #f0f8ff;
+            background-color: var(--page-bg);
+            color: var(--text);
             margin: 0;
             padding: 20px;
             display: flex;
@@ -20,15 +56,17 @@
             max-width: 600px;
             padding: 15px;
             font-size: 24px;
-            border: 2px solid #87ceeb;
+            border: 2px solid var(--search-border);
             border-radius: 30px;
+            background: var(--search-bg);
+            color: var(--search-fg);
             margin-bottom: 30px;
             outline: none;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         #search::placeholder {
-            color: #a9a9a9;
+            color: var(--placeholder);
         }
 
         #results {
@@ -48,7 +86,7 @@
             background-color: #fffacd;
             border-radius: 30px;
             text-decoration: none;
-            color: #333;
+            color: var(--text);
             font-size: 24px;
             text-align: center;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
@@ -65,20 +103,20 @@
             border-radius: 50%;
             margin-bottom: 15px;
             object-fit: cover;
-            border: 3px solid #fff;
+            border: 3px solid var(--picture-ring);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .card:nth-child(3n+1) {
-            background-color: #b0e57c;
+            background-color: var(--card-1);
         }
 
         .card:nth-child(3n+2) {
-            background-color: #ffd700;
+            background-color: var(--card-2);
         }
 
         .card:nth-child(3n+3) {
-            background-color: #87cefa;
+            background-color: var(--card-3);
         }
     </style>
 </head>

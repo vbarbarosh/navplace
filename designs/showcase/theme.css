@@ -14,6 +14,12 @@
     --input-bg: #f6f6f6;
     --focus-ring: rgba(0, 0, 0, 0.25); /* light mode */
     --focus-bg: rgba(0, 0, 0, 0.03);
+    /* /lib/theme_switch.js: its button and the scrollbars */
+    --np-switch-bg: var(--card-bg);
+    --np-switch-fg: var(--muted);
+    --np-switch-border: var(--border);
+    --np-scrollbar-thumb: #c9c9cf;
+    --np-scrollbar-track: var(--bg);
 }
 
 :root[data-theme="dark"] {
@@ -29,6 +35,7 @@
     --input-bg: #141824;
     --focus-ring: rgba(255, 255, 255, 0.25); /* dark mode */
     --focus-bg: rgba(255, 255, 255, 0.05);
+    --np-scrollbar-thumb: #343a48;
 }
 
 html,
@@ -75,30 +82,16 @@ a:hover {
     font-size: 14px;
 }
 
-/* Theme switch */
+/* Theme switch: /lib/theme_switch.js puts its button in [data-theme-switch] */
 
-.theme-switch {
-    display: flex;
-    gap: 6px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 4px;
-    background: var(--card-bg);
+.np-theme-switch {
+    width: 38px;
+    height: 38px;
 }
 
-.theme-switch button {
-    border: 0;
-    background: transparent;
-    padding: 6px 10px;
-    border-radius: 999px;
-    cursor: pointer;
-    color: var(--muted);
-    font-size: 13px;
-}
-
-.theme-switch button.active {
-    background: var(--accent);
-    color: white;
+.np-theme-switch:hover {
+    color: var(--accent);
+    border-color: var(--accent);
 }
 
 /* Search */

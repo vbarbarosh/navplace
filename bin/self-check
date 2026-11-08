@@ -43,4 +43,14 @@ cd $scriptdir/..
     echo "every design loads /lib/…"
 ) 2>&1 | sed 's/^/[designs] /'
 
+# Every design has the light/dark switch (rules UI-01): /lib/theme_switch.js in its index.html
+(
+    set -o nounset -o errexit -o pipefail
+    if grep -L '/lib/theme_switch.js' designs/*/index.html | grep .; then
+        echo "the designs above have no /lib/theme_switch.js"
+        exit 1
+    fi
+    echo "every design has the theme switch"
+) 2>&1 | sed 's/^/[designs] /'
+
 EXIT_MESSAGE="${GREEN}bin/self-check succeeded${RESET}"

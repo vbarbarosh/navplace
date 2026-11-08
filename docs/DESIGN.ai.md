@@ -8,7 +8,7 @@ produce a working `index.html`.
 
 Two existing designs are the canonical, battle-tested references. When generating a new design, base patterns on these — not on the less polished `basic-for-*` designs.
 
-- **`designs/showcase/`** — the canonical **presentation-style** reference. Powers https://vbarbarosh.com in production. Vanilla JS, no framework. Uses `meta` mapping to bind `% title:` / `% email:` / `% subtitle:` into the page chrome. Has a working light/dark/system theme switcher with `localStorage`. Uses `navplace.navigate(item, e)` on click so multi-open works.
+- **`designs/showcase/`** — the canonical **presentation-style** reference. Powers https://vbarbarosh.com in production. Vanilla JS, no framework. Uses `meta` mapping to bind `% title:` / `% email:` / `% subtitle:` into the page chrome. Shows the shared light/dark switch (`/lib/theme_switch.js`) in its topbar. Uses `navplace.navigate(item, e)` on click so multi-open works.
 
 - **`designs/github/`** — the canonical **launcher-style** reference. Default fallback in `desktop-electron/main.js` when `% design:` is missing or unknown. Vanilla JS, no framework. Search input + dense table of rows (icon / label / href). Implements its own arrow-key navigation (Up/Down/Enter/Escape) on top of the runtime; opens via `navplace.navigate(item)` to preserve multi-open. Explicit "No matches." empty state.
 
@@ -140,6 +140,7 @@ A design **must**:
 3. Make item clicks call `navplace.navigate(item, e)` (not just rely on `<a href>`).
 4. Work without network access (see "Desktop network gate" below).
 5. Be a single `index.html` plus a `theme.css` (plus any local assets). No build step.
+6. Have a light and a dark theme with the shared switch: `<script src="/lib/theme_switch.js"></script>` in `<head>`, before the design's CSS; light colours on `:root`, dark ones on `:root[data-theme="dark"]` (the rulebook's UI-01 to UI-04). `bin/self-check` fails the build for a design without it.
 
 A design **should**:
 
@@ -178,6 +179,7 @@ Copy this and modify. It's a complete, working design with no dependencies — d
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><!-- Design Name --> | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
     <link href="theme.css" rel="stylesheet">
 </head>
 <body>
@@ -230,15 +232,18 @@ And a starter `theme.css`:
 
 ```css
 :root {
-    color-scheme: light dark;
     --bg: #fbfaf7;
     --fg: #1a1a1a;
     --muted: #888;
     --row-hover: rgba(0,0,0,.04);
     --accent: #2563eb;
+    --np-scrollbar-thumb: rgba(26,26,26,.35);
 }
-@media (prefers-color-scheme: dark) {
-    :root { --bg: #1a1a1a; --fg: #fbfaf7; --row-hover: rgba(255,255,255,.06); }
+:root[data-theme="dark"] {
+    --bg: #1a1a1a;
+    --fg: #fbfaf7;
+    --row-hover: rgba(255,255,255,.06);
+    --np-scrollbar-thumb: rgba(251,250,247,.35);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--fg); }
@@ -321,9 +326,14 @@ function render(items) {
 }
 ```
 
-### Theme switcher (light / dark / system)
+### Light/dark theme and scrollbars
 
-See `designs/showcase/index.html` for a working pattern: three buttons, `localStorage`, `data-theme` attribute on `<html>`, and CSS variables per theme.
+`/lib/theme_switch.js`, loaded in `<head>`, does it for every design, the same way:
+
+- It sets `data-theme="light"` or `"dark"` on `<html>` before the page shows: the choice saved in `localStorage` under `navplace.design.theme` (one for all designs), or the OS setting when nothing is saved yet. There is no System option: one button, sun for light, crescent for dark.
+- The button goes into the design's `<span data-theme-switch></span>` when it has one (a header or a footer); otherwise it sits in the page's top-right corner. Restyle it through `.np-theme-switch` or `--np-switch-bg`, `--np-switch-fg`, `--np-switch-border`.
+- Scrollbars are thin and take `--np-scrollbar-thumb` and `--np-scrollbar-track` (transparent by default); set both for each theme.
+- Keep pictures readable in dark: a black logo on a transparent picture needs a muted plate behind it, not a near-black one.
 
 ## What breaks designs (don't do these)
 
@@ -367,17 +377,18 @@ A complete brief plus this spec is enough for an AI agent to produce a working `
 
 ## Appendix A: Reference design — `showcase` (presentation style)
 
-The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla JS, no framework, no build step. Uses the `meta` mapping, a light/dark/system theme switcher, and `navplace.navigate(item, e)` on click. Use this as the direct template for presentation-style design briefs.
+The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla JS, no framework, no build step. Uses the `meta` mapping, the shared light/dark switch in its topbar, and `navplace.navigate(item, e)` on click. Use this as the direct template for presentation-style design briefs.
 
 ### `designs/showcase/index.html`
 
 ```html
 <!doctype html>
-<html lang="en" data-theme="system">
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Showcase Theme | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
     <link href="theme.css" rel="stylesheet" />
 </head>
 <body>
@@ -388,11 +399,7 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
             <h1>John Doe</h1>
             <a href="mailto:hello@example.com">hello@example.com</a>
         </div>
-        <div class="theme-switch" role="group" aria-label="Theme">
-            <button data-theme="system">Auto</button>
-            <button data-theme="light">Light</button>
-            <button data-theme="dark">Dark</button>
-        </div>
+        <span data-theme-switch></span>
     </div>
 
     <div class="search">
@@ -417,14 +424,6 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
         update: items => render(items),
     });
 
-    const root = document.documentElement;
-    const buttons = document.querySelectorAll('.theme-switch button');
-
-    const saved = localStorage.getItem('theme') || 'system';
-    apply_theme(saved);
-
-    buttons.forEach(v => v.addEventListener('click', () => apply_theme(v.dataset.theme)));
-
     function render(items)
     {
         const grid = document.getElementById('grid');
@@ -445,12 +444,6 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
             out.onclick = e => navplace.navigate(item, e);
             return out;
         }));
-    }
-
-    function apply_theme(t) {
-        root.dataset.theme = t !== 'system' ? t : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        buttons.forEach(v => v.classList.toggle('active', v.dataset.theme === t));
-        localStorage.setItem('theme', t);
     }
 
 })();
@@ -512,9 +505,9 @@ a:hover { text-decoration: underline; }
 .identity h1 { margin: 0; font-size: 36px; letter-spacing: -0.02em; }
 .identity a  { color: var(--muted); font-size: 14px; }
 
-.theme-switch { display: flex; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 4px; background: var(--card-bg); }
-.theme-switch button { border: 0; background: transparent; padding: 6px 10px; border-radius: 999px; cursor: pointer; color: var(--muted); font-size: 13px; }
-.theme-switch button.active { background: var(--accent); color: white; }
+/* /lib/theme_switch.js puts its one sun/moon button in [data-theme-switch] */
+.np-theme-switch { width: 38px; height: 38px; }
+.np-theme-switch:hover { color: var(--accent); border-color: var(--accent); }
 
 .search { margin: 18px 0 26px; }
 .search input {

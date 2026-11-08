@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="en" data-theme="system">
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Showcase Theme | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
     <link href="theme.css" rel="stylesheet" />
 </head>
 <body>
@@ -14,11 +15,7 @@
             <h1>John Doe</h1>
             <a href="mailto:hello@example.com">hello@example.com</a>
         </div>
-        <div class="theme-switch" role="group" aria-label="Theme">
-            <button data-theme="system">Auto</button>
-            <button data-theme="light">Light</button>
-            <button data-theme="dark">Dark</button>
-        </div>
+        <span data-theme-switch></span>
     </div>
 
     <div class="search">
@@ -41,16 +38,6 @@ function main()
         update: v => refresh_grid(v),
     });
 
-    const root = document.documentElement;
-    const buttons = document.querySelectorAll('.theme-switch button');
-
-    const saved = theme_read();
-    theme_apply(saved);
-
-    for (const button of buttons) {
-        button.addEventListener('click', () => theme_apply(button.dataset.theme));
-    }
-
     function refresh_grid(items) {
         const grid = document.getElementById('grid');
         grid.replaceChildren(...items.map(function (item) {
@@ -72,37 +59,6 @@ function main()
             };
             return out;
         }));
-    }
-
-    // 'system' when nothing is saved or the storage is closed
-    function theme_read() {
-        try {
-            return localStorage.getItem('theme') || 'system';
-        }
-        catch {
-            return 'system';
-        }
-    }
-
-    function theme_apply(theme) {
-        if (theme !== 'system') {
-            root.dataset.theme = theme;
-        }
-        else if (matchMedia('(prefers-color-scheme: dark)').matches) {
-            root.dataset.theme = 'dark';
-        }
-        else {
-            root.dataset.theme = 'light';
-        }
-        for (const button of buttons) {
-            button.classList.toggle('active', button.dataset.theme === theme);
-        }
-        try {
-            localStorage.setItem('theme', theme);
-        }
-        catch {
-            // Not kept: the page still switches
-        }
     }
 }
 </script>

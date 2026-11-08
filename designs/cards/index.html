@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cards | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
     <style>
+        /* Light on :root, dark on :root[data-theme="dark"]: /lib/theme_switch.js sets it */
         :root {
             color-scheme: light;
             --bg: #f5f7fa;
@@ -18,23 +20,24 @@
             --banner: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
             --shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
             --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --np-scrollbar-thumb: #c3cad6;
+            --np-scrollbar-track: var(--bg);
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                color-scheme: dark;
-                --bg: #0f1218;
-                --panel: #191d25;
-                --border: #2a2f39;
-                --text: #e7ebf1;
-                --text-soft: #a6aebb;
-                --text-mute: #6e7685;
-                --accent: #6ea2ff;
-                --accent-soft: rgba(110, 162, 255, 0.14);
-                --banner: linear-gradient(135deg, #4a0f8f 0%, #1a4fb3 100%);
-                --shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
-                --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.5);
-            }
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #0f1218;
+            --panel: #191d25;
+            --border: #2a2f39;
+            --text: #e7ebf1;
+            --text-soft: #a6aebb;
+            --text-mute: #6e7685;
+            --accent: #6ea2ff;
+            --accent-soft: rgba(110, 162, 255, 0.14);
+            --banner: linear-gradient(135deg, #4a0f8f 0%, #1a4fb3 100%);
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+            --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.5);
+            --np-scrollbar-thumb: #343b48;
         }
 
         * {
@@ -60,6 +63,7 @@
         }
 
         header {
+            position: relative;
             margin-bottom: 28px;
             padding: 32px 24px;
             border-radius: 12px;
@@ -73,6 +77,16 @@
             margin: 0;
             font-size: 34px;
             line-height: 1.2;
+        }
+
+        /* /lib/theme_switch.js puts its button here, on the banner */
+        header [data-theme-switch] {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            --np-switch-border: rgba(255, 255, 255, 0.45);
+            --np-switch-bg: rgba(255, 255, 255, 0.16);
+            --np-switch-fg: #ffffff;
         }
 
         .subtitle {
@@ -285,6 +299,7 @@
 
 <div class="page">
     <header>
+        <span data-theme-switch></span>
         <h1 id="title">My links</h1>
         <p class="subtitle" id="subtitle"></p>
     </header>

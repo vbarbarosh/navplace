@@ -5,25 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <title>NavPlace Theme — Ops Links</title>
+    <script src="/lib/theme_switch.js"></script>
     <style>
+        /* Light on :root, dark on :root[data-theme="dark"]: /lib/theme_switch.js sets it and shows the switch */
         :root {
-            --bg: #0b0c0f;
-            --panel: #101218;
-            --panel-2: #0e1015;
-            --border: rgba(255,255,255,.10);
-            --border-2: rgba(255,255,255,.14);
-            --text: rgba(255,255,255,.92);
-            --muted: rgba(255,255,255,.66);
-            --muted-2: rgba(255,255,255,.52);
-            --dim: rgba(255,255,255,.12);
-            --hover: rgba(255,255,255,.06);
-            --focus: rgba(180, 205, 255, .45);
-            --accent: #7fb3ff;
+            --bg: #f6f7fa;
+            --panel: #ffffff;
+            --panel-2: #fbfbfd;
+            --border: rgba(0,0,0,.10);
+            --border-2: rgba(0,0,0,.14);
+            --text: rgba(0,0,0,.88);
+            --muted: rgba(0,0,0,.62);
+            --muted-2: rgba(0,0,0,.50);
+            --dim: rgba(0,0,0,.10);
+            --hover: rgba(0,0,0,.04);
+            --focus: rgba(40, 90, 200, .35);
+            --accent: #1b66ff;
+            --topbar-fade: rgba(255,255,255,.85);
+            --topbar-fade-0: rgba(255,255,255,0);
+            --summary-tint: rgba(0,0,0,.03);
+            --summary-tint-0: rgba(0,0,0,0);
+            --np-scrollbar-thumb: rgba(0,0,0,.28);
+            --np-switch-bg: var(--panel);
+            --np-switch-fg: var(--muted);
+            --np-switch-border: var(--border);
 
             --radius: 10px;
             --radius-2: 12px;
-            --shadow: 0 12px 30px rgba(0,0,0,.40);
-            --shadow-2: 0 6px 16px rgba(0,0,0,.30);
+            --shadow: 0 12px 30px rgba(0,0,0,.12);
+            --shadow-2: 0 6px 16px rgba(0,0,0,.10);
 
             --gap: 10px;
             --gap-2: 12px;
@@ -38,22 +48,27 @@
             --sticky-top: 0px;
         }
 
-        [data-theme="light"] {
-            --bg: #f6f7fa;
-            --panel: #ffffff;
-            --panel-2: #fbfbfd;
-            --border: rgba(0,0,0,.10);
-            --border-2: rgba(0,0,0,.14);
-            --text: rgba(0,0,0,.88);
-            --muted: rgba(0,0,0,.62);
-            --muted-2: rgba(0,0,0,.50);
-            --dim: rgba(0,0,0,.10);
-            --hover: rgba(0,0,0,.04);
-            --focus: rgba(40, 90, 200, .35);
-            --accent: #1b66ff;
+        :root[data-theme="dark"] {
+            --bg: #0b0c0f;
+            --panel: #101218;
+            --panel-2: #0e1015;
+            --border: rgba(255,255,255,.10);
+            --border-2: rgba(255,255,255,.14);
+            --text: rgba(255,255,255,.92);
+            --muted: rgba(255,255,255,.66);
+            --muted-2: rgba(255,255,255,.52);
+            --dim: rgba(255,255,255,.12);
+            --hover: rgba(255,255,255,.06);
+            --focus: rgba(180, 205, 255, .45);
+            --accent: #7fb3ff;
 
-            --shadow: 0 12px 30px rgba(0,0,0,.12);
-            --shadow-2: 0 6px 16px rgba(0,0,0,.10);
+            --shadow: 0 12px 30px rgba(0,0,0,.40);
+            --shadow-2: 0 6px 16px rgba(0,0,0,.30);
+            --topbar-fade: rgba(0,0,0,.25);
+            --topbar-fade-0: rgba(0,0,0,0);
+            --summary-tint: rgba(255,255,255,.04);
+            --summary-tint-0: rgba(255,255,255,0);
+            --np-scrollbar-thumb: rgba(255,255,255,.22);
         }
 
         * { box-sizing: border-box; }
@@ -80,12 +95,8 @@
             position: sticky;
             top: 0;
             z-index: 10;
-            background: linear-gradient(to bottom, rgba(0,0,0,.25), rgba(0,0,0,0));
+            background: linear-gradient(to bottom, var(--topbar-fade), var(--topbar-fade-0));
             padding: 12px 12px 8px 12px;
-        }
-
-        [data-theme="light"] .topbar {
-            background: linear-gradient(to bottom, rgba(255,255,255,.85), rgba(255,255,255,0));
         }
 
         .shell {
@@ -133,42 +144,6 @@
             display: flex;
             gap: 8px;
             align-items: center;
-        }
-
-        .select {
-            appearance: none;
-            background: var(--panel);
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 8px 32px 8px 10px;
-            font-size: 12px;
-            line-height: 1;
-            outline: none;
-            box-shadow: var(--shadow-2);
-            cursor: pointer;
-            position: relative;
-        }
-
-        .select:focus { box-shadow: 0 0 0 3px var(--focus), var(--shadow-2); }
-
-        .select-wrap {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .select-wrap::after {
-            content: "";
-            position: absolute;
-            right: 10px;
-            width: 10px;
-            height: 10px;
-            pointer-events: none;
-            border-right: 2px solid var(--muted);
-            border-bottom: 2px solid var(--muted);
-            transform: rotate(45deg);
-            opacity: .85;
         }
 
         .search-row {
@@ -265,11 +240,7 @@
             gap: 12px;
             padding: 10px 12px;
             border-bottom: 1px solid var(--border);
-            background: linear-gradient(to bottom, rgba(255,255,255,.04), rgba(255,255,255,0));
-        }
-
-        [data-theme="light"] .summary {
-            background: linear-gradient(to bottom, rgba(0,0,0,.03), rgba(0,0,0,0));
+            background: linear-gradient(to bottom, var(--summary-tint), var(--summary-tint-0));
         }
 
         .summary__left {
@@ -494,17 +465,6 @@
             color: color-mix(in srgb, var(--accent) 65%, var(--text));
         }
 
-        .sr {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0,0,0,0);
-            border: 0;
-        }
-
         .empty {
             padding: 26px 12px;
             color: var(--muted-2);
@@ -532,7 +492,7 @@
     </style>
 </head>
 <body>
-<div class="app" id="app" data-theme="system">
+<div class="app" id="app">
     <div class="topbar">
         <div class="shell">
             <div class="header">
@@ -541,14 +501,7 @@
                     <div class="brand__meta" id="meta">renderer-only · grouped by host</div>
                 </div>
                 <div class="controls">
-                    <div class="select-wrap">
-                        <label class="sr" for="theme-select">Theme</label>
-                        <select id="theme-select" class="select">
-                            <option value="system">System</option>
-                            <option value="dark">Dark</option>
-                            <option value="light">Light</option>
-                        </select>
-                    </div>
+                    <span data-theme-switch></span>
                 </div>
             </div>
 
@@ -593,29 +546,10 @@
     {
         let active_row = null;
 
-        const app = document.getElementById('app');
-        const theme_select = document.getElementById('theme-select');
         const list = document.getElementById('list');
         const counts = document.getElementById('counts');
         const status = document.getElementById('status');
         const meta = document.getElementById('meta');
-
-        theme_load();
-
-        if (window.matchMedia) {
-            const media = window.matchMedia('(prefers-color-scheme: light)');
-            if (media && media.addEventListener) {
-                media.addEventListener('change', function () {
-                    if (theme_mode_read() === 'system') {
-                        theme_apply('system');
-                    }
-                });
-            }
-        }
-
-        theme_select.addEventListener('change', function () {
-            theme_save(theme_select.value);
-        });
 
         list.addEventListener('keydown', function (event) {
             if (event.key === 'ArrowDown') {
@@ -655,48 +589,6 @@
 
         navplace_bind();
         status.textContent = (status.textContent === 'idle') ? 'ready' : status.textContent;
-
-        function system_theme_detect() {
-            return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
-        }
-
-        function theme_apply(mode) {
-            app.setAttribute('data-theme', mode);
-            if (mode === 'system') {
-                const system_theme = system_theme_detect();
-                app.setAttribute('data-theme', system_theme);
-                app.setAttribute('data-theme-mode', 'system');
-            }
-            else {
-                app.setAttribute('data-theme-mode', mode);
-            }
-        }
-
-        function theme_load() {
-            const mode = theme_mode_read();
-            theme_select.value = mode;
-            theme_apply(mode);
-        }
-
-        function theme_save(mode) {
-            try {
-                localStorage.setItem('navplace_theme_mode', mode);
-            }
-            catch {
-                // Not kept: the page still switches
-            }
-            theme_apply(mode);
-        }
-
-        // 'system' when nothing is saved or the storage is closed
-        function theme_mode_read() {
-            try {
-                return localStorage.getItem('navplace_theme_mode') || 'system';
-            }
-            catch {
-                return 'system';
-            }
-        }
 
         function text_from_value(value) {
             try {
@@ -1003,7 +895,7 @@
             const items_text = plural(total, '# item', '# items');
             const groups_text = plural(group_keys.length, '# group', '# groups');
             counts.textContent = `${items_text} · ${groups_text}`;
-            meta.textContent = `renderer-only · grouped by host · ${app.getAttribute('data-theme-mode') || 'system'}`;
+            meta.textContent = 'renderer-only · grouped by host';
 
             if (!total) {
                 list.appendChild(make_elem('div', {class: 'empty', text: 'No items.'}));

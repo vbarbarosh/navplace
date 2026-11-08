@@ -1,3 +1,25 @@
+/* Light on :root, dark on :root[data-theme="dark"]: /lib/theme_switch.js sets it and shows the switch */
+:root {
+    --page-shade: transparent;
+    --bookmark-bg: #DFDBE5;
+    --bookmark-hatch: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+    --search-bg: #ffffff;
+    --search-fg: #1c1917;
+    --search-border: #57534e;
+    --np-scrollbar-thumb: rgba(66, 56, 84, 0.45);
+}
+
+:root[data-theme="dark"] {
+    --page-shade: rgba(12, 12, 20, 0.6);
+    /* A muted plate, not a dark one: black logos on transparent stay readable */
+    --bookmark-bg: #a8a2b4;
+    --bookmark-hatch: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23645a78' fill-opacity='0.35' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+    --search-bg: #1e1c24;
+    --search-fg: #f4f4f5;
+    --search-border: #6b6478;
+    --np-scrollbar-thumb: rgba(223, 219, 229, 0.4);
+}
+
 /* The font smcss 1's reset.css gave the page; smcss 2's reset leaves the browser's own */
 body {
     font: 9pt/1.5em Arial, Helvetica, sans-serif;
@@ -9,13 +31,13 @@ a {
 
 .bg-page {
     /*background: url("https://images.unsplash.com/photo-1554147090-e1221a04a025?q=80&w=3848&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");*/
-    background: url("photo-1554147090-e1221a04a025.jpg");
+    background: linear-gradient(var(--page-shade), var(--page-shade)), url("photo-1554147090-e1221a04a025.jpg");
     background-size: cover;
 }
 
 .bg-bookmark {
-    background-color: #DFDBE5;
-    background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+    background-color: var(--bookmark-bg);
+    background-image: var(--bookmark-hatch);
 }
 
 .gap10 { gap: 10px; }
@@ -42,6 +64,9 @@ a {
 .search {
     box-sizing: border-box;
     max-width: 100%;
+    border: 1px solid var(--search-border);
+    background: var(--search-bg);
+    color: var(--search-fg);
 }
 
 .container > .break {
