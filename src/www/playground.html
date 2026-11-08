@@ -795,6 +795,136 @@
             text-decoration: underline;
         }
 
+        .heading-actions {
+            display: flex;
+            gap: 14px;
+        }
+
+        .heading-actions button {
+            padding: 0;
+            border: 0;
+            background: none;
+            color: var(--accent);
+            font: inherit;
+            letter-spacing: inherit;
+            text-transform: inherit;
+            cursor: pointer;
+        }
+
+        .heading-actions button:hover {
+            text-decoration: underline;
+        }
+
+        /* A row per picture under links.txt, its formats as the worker makes them */
+        .pictures {
+            max-height: 40%;
+            overflow: auto;
+            border-top: 1px solid var(--border);
+            background: var(--panel);
+            font-size: 12px;
+        }
+
+        .pictures[hidden] {
+            display: none;
+        }
+
+        .pictures-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 14px 0;
+            color: var(--text-soft);
+        }
+
+        .pictures-close {
+            padding: 0 4px;
+            border: 0;
+            background: none;
+            color: var(--text-mute);
+            cursor: pointer;
+        }
+
+        .pictures-close:hover {
+            color: var(--text);
+        }
+
+        .pictures-list {
+            margin: 0;
+            padding: 6px 14px 8px;
+            list-style: none;
+        }
+
+        .pictures-list li {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 0;
+        }
+
+        .pictures-list code {
+            min-width: 90px;
+            color: var(--c-image);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            height: 24px;
+            padding: 0 8px;
+            border: 1px solid var(--border-strong);
+            border-radius: 7px;
+            background: var(--panel);
+            color: var(--text-soft);
+            font-size: 12px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .chip b {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .chip:hover:not(:disabled) {
+            border-color: var(--text-mute);
+        }
+
+        .chip:disabled {
+            cursor: default;
+        }
+
+        .chip[data-state="failed"] {
+            color: var(--text-mute);
+            text-decoration: line-through;
+        }
+
+        .chip[data-smallest] b {
+            color: var(--accent);
+        }
+
+        .chip[aria-pressed="true"] {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .chip-spinner {
+            width: 10px;
+            height: 10px;
+            border: 2px solid var(--border-strong);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: chip-spin 0.8s linear infinite;
+        }
+
+        @keyframes chip-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         /* What shows before a design paints, or when it paints nothing. A design keeps its
            own scheme: one that differs from the frame's would get an opaque canvas over this */
         .pane iframe {
@@ -950,10 +1080,14 @@
 
     <main class="work">
         <section class="pane pane-editor" id="editor-pane" aria-label="Source">
-            <div class="pane-heading"><code>links.txt</code><a href="docs.html#format" target="_blank" title="The format: directives, sections, links">Format <span aria-hidden="true">↗</span></a></div>
+            <div class="pane-heading"><code>links.txt</code><span class="heading-actions"><button type="button" data-action="pictures-shrink" title="Every picture of the text made again as WebP, AVIF, JPEG and PNG; the smallest takes its place">Shrink pictures</button><a href="docs.html#format" target="_blank" title="The format: directives, sections, links">Format <span aria-hidden="true">↗</span></a></span></div>
             <div class="code">
                 <pre aria-hidden="true"></pre>
                 <textarea aria-label="Collection source" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+            </div>
+            <div class="pictures" hidden>
+                <div class="pictures-heading"><span class="pictures-title"></span><button type="button" class="pictures-close" data-action="pictures-close" title="Close" aria-label="Close">✕</button></div>
+                <ul class="pictures-list"></ul>
             </div>
         </section>
         <div class="divider" data-divider="1" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize the panes" aria-valuemin="0" aria-valuemax="100" title="Drag to resize, double-click to reset"></div>
@@ -1005,8 +1139,10 @@
 const SIZES_DEFAULT = {basic: [1/3], advanced: [1/3, 1/3], design: [2/3], errors: 76};
 // The longest data url a pasted picture keeps, in characters; a bigger one is drawn smaller to fit
 const PICTURE_URL_MAX = 100000;
-// The longest side a picture drawn smaller starts from, in pixels
+// The longest side of a picture made again in another format, in pixels
 const PICTURE_SIDE_MAX = 1024;
+// A picture shrunk takes the smaller format only when it saves this part of its size at least
+const PICTURE_SHRINK_MIN = 0.05;
 // Runs first in the preview: its errors, failed loads and console.error go to the Playground
 const PREVIEW_ERRORS_HOOK = `(function () {
     function send(message, source, line, load) {
@@ -1091,6 +1227,14 @@ async function main()
     // so typing a new `@name` on a link never renames the picture whose name it passes through
     let picture_line_entry = null;
     let picture_renaming = false;
+    // The picture panel's rows: {name, url (the one in the text now), candidates: Map value → {value,
+    // label, state, url, width, height, note}, chosen, busy}
+    let picture_rows = [];
+    let picture_rows_title = '';
+    // The worker that makes the formats, started on first use; its requests by id
+    let picture_worker = null;
+    let picture_worker_next_id = 1;
+    const picture_requests = new Map();
 
     const work = document.querySelector('.work');
     const app = document.querySelector('.app');
@@ -1107,6 +1251,9 @@ async function main()
     const dividers = document.querySelectorAll('.divider[data-divider]');
     const divider_errors = document.querySelector('.divider-errors');
     const copy_button = document.querySelector('[data-action="copy"]');
+    const pictures_panel = document.querySelector('.pictures');
+    const pictures_title = document.querySelector('.pictures-title');
+    const pictures_list = document.querySelector('.pictures-list');
     const sizes = sizes_load();
     const design_editor = document.querySelector('.pane-design textarea');
     const design_colours = document.querySelector('.pane-design .code > pre:not(.gutter)');
@@ -1269,6 +1416,18 @@ async function main()
         }
     });
     copy_button.addEventListener('click', embed_copy);
+    document.querySelector('[data-action="pictures-shrink"]').addEventListener('click', pictures_shrink);
+    document.querySelector('[data-action="pictures-close"]').addEventListener('click', function () {
+        picture_rows = [];
+        pictures_render();
+    });
+    // A format of a picture, clicked: it takes the place of the one the text has
+    pictures_list.addEventListener('click', function (event) {
+        const chip = event.target.closest('.chip');
+        if (chip && !chip.disabled) {
+            picture_choose(picture_rows[Number(chip.dataset.row)], chip.dataset.value);
+        }
+    });
     document.querySelector('[data-action="codepen"]').addEventListener('click', () => codepen_open(render_embed_snippet(editor.value.trim())));
 
     // A design says it is ready on every load; it gets the text in reply
@@ -1944,25 +2103,31 @@ async function main()
     // through the editing commands, so one Ctrl+Z takes it all out. Pasted on a link, the link takes
     // `@name` before its url, in place of the one it had, and the cursor stays there; anywhere else
     // the cursor follows the picture to the end, its name selected to rename
+    // The formats are made first, in the worker, a row of the picture panel showing them as they come;
+    // the smallest that fits PICTURE_URL_MAX goes in, and a click on another format puts that one in
     async function picture_paste(file, at) {
-        let picture;
-        try {
-            picture = await picture_from_file(file);
-        }
-        catch (error) {
-            picture = {url: null, note: error.message};
-        }
-        if (!picture.url) {
-            editor_note_show(`picture not pasted: ${picture.note}`);
+        const row = {name: picture_name_from_file_name(file.name, picture_names_of_text(editor.value)), url: null, candidates: new Map(), chosen: null, busy: true};
+        picture_rows = [row];
+        picture_rows_title = 'Pasted picture: the smallest format goes in, a click takes another';
+        pictures_render();
+        await picture_formats_make({blob: file}, row);
+        const best = picture_smallest_of_row(row, PICTURE_URL_MAX);
+        if (!best) {
+            pictures_render();
+            editor_note_show(`picture not pasted: no format of it fits ${format_kb(PICTURE_URL_MAX)}`);
             return;
         }
         const text = editor.value;
         const name = picture_name_from_file_name(file.name, picture_names_of_text(text));
         const glue = (text && !text.endsWith('\n')) ? '\n' : '';
-        const line = `% picture ${name}: ${picture.url}`;
+        const line = `% picture ${name}: ${best.url}`;
         const n = line_from_offset(text, Math.min(at, text.length));
         const spans = item_spans_from_text(text, n);
-        const shrunk = picture.note ? `, ${picture.note}` : '';
+        const shrunk = `, ${best.label} ${format_kb_fine(best.url.length)}${best.note ? `, ${best.note}` : ''}`;
+        row.name = name;
+        row.url = best.url;
+        row.chosen = best.value;
+        pictures_render();
         editor.focus();
         if (spans) {
             const line_start = range_from_line(text, n)[0];
@@ -1985,6 +2150,173 @@ async function main()
             editor_note_show(`pasted @${name}${shrunk}`);
         }
         code_scroll_sync(editor, editor_colours);
+    }
+
+    // Every `% picture name: data:…` of the text but SVG, made again in the worker one after another;
+    // those a smaller format saves PICTURE_SHRINK_MIN on take it, all in one edit, so one Ctrl+Z takes it back
+    async function pictures_shrink() {
+        if (picture_rows.some(v => v.busy)) {
+            return;
+        }
+        const pictures = data_pictures_of_text(editor.value);
+        if (!pictures.length) {
+            editor_note_show('no pictures to shrink: only data: pictures other than SVG are');
+            return;
+        }
+        picture_rows = pictures.map(v => ({name: v.name, url: v.url, candidates: new Map(), chosen: 'original', busy: true}));
+        picture_rows_title = `Shrinking ${plural(picture_rows.length, '# picture', '# pictures')}…`;
+        pictures_render();
+        for (const row of picture_rows) {
+            await picture_formats_make({url: row.url}, row);
+        }
+        const changes = [];
+        for (const row of picture_rows) {
+            const best = picture_smallest_of_row(row, Infinity);
+            if (best && (best.url.length <= row.url.length*(1 - PICTURE_SHRINK_MIN))) {
+                changes.push({row, best});
+            }
+        }
+        if (!changes.length) {
+            picture_rows_title = `${plural(picture_rows.length, '# picture', '# pictures')}: none gets smaller`;
+            pictures_render();
+            return;
+        }
+        const before = changes.reduce((sum, v) => sum + v.row.url.length, 0);
+        const after = changes.reduce((sum, v) => sum + v.best.url.length, 0);
+        if (!pictures_replace(changes.map(v => ({from: v.row.url, to: v.best.url})))) {
+            picture_rows_title = 'The text changed meanwhile: shrink again';
+            pictures_render();
+            return;
+        }
+        for (const {row, best} of changes) {
+            row.url = best.url;
+            row.chosen = best.value;
+        }
+        picture_rows_title = `${plural(changes.length, '# picture', '# pictures')} smaller: ${format_kb_fine(before)} → ${format_kb_fine(after)}; Ctrl+Z puts them back`;
+        pictures_render();
+        editor_note_show(picture_rows_title);
+    }
+
+    // One format of a row's picture in place of the one the text has now
+    function picture_choose(row, value) {
+        const candidate = row?.candidates.get(value);
+        if (!candidate || (candidate.state !== 'done') || !row.url || (candidate.url === row.url)) {
+            return;
+        }
+        if (!pictures_replace([{from: row.url, to: candidate.url}])) {
+            editor_note_show(`@${row.name} is no longer in the text as it was`);
+            return;
+        }
+        row.url = candidate.url;
+        row.chosen = value;
+        pictures_render();
+        editor_note_show(`@${row.name}: ${candidate.label}, ${format_kb_fine(candidate.url.length)}`);
+    }
+
+    // [{from, to}]: each data url of the text put in place of another, in one edit over the span they
+    // cover, the scroll and a cursor before them kept; false, and nothing changed, when one is not in the text
+    function pictures_replace(changes) {
+        const text = editor.value;
+        const spots = changes.map(v => ({...v, at: text.indexOf(v.from)})).sort((a, b) => a.at - b.at);
+        if (spots.some(v => v.at === -1)) {
+            return false;
+        }
+        const begin = spots[0].at;
+        const end = spots[spots.length - 1].at + spots[spots.length - 1].from.length;
+        let middle = '';
+        let from = begin;
+        for (const spot of spots) {
+            middle += text.slice(from, spot.at) + spot.to;
+            from = spot.at + spot.from.length;
+        }
+        const scroll = [editor.scrollTop, editor.scrollLeft];
+        const cursor = (editor.selectionStart <= begin) ? editor.selectionStart : null;
+        editor.focus();
+        editor_text_replace(begin, end, middle);
+        if (cursor !== null) {
+            editor.setSelectionRange(cursor, cursor);
+        }
+        editor.scrollTop = scroll[0];
+        editor.scrollLeft = scroll[1];
+        code_scroll_sync(editor, editor_colours);
+        return true;
+    }
+
+    // The worker makes the formats; each one fills the row's candidates and redraws the panel as it comes
+    function picture_formats_make(source, row) {
+        if (!picture_worker) {
+            picture_worker = new Worker('playground-pictures.js', {type: 'module'});
+            picture_worker.addEventListener('message', function (event) {
+                const request = picture_requests.get(event.data.id);
+                if (!request) {
+                    return;
+                }
+                if (event.data.state === 'end') {
+                    picture_requests.delete(event.data.id);
+                    request.row.busy = false;
+                    pictures_render();
+                    request.resolve();
+                    return;
+                }
+                request.row.candidates.set(event.data.value, event.data);
+                pictures_render();
+            });
+            picture_worker.addEventListener('error', function (event) {
+                for (const request of picture_requests.values()) {
+                    request.row.busy = false;
+                    request.resolve();
+                }
+                picture_requests.clear();
+                picture_worker = null;
+                editor_note_show(`the pictures' worker stopped: ${event.message ?? 'it did not load'}`);
+            });
+        }
+        const id = picture_worker_next_id++;
+        return new Promise(function (resolve) {
+            picture_requests.set(id, {row, resolve});
+            picture_worker.postMessage({id, ...source, side_max: PICTURE_SIDE_MAX, url_max: PICTURE_URL_MAX});
+        });
+    }
+
+    function pictures_render() {
+        pictures_panel.hidden = !picture_rows.length;
+        pictures_title.textContent = picture_rows_title;
+        pictures_list.replaceChildren(...picture_rows.map(function (row, i) {
+            const li = document.createElement('li');
+            const name = document.createElement('code');
+            name.textContent = `@${row.name}`;
+            li.append(name);
+            const smallest = picture_smallest_of_row(row, Infinity);
+            for (const candidate of row.candidates.values()) {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'chip';
+                chip.dataset.row = String(i);
+                chip.dataset.value = candidate.value;
+                chip.dataset.state = candidate.state;
+                chip.disabled = (candidate.state !== 'done') || !row.url;
+                chip.setAttribute('aria-pressed', String(candidate.value === row.chosen));
+                chip.toggleAttribute('data-smallest', !row.busy && (candidate === smallest));
+                chip.append(candidate.label);
+                if (candidate.state === 'working') {
+                    const spinner = document.createElement('i');
+                    spinner.className = 'chip-spinner';
+                    chip.append(spinner);
+                    chip.title = `${candidate.label}: being made`;
+                }
+                else if (candidate.state === 'done') {
+                    const size = document.createElement('b');
+                    size.textContent = format_kb_fine(candidate.url.length);
+                    chip.append(size);
+                    chip.title = [candidate.width ? `${candidate.width}×${candidate.height}` : '', candidate.note].filter(Boolean).join(', ');
+                }
+                else {
+                    chip.title = candidate.note ?? '';
+                }
+                li.append(chip);
+            }
+            return li;
+        }));
     }
 
     // `before` is the text before a keystroke, the editor's the text after it. A keystroke that changed a
@@ -2481,36 +2813,36 @@ function picture_names_of_text(text)
     return new Set(text.split('\n').map(picture_name_of_line).filter(Boolean));
 }
 
-// {url, note}: the file as a data url, as it is when it fits PICTURE_URL_MAX; otherwise drawn smaller
-// as WebP until it fits, the note saying so; url null and the note why when it cannot be read or fit
-async function picture_from_file(file)
+// The smallest format of a picture panel's row that is done and fits `max` characters, or null
+function picture_smallest_of_row(row, max)
 {
-    const url = await data_url_from_blob(file);
-    if (url.length <= PICTURE_URL_MAX) {
-        return {url, note: ''};
-    }
-    let bitmap;
-    try {
-        bitmap = await createImageBitmap(file);
-    }
-    catch {
-        return {url: null, note: `${format_kb(url.length)}, over ${format_kb(PICTURE_URL_MAX)}, and not a picture the browser can draw smaller`};
-    }
-    let side = Math.min(PICTURE_SIDE_MAX, Math.max(bitmap.width, bitmap.height));
-
-    const canvas = document.createElement('canvas');
-    while (side >= 32) {
-        const scale = side/Math.max(bitmap.width, bitmap.height);
-        canvas.width = Math.max(1, Math.round(bitmap.width*scale));
-        canvas.height = Math.max(1, Math.round(bitmap.height*scale));
-        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-        const smaller = canvas.toDataURL('image/webp', 0.85);
-        if (smaller.length <= PICTURE_URL_MAX) {
-            return {url: smaller, note: `drawn smaller to ${canvas.width}×${canvas.height}, ${format_kb(url.length)} → ${format_kb(smaller.length)}`};
+    let out = null;
+    for (const candidate of row.candidates.values()) {
+        if ((candidate.state === 'done') && (candidate.url.length <= max) && (!out || (candidate.url.length < out.url.length))) {
+            out = candidate;
         }
-        side = Math.floor(side*0.75);
     }
-    return {url: null, note: `${format_kb(url.length)}, and no smaller copy fits ${format_kb(PICTURE_URL_MAX)}`};
+    return out;
+}
+
+// [{name, url}]: the `% picture name: data:…` lines of the text whose picture the browser can draw
+// again, SVG left out (a drawing, smaller as it is)
+function data_pictures_of_text(text)
+{
+    const out = [];
+    for (const line of text.split('\n')) {
+        const match = line.match(/^\s*%\s*picture\s+([^\s:]+)\s*:\s*(data:image\/(?!svg)\S+)\s*$/);
+        if (match) {
+            out.push({name: match[1], url: match[2]});
+        }
+    }
+    return out;
+}
+
+// A size in KB with a decimal under 10 KB, where formats differ by less than one
+function format_kb_fine(chars)
+{
+    return (chars < 10000) ? `${(chars/1000).toFixed(1)} KB` : format_kb(chars);
 }
 
 // The name a `% picture <name>:` line gives, or null on any other line; `% picture https://…` has none
@@ -2557,20 +2889,6 @@ function pictures_of_text(text)
     catch {
         return {};
     }
-}
-
-function data_url_from_blob(blob)
-{
-    return new Promise(function (resolve, reject) {
-        const reader = new FileReader();
-        reader.onload = function () {
-            resolve(reader.result);
-        };
-        reader.onerror = function () {
-            reject(new Error('the clipboard\'s picture could not be read'));
-        };
-        reader.readAsDataURL(blob);
-    });
 }
 
 function format_kb(chars)
