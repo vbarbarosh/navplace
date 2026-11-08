@@ -205,8 +205,13 @@ async function main()
         callback({cancel: !prefixes.some(v => params.url.startsWith(v))});
     });
 
+    // A link opened, by Enter, a click or several at once: the search starts over, so the window
+    // that comes back shows every link with the first one selected
+    let search_reset_timer = null;
     win.webContents.setWindowOpenHandler(function (details) {
         url_open_external(details.url);
+        clearTimeout(search_reset_timer);
+        search_reset_timer = setTimeout(() => search_reset().catch(() => {}), 100);
         return {action: 'deny'};
     });
 
@@ -370,6 +375,11 @@ async function main()
             win.show();
         }
         win.focus();
+        await search_reset();
+    }
+
+    // An empty search box, focused: the design shows every link again, the first one selected
+    async function search_reset() {
         await win.webContents.executeJavaScript(`{
             const input = document.querySelector('input');
             if (input) {
