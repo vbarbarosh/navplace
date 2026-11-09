@@ -6,6 +6,7 @@ const collection_resolve_includes = require('./helpers/collection_resolve_includ
 const config = require('./config');
 const crypto = require('crypto');
 const electron = require('electron');
+const file_is_inside = require('./helpers/file_is_inside');
 const format_date = require('@vbarbarosh/node-helpers/src/format_date');
 const fs = require('fs');
 const fs_exists = require('@vbarbarosh/node-helpers/src/fs_exists');
@@ -200,9 +201,14 @@ async function main()
 
         const url = new URL(request.url);
         const path = decodeURIComponent(url.pathname);
-        // The settings page sits inside app.asar: the URL is already normalized, and the archive has no links
+        // The settings page sits inside app.asar, which has no links: the path as written decides.
+        // A `%2F` is a slash by now, so `..` can still lead out of the folder
         if ((url.host === 'app') && path.startsWith('/settings/')) {
-            return electron.net.fetch(url_from_path(fs_path_resolve(config.settings_page_dir, path.slice('/settings/'.length))).href);
+            abs = fs_path_resolve(config.settings_page_dir, path.slice('/settings/'.length));
+            if (!file_is_inside(abs, config.settings_page_dir)) {
+                return new Response('Forbidden', {status: 403});
+            }
+            return electron.net.fetch(url_from_path(abs).href);
         }
         const dir_by_prefix = {'/designs/': config.designs_dir, '/lib/': config.lib_dir};
         const prefix = Object.keys(dir_by_prefix).find(v => path.startsWith(v)) ?? null;

@@ -20,7 +20,7 @@ fix lands.
 - [ ] A link's name or address runs as code in 5 designs (`showcase`,
   `basic-for-internal2`, `basic-for-kids2`, `basic-for-portfolio`,
   `basic-for-recipes`) and in the example of `docs/DESIGN.ai.md`
-- [ ] Any page of the desktop app can read any file on the disk, through
+- [x] Any page of the desktop app can read any file on the disk, through
   the settings address of `navplace://app/`
 - [ ] The desktop app hands any kind of link to the system
 - [ ] The desktop app grants every permission a page asks for
