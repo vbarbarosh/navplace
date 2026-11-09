@@ -318,27 +318,27 @@
             function render_item_html(item, is_current) {
                 const has_image = item.image_url && (item.image_url.trim() !== '');
                 return `
-                        <a href="${item.href}" class="item-card ${has_image ? 'has-image' : ''} ${is_current ? 'np-current' : ''}" target="_blank">
+                        <a href="${html_escape(item.href)}" class="item-card ${has_image ? 'has-image' : ''} ${is_current ? 'np-current' : ''}" target="_blank">
                             <div class="card-decoration decoration-1"></div>
                             <div class="card-decoration decoration-2"></div>
                             <div class="card-content">
-                                ${has_image ? `<img src="${item.image_url}" alt="" class="item-image" loading="lazy">` : ''}
+                                ${has_image ? `<img src="${html_escape(item.image_url)}" alt="" class="item-image" loading="lazy">` : ''}
                                 <div class="icon-container">
-                                    <img src="${item.icon_url}" alt="" class="item-icon" loading="lazy" onerror="this.style.display='none'">
+                                    <img src="${html_escape(item.icon_url)}" alt="" class="item-icon" loading="lazy" onerror="this.style.display='none'">
                                 </div>
                                 <div class="item-label">${html_escape(item.label)}</div>
                                 ${item.meta ? `<div class="item-meta">${html_escape(meta_format(item.meta))}</div>` : ''}
-                                <div class="item-href">${new URL(item.href).hostname}</div>
+                                <div class="item-href">${html_escape(new URL(item.href).hostname)}</div>
                             </div>
                         </a>
                     `;
             }
         }
 
+        // The links file is not trusted: every value from it goes into the HTML through this,
+        // an attribute's value too
         function html_escape(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
 
         function meta_format(meta) {
