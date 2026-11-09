@@ -113,7 +113,7 @@ text, and a click that keeps the page.
 
 ## Docs and checks
 
-- [ ] `docs/ABOUT.ai.md` still speaks of sync and sign-in; it, `ABOUT.md`
+- [x] `docs/ABOUT.ai.md` still speaks of sync and sign-in; it, `ABOUT.md`
   and `DESIGN.ai.md` name commands and paths that are gone
 - [ ] The desktop documents describe an older app: no settings window, no
   login entry, old function names
