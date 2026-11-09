@@ -26,7 +26,7 @@ fix lands.
 - [ ] The desktop app grants every permission a page asks for
 - [ ] A click in the Playground's preview hands the draft to the linked site
 - [x] Another frame on the page can swap an embedded design's links
-- [ ] `% email` takes a `javascript:` address
+- [x] `% email` takes a `javascript:` address
 - [ ] Private host names go to an outside icon service
 - [ ] A password in an include address lands in the log
 - [ ] One icon request makes the site fetch without limit, and an odd icon
@@ -48,7 +48,7 @@ Search and keys:
 - [ ] Names with `ь` or `ъ` are not found by Latin typing
 - [ ] Going Up a long list, the current link hides under the top bar
   (`github`, `google-chrome`, `basic-for-internal3-with-groups`)
-- [ ] `% email` becomes a dead link
+- [x] `% email` becomes a dead link
 - [ ] The embed takes every key from the page around it
 - [ ] The embed misses an indented `% design`, and shows three sample
   links for no links
