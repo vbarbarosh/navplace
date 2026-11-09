@@ -68,6 +68,52 @@ describe('serve_icon', function () {
         }
         assert.equal(cache.size(), 0);
     });
+    it('draws a tile for a path with a broken escape, not an error', async function () {
+        for (const path of ['%E0%A4%A', '%', 'a.com%', '%ZZ.com']) {
+            const response = await serve_icon(make_request(path), {fetch_fn: fail_fetch});
+            assert.equal(response.status, 200, path);
+            assert.equal(response.headers.get('Content-Type'), 'image/svg+xml', path);
+            assert.match(await response.text(), />\?<\/text>/, path);
+        }
+    });
+    it('goes past an icon link it cannot read to the next source', async function () {
+        const links = [
+            '<link rel="icon" href="http://">',
+            '<link rel="icon" href="https://[bad">',
+            '<link rel="icon" href="data:image/svg+xml,%3Csvg%3E%">',
+            '<link rel="icon" href="data:image/png;base64,***">',
+            `<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%'%3E%3C/svg%3E">`,
+        ];
+        for (const link of [...links, links.join('')]) {
+            const fetch_fn = make_fetch({'https://a.com/': make_html_route(link), 'https://a.com/favicon.ico': make_png_route('image/x-icon')});
+            const response = await serve_icon(make_request('a.com'), {fetch_fn});
+            assert.equal(response.status, 200, link);
+            assert.equal(response.headers.get('Content-Type'), 'image/x-icon', link);
+        }
+    });
+    it('draws a tile, kept a day, when the lookup fails in a way no one foresaw', async function () {
+        const cache = make_cache();
+        const assets = {fetch: fail_fetch};
+        const response = await serve_icon(make_request('a.com'), {cache, fetch_fn: fail_fetch, assets});
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get('Content-Type'), 'image/svg+xml');
+        assert.equal(response.headers.get('Cache-Control'), 'public, max-age=86400, s-maxage=86400');
+        assert.equal(cache.size(), 1);
+    });
+    it("keeps the site's icon and navplace's own a month, Google's a day", async function () {
+        const site = await serve_icon(make_request('a.com'), {fetch_fn: make_fetch({'https://a.com/favicon.ico': make_png_route()})});
+        assert.equal(site.headers.get('Cache-Control'), 'public, max-age=86400, s-maxage=2592000');
+        const files = {
+            'https://navplace.com/lib/icons/index.json': new Response(JSON.stringify({'a.com': 'a.com.svg'})),
+            'https://navplace.com/lib/icons/a.com.svg': new Response('<svg/>'),
+        };
+        const assets = {fetch: async v => files[v.url]};
+        const own = await serve_icon(make_request('a.com'), {fetch_fn: fail_fetch, assets});
+        assert.equal(own.headers.get('Cache-Control'), 'public, max-age=86400, s-maxage=2592000');
+        const google = await serve_icon(make_request('a.com'), {fetch_fn: make_fetch({'https://www.google.com/s2/favicons?domain=a.com&sz=64': make_png_route()})});
+        assert.equal(google.headers.get('Content-Type'), 'image/png');
+        assert.equal(google.headers.get('Cache-Control'), 'public, max-age=86400, s-maxage=86400');
+    });
     it('answers from the cache without a lookup', async function () {
         const cache = make_cache();
         await serve_icon(make_request('a.com'), {cache, fetch_fn: make_fetch({'https://a.com/favicon.ico': make_png_route()})});

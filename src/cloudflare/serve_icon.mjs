@@ -9,7 +9,7 @@ import is_public_domain from '../../lib/is_public_domain.js';
 
 const DAY = 86400;
 // A new value drops every icon kept at the edge: what it keeps under the old one is never asked again
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 
 // What any icon answer carries: same-origin only, and an SVG opened as a page runs nothing
 const ICON_HEADERS = {
@@ -27,9 +27,9 @@ async function serve_icon(request, {cache = null, fetch_fn = fetch, assets = nul
         return new Response('Icons are for navplace pages only', {status: 403, headers: ICON_HEADERS});
     }
 
-    const domain = decodeURIComponent(url.pathname.slice('/icon/'.length)).toLowerCase();
+    const domain = domain_from_pathname(url.pathname);
     if (!is_public_domain(domain)) {
-        // localhost, an address, a port, a private name: nothing to look up
+        // localhost, an address, a port, a private name, a broken path: nothing to look up
         return make_icon_response(render_tile_svg(domain), 'image/svg+xml', DAY);
     }
 
@@ -39,9 +39,16 @@ async function serve_icon(request, {cache = null, fetch_fn = fetch, assets = nul
         return kept;
     }
 
-    const icon = await icon_find(domain, fetch_fn, assets ? library_from_assets(assets, url.origin) : null);
+    let icon = null;
+    try {
+        icon = await icon_find(domain, fetch_fn, assets ? library_from_assets(assets, url.origin) : null);
+    }
+    catch {
+        // An error no one foresaw is a miss as well: a tile, never a 500
+    }
+    // Google's is the last resort and a tile is a miss: both are asked again after a day
     const response = icon
-        ? make_icon_response(icon.bytes, icon.type, 30*DAY)
+        ? make_icon_response(icon.bytes, icon.type, (icon.source === 'google') ? DAY : 30*DAY)
         : make_icon_response(render_tile_svg(domain), 'image/svg+xml', DAY);
     if (cache) {
         await cache.put(key, response.clone());
@@ -62,6 +69,17 @@ function is_own_page(request, origin)
     }
     catch {
         return false;
+    }
+}
+
+// The <domain> of /icon/<domain>, in lower case; nothing when its escapes are broken (%E0%A4%A)
+function domain_from_pathname(pathname)
+{
+    try {
+        return decodeURIComponent(pathname.slice('/icon/'.length)).toLowerCase();
+    }
+    catch {
+        return '';
     }
 }
 
