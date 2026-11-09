@@ -77,6 +77,8 @@ async function main()
     await electron.app.whenReady();
 
     let parsed_collection = await collection_load();
+    // Chosen before anything can ask for a reload: a reload reads it and may change it
+    let design = await design_of_collection(parsed_collection);
 
     electron.ipcMain.handle('api_ping', function () {
         return `pong ${format_date(new Date())}`;
@@ -265,7 +267,6 @@ async function main()
         link_open(event.url);
     });
 
-    let design = await design_of_collection(parsed_collection);
     await win.loadURL(design_url(design));
     // Started at login (`--background`, from ~/.config/autostart): it waits hidden for the hotkey
     if (process.argv.includes('--background')) {
@@ -382,11 +383,18 @@ async function main()
         }
         catch {
         }
-        if (next !== design) {
-            design = next;
-            await win.loadURL(design_url(design));
-        }
+        await design_load(next);
         refresh_collection_in_background();
+    }
+
+    // The design the links file names now: the window loads it only when it is another one
+    async function design_load(next) {
+        if (next === design) {
+            return;
+        }
+        console.log(`[${app_uid}][design_changed] from=${design} to=${next}`);
+        design = next;
+        await win.loadURL(design_url(design));
     }
 
     // {zoom, on_top, hide_on_blur, hotkey, autostart}: each one given applied to the app and kept
@@ -407,8 +415,12 @@ async function main()
         await settings_save(settings);
     }
 
+    // The file is read again, so `% design:` is too: a design named since the last reload is loaded
+    // before the includes are pulled, the same one again leaves the page as it is
     async function refresh_collection() {
-        parsed_collection = await collection_resolve_includes(await collection_load(), app_uid);
+        const collection = await collection_load();
+        await design_load(await design_of_collection(collection));
+        parsed_collection = await collection_resolve_includes(collection, app_uid);
         win.webContents.send('api_items_changed', parsed_collection);
     }
 
