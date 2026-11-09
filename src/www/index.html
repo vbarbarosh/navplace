@@ -1073,7 +1073,7 @@ function main()
         if ((event.source !== iframe.contentWindow) || (event.data?.type !== 'navplace:ready')) {
             return;
         }
-        iframe.contentWindow.postMessage({type: 'navplace:items-text', text: DEFAULT_README}, '*');
+        iframe.contentWindow.postMessage({type: 'navplace:items-text', text: DEFAULT_README}, location.origin);
     });
     iframe.addEventListener('load', function () {
         const doc = iframe.contentDocument;

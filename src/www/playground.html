@@ -1534,8 +1534,12 @@ async function main()
         frame_ready = true;
         text_post();
     });
-    // A design focuses its own search box on load; typing keeps going in the editor
+    // A design focuses its own search box on load; typing keeps going in the editor.
+    // A link clicked in the preview can load its page there instead: that one is not ready for the text
     frame.addEventListener('load', function () {
+        if (!is_design_in_frame()) {
+            frame_ready = false;
+        }
         if (refocus_element) {
             refocus_element.focus();
             refocus_element = null;
@@ -2662,9 +2666,14 @@ async function main()
         refresh_text();
     }
 
+    // The text goes to the design in the preview, at this site's own origin, and to nothing else:
+    // a page a link loaded in the frame, the linked site, never gets the draft.
     // A failed load of the links' stays while the text still has that picture or icon: a preview
     // does not always load it again to say so, and a name typed half-way must not stay behind
     function text_post() {
+        if (!is_design_in_frame()) {
+            return;
+        }
         if (preview_errors.some(v => v.url)) {
             const urls = urls_from_text(editor.value, frame.contentDocument?.baseURI ?? location.href);
             const kept = preview_errors.filter(v => !v.url || urls.has(v.url));
@@ -2673,8 +2682,21 @@ async function main()
                 refresh_errors();
             }
         }
-        frame.contentWindow.postMessage({type: 'navplace:items-text', text: editor.value}, '*');
+        frame.contentWindow.postMessage({type: 'navplace:items-text', text: editor.value}, location.origin);
         frame_has_text = true;
+    }
+
+    // The preview still shows what the Playground put there: a design's own page, or its code as
+    // a srcdoc page, a # part the design added aside. The address of another site's page cannot
+    // be read at all
+    function is_design_in_frame() {
+        const design_href = frame.hasAttribute('srcdoc') ? 'about:srcdoc' : frame.src;
+        try {
+            return frame.contentWindow.location.href.replace(/#.*$/, '') === design_href;
+        }
+        catch {
+            return false;
+        }
     }
 
     // Divider `index` of the current tab to the place `at` (a part of the width): the panes on
