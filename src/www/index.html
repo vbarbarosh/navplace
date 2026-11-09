@@ -1077,6 +1077,12 @@ function main()
     });
     iframe.addEventListener('load', function () {
         const doc = iframe.contentDocument;
+        // A design puts the focus into its search box as it starts, and the page's keys went there
+        // with it. The page takes the focus back, so Home, End and the page keys scroll it; the demo
+        // has it again once the visitor clicks or types into it
+        if (document.activeElement === iframe) {
+            iframe.blur();
+        }
         // The app opens a link in the browser; here it opens in a new tab and the page stays
         iframe.contentWindow.open = function (href) {
             window.open(href, '_blank', 'noopener,noreferrer');
@@ -1092,7 +1098,8 @@ function main()
     });
     iframe.src = 'designs/github/index.html';
 
-    // Typing anywhere on the page goes to the app's search, the first letter too
+    // Typing anywhere on the page goes to the app's search, the first letter too, and the focus with
+    // it. Space is not typing: on the page it scrolls, as in any page; in the demo it is the demo's
     document.addEventListener('keydown', function (event) {
         if (!ready || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) {
             return;
@@ -1100,7 +1107,7 @@ function main()
         if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) {
             return;
         }
-        if ((event.key.length !== 1) || ((event.key === ' ') && (document.activeElement !== document.body))) {
+        if ((event.key.length !== 1) || (event.key === ' ')) {
             return;
         }
         demo_stop();

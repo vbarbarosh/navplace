@@ -1127,7 +1127,7 @@
             <div class="pane-heading"><code>links.txt</code><span class="heading-actions"><button type="button" data-action="pictures-shrink" title="Every picture of the text made again as WebP, AVIF, JPEG and PNG; the smallest takes its place">Shrink pictures</button><a href="docs.html#format" target="_blank" title="The format: directives, sections, links">Format <span aria-hidden="true">↗</span></a></span></div>
             <div class="code">
                 <pre aria-hidden="true"></pre>
-                <textarea aria-label="Collection source" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+                <textarea aria-label="Collection source" aria-describedby="editor-keys" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
             </div>
             <div class="pictures" hidden>
                 <div class="pictures-heading"><span class="pictures-title"></span><button type="button" class="pictures-close" data-action="pictures-close" title="Close" aria-label="Close">✕</button></div>
@@ -1163,7 +1163,7 @@
             <div class="code with-gutter">
                 <pre class="gutter" aria-hidden="true"></pre>
                 <pre aria-hidden="true"></pre>
-                <textarea aria-label="The design's code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+                <textarea aria-label="The design's code" aria-describedby="editor-keys" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
             </div>
         </section>
         <div class="divider" data-divider="2" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Resize the JSON and the preview" aria-valuemin="0" aria-valuemax="100" title="Drag to resize, double-click to reset"></div>
@@ -1176,6 +1176,8 @@
             <div class="pane-heading"><span class="errors-title">No errors</span></div>
             <ul class="errors-list"></ul>
         </section>
+        <!-- Read to a screen reader with each of the two editors that take Tab -->
+        <p id="editor-keys" hidden>Tab indents, Shift+Tab outdents. Escape, then Tab or Shift+Tab, leaves the editor.</p>
     </main>
 
 </div>
@@ -1306,6 +1308,9 @@ async function main()
     // The worker that makes the formats, started on first use; its requests by id
     let picture_worker = null;
     let picture_worker_next_id = 1;
+    // Escape was the last key in an editor: the next Tab moves the focus instead of indenting
+    let is_escaped = false;
+    let is_tab_hinted = false;
     const picture_requests = new Map();
 
     const work = document.querySelector('.work');
@@ -1453,14 +1458,29 @@ async function main()
     }
     document.addEventListener('beforeinput', text_replacing_beforeinput, true);
     document.addEventListener('input', text_replacing_input, true);
-    // Tab indents and Shift+Tab outdents by 4 spaces, every selected line alike; Ctrl+Z takes it back like any typing
+    // Tab indents and Shift+Tab outdents by 4 spaces, every selected line alike; Ctrl+Z takes it back like any typing.
+    // Escape is the keyboard's way out: the next Tab or Shift+Tab after it moves the focus as in any
+    // field. Any other key, a click or the focus gone turns indenting back on; a key held with Tab,
+    // Shift for one, is no key of its own
     for (const textarea of [editor, design_editor]) {
         textarea.addEventListener('keydown', function (event) {
-            if ((event.key === 'Tab') && !event.ctrlKey && !event.altKey && !event.metaKey) {
+            if (['Shift', 'Control', 'Alt', 'Meta'].includes(event.key)) {
+                return;
+            }
+            const is_leaving = is_escaped;
+            is_escaped = (event.key === 'Escape');
+            if ((event.key === 'Tab') && !is_leaving && !event.ctrlKey && !event.altKey && !event.metaKey) {
                 event.preventDefault();
                 textarea_tab(textarea, event.shiftKey);
+                // Said once, the first time Tab stays in the editor
+                if (!is_tab_hinted) {
+                    is_tab_hinted = true;
+                    editor_note_show('Tab indents: Escape, then Tab leaves the editor');
+                }
             }
         });
+        textarea.addEventListener('pointerdown', () => is_escaped = false);
+        textarea.addEventListener('blur', () => is_escaped = false);
     }
     // Load swaps a design in on purpose; Undo brings back what it replaced
     design_load_button.addEventListener('click', async function () {

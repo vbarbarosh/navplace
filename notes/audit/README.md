@@ -80,8 +80,8 @@ The Playground and the site:
 - [x] Picking a design replaces the visitor's own links
 - [x] A full storage stops saving the draft, with no word
 - [x] Two tabs overwrite each other's draft
-- [ ] Tab cannot leave the editor
-- [ ] Space, Home and End do not scroll the home page
+- [x] Tab cannot leave the editor
+- [x] Space, Home and End do not scroll the home page
 - [ ] `/docs` and `/playground` do not open
 - [ ] The home page shows an old version of the app
 - [ ] The site sends no security headers
