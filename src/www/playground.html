@@ -1532,6 +1532,7 @@ async function main()
             return;
         }
         frame_ready = true;
+        preview_open_replace();
         text_post();
     });
     // A design focuses its own search box on load; typing keeps going in the editor.
@@ -2063,6 +2064,20 @@ async function main()
         for (const element of doc.querySelectorAll(`a[href="${CSS.escape(href)}"]`)) {
             element.setAttribute('data-navplace-current', '');
         }
+    }
+
+    // A link the design opens (lib/navplace.js calls window.open) goes to a new tab, and the
+    // Playground stays. Done when the design says it is ready, not on the frame's load: that waits
+    // for the icons, and Enter comes sooner. Only the design's own page is touched, not a page a
+    // link loaded there
+    function preview_open_replace() {
+        if (!is_design_in_frame()) {
+            return;
+        }
+        frame.contentWindow.open = function (href) {
+            window.open(href, '_blank', 'noopener,noreferrer');
+            return null;
+        };
     }
 
     function preview_observe() {
