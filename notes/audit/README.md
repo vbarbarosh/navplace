@@ -77,7 +77,7 @@ The Playground and the site:
 
 - [x] A tag added to a link with no name turns it into a section; two
   parts changed at once garble the address
-- [ ] Picking a design replaces the visitor's own links
+- [x] Picking a design replaces the visitor's own links
 - [ ] A full storage stops saving the draft, with no word
 - [ ] Two tabs overwrite each other's draft
 - [ ] Tab cannot leave the editor

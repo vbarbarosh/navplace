@@ -1469,13 +1469,22 @@ async function main()
         refresh_design_pane(true);
         refresh_preview();
     });
-    // Picking a design loads its sample; without one, only the design line changes
+    // Picking a design changes the `% design:` line and nothing else: the links are the visitor's own.
+    // A sample nobody has touched is not, nor is no text at all: there the picked design's sample
+    // loads; without one, only the design line changes
     design_select.addEventListener('change', async function () {
         const design_name = design_select.value;
-        const sample = await sample_load(design_name);
-        if (sample !== undefined) {
-            text_replace(sample ?? text_design_set(editor.value, design_name));
+        const text = editor.value;
+        const sample_shown = text.trim() ? await sample_load(text_design) : '';
+        if (sample_shown === undefined) {
+            return;
         }
+        const sample = (!text.trim() || (text === sample_shown)) ? await sample_load(design_name) : null;
+        if (sample === undefined) {
+            return;
+        }
+        // What was typed while the samples loaded is kept too
+        text_replace(((editor.value === text) && sample) || text_design_set(editor.value, design_name));
     });
     document.querySelector('[data-action="reset"]').addEventListener('click', async function () {
         const sample = await sample_load(frame_design ?? 'showcase');
