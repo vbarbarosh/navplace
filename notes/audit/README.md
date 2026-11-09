@@ -59,7 +59,7 @@ Opening links:
 - [x] Several words + Enter open only the last link on the web, in place
   of the page
 - [x] A click in `google-chrome` or `basic-for-kids` loses the page
-- [ ] `file://` links do nothing in the desktop app
+- [x] `file://` links do nothing in the desktop app
 
 The desktop app:
 

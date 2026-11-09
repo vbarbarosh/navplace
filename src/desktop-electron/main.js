@@ -8,6 +8,8 @@ const collection_resolve_includes = require('./helpers/collection_resolve_includ
 const config = require('./config');
 const crypto = require('crypto');
 const electron = require('electron');
+const file_from_href = require('./helpers/file_from_href');
+const file_hrefs_from_collection = require('./helpers/file_hrefs_from_collection');
 const file_is_inside = require('./helpers/file_is_inside');
 const format_date = require('@vbarbarosh/node-helpers/src/format_date');
 const fs = require('fs');
@@ -23,6 +25,7 @@ const gnome_configure = require('./helpers/gnome_configure');
 const gnome_hotkey_set = require('./helpers/gnome_hotkey_set');
 const icon_find = require('../../lib/icon_find');
 const icon_library_file = require('../../lib/icon_library_file');
+const is_program_file = require('./helpers/is_program_file');
 const is_url_external = require('./helpers/is_url_external');
 const letter_tile_svg = require('./helpers/letter_tile_svg');
 const make = require('@vbarbarosh/type-helpers');
@@ -88,6 +91,9 @@ async function main()
     await electron.app.whenReady();
 
     let parsed_collection = await start_step('The links file could not be read', config.readme_file, collection_load());
+    // The `file:` addresses of the user's own file, taken before its includes are added: the only
+    // ones a page may ask the app to open
+    let file_hrefs = file_hrefs_from_collection(parsed_collection);
     // Chosen before anything can ask for a reload: a reload reads it and may change it
     let design = await design_of_collection(parsed_collection);
     const refresh_gate = make_newest_gate();
@@ -97,6 +103,9 @@ async function main()
     });
     electron.ipcMain.handle('api_items_all', async function () {
         return parsed_collection;
+    });
+    electron.ipcMain.handle('api_file_open', function (event, href) {
+        file_link_open(href);
     });
 
     const win = new electron.BrowserWindow({
@@ -456,6 +465,7 @@ async function main()
             return;
         }
         parsed_collection = resolved;
+        file_hrefs = file_hrefs_from_collection(collection);
         if (!win.isDestroyed()) {
             win.webContents.send('api_items_changed', parsed_collection);
         }
@@ -488,6 +498,17 @@ async function main()
     // A link a page asked for: opened outside, and the search starts over
     function link_open(url) {
         url_open_external(url, app_uid);
+        search_reset_later();
+    }
+
+    // A `file:` link a page asked the app to open, which the page cannot do itself: the same
+    function file_link_open(href) {
+        file_open_external(href, file_hrefs, app_uid);
+        search_reset_later();
+    }
+
+    // Several links opened at once start the search over once
+    function search_reset_later() {
         clearTimeout(search_reset_timer);
         search_reset_timer = setTimeout(() => search_reset().catch(() => {}), 100);
     }
@@ -553,7 +574,8 @@ function start_failure_report(error)
 
 // Only a web address or a plain mail address is handed to the system (helpers/is_url_external.js):
 // any other kind (ssh:, smb:, vscode:, file:, a mailto: that says more than whom to write to)
-// would start whatever program the system keeps for it
+// would start whatever program the system keeps for it. A `file:` link has its own way in,
+// file_open_external
 async function url_open_external(url, group_uid)
 {
     let protocol = null;
@@ -576,6 +598,37 @@ async function url_open_external(url, group_uid)
         }
     }
     await electron.shell.openExternal(url);
+}
+
+// A `file:` address is opened only when the user's own links file lists it (`file_hrefs`): a link
+// of an included file is someone else's text. A folder or a plain file goes to the system's
+// program for it; one that opening could run (helpers/is_program_file.js) is shown in its folder.
+// The logs keep no path
+async function file_open_external(href, file_hrefs, group_uid)
+{
+    let stat = null;
+
+    const file = file_from_href(href, file_hrefs);
+    if (!file) {
+        console.error(`[${group_uid}][file_link_skipped] listed=${file_hrefs.has(href)}`);
+        return;
+    }
+    try {
+        stat = await fs.promises.stat(file);
+    }
+    catch (error) {
+        console.error(`[${group_uid}][file_link_stat_failed] code=${error.code}`);
+        return;
+    }
+    if (is_program_file(file, stat.mode)) {
+        console.log(`[${group_uid}][file_link_shown_in_folder]`);
+        electron.shell.showItemInFolder(file);
+        return;
+    }
+    const failure = await electron.shell.openPath(file);
+    if (failure) {
+        console.error(`[${group_uid}][file_link_open_failed] reason=${JSON.stringify(failure)}`);
+    }
 }
 
 // The local file only. `% include:` urls are pulled by refresh_collection,
