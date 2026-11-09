@@ -936,7 +936,7 @@ Gmail   https://mail.google.com/
     <tbody>
         <tr><td><code>{type: 'navplace:ready'}</code></td><td>design → page</td><td>The design's runtime has loaded.</td></tr>
         <tr><td><code>{type: 'navplace:items-text', text}</code></td><td>page → design</td><td>The answer to ready: the <code>data-links</code> text.</td></tr>
-        <tr><td><code>{type: 'navplace:focus'}</code></td><td>page → design</td><td>Every key pressed on the host page; it focuses the design's search box.</td></tr>
+        <tr><td><code>{type: 'navplace:focus', key}</code></td><td>page → design</td><td>A character typed on the host page while nothing there has the focus: the design focuses its search box and types the character. A field, a button or a link of the host page keeps its keys; so do Space and the shortcuts with Ctrl, Alt or Cmd.</td></tr>
     </tbody>
 </table>
 <p>Links open in the top window. The widget shows only its own <code>data-links</code>: <code>% include:</code> does nothing here.</p>

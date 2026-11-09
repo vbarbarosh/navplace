@@ -50,7 +50,7 @@ Search and keys:
 - [ ] Going Up a long list, the current link hides under the top bar
   (`github`, `google-chrome`, `basic-for-internal3-with-groups`)
 - [x] `% email` becomes a dead link
-- [ ] The embed takes every key from the page around it
+- [x] The embed takes every key from the page around it
 - [ ] The embed misses an indented `% design`, and shows three sample
   links for no links
 
