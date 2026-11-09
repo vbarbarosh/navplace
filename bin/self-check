@@ -33,6 +33,64 @@ cd $scriptdir/..
     echo "`node -p 'require("./build/www/designs/index.json").length'` designs, the pages and lib/"
 ) 2>&1 | sed 's/^/[build\/www] /'
 
+# What is built can run: every script parses, and every file a page names is there
+(
+    set -o nounset -o errexit -o pipefail
+    node -e '
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
+
+const root = "build/www";
+const faults = [];
+const lib_files = fs.readdirSync(`${root}/lib`).filter(v => v.endsWith(".js")).map(v => `${root}/lib/${v}`);
+const page_files = fs.readdirSync(root).filter(v => v.endsWith(".html")).map(v => `${root}/${v}`);
+const design_files = fs.readdirSync(`${root}/designs`).map(v => `${root}/designs/${v}/index.html`).filter(v => fs.existsSync(v));
+
+for (const file of lib_files) {
+    script_check(fs.readFileSync(file, "utf8"), file);
+}
+for (const file of [...page_files, ...design_files]) {
+    const html = fs.readFileSync(file, "utf8");
+    let n = 0;
+    const rest = html.replace(/<script\b([^>]*)>([\s\S]*?)<\/script>/g, function (all, attrs, code) {
+        n += 1;
+        if (!/\bsrc=/.test(attrs)) {
+            script_check(code, `${file}, script ${n}`);
+        }
+        return `<script${attrs}></script>`;
+    });
+    // A static src or href only: v-bind:href, :src and the like belong to the page
+    for (const match of rest.matchAll(/(?<![\w:-])(?:src|href)="([^"]*)"/g)) {
+        const url = match[1];
+        if (!url || /^(https?:|\/\/|#|data:|mailto:|javascript:)/.test(url) || url.includes("${") || url.includes("{{")) {
+            continue;
+        }
+        const name = url.replace(/[?#].*$/, "");
+        const target = name.startsWith("/") ? path.join(root, name) : path.join(path.dirname(file), name);
+        if (!fs.existsSync(target)) {
+            faults.push(`${file}: ${url} is not in the build`);
+        }
+    }
+}
+if (faults.length) {
+    console.log(faults.join("\n"));
+    process.exit(1);
+}
+console.log(`${lib_files.length} scripts of lib/, ${page_files.length} pages and ${design_files.length} designs parse, and name only files that are there`);
+
+function script_check(code, name)
+{
+    try {
+        new vm.Script(code, {filename: name});
+    }
+    catch (error) {
+        faults.push(`${name}: ${error.message}`);
+    }
+}
+'
+) 2>&1 | sed 's/^/[build\/www] /'
+
 # A design loads the shared libraries from /lib/…, never ../../lib/…
 (
     set -o nounset -o errexit -o pipefail
