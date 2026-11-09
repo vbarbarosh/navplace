@@ -18,9 +18,10 @@ Links are always a redraw behind, never a delay in front.
   `refresh_collection()`, which runs after the window is up.
 - Startup awaits `load_collection()` once, because `% design:` decides which
   design to load. That is a local file read.
-- A pulled url gets 5 seconds and is then abandoned: its last good text, kept
-  in the app's folder, stands in for it. The window never learns about it; the
-  log does.
+- The urls are pulled side by side. Each gets 5 seconds, counted from the
+  request to the last byte of its answer, and 2 MB of text; past either it is
+  abandoned: its last good text, kept in the app's folder, stands in for it.
+  The window never learns about it; the log does.
 - New links reach the window through `api_items_changed`. The design redraws
   itself, so a slow source costs a redraw, never a stalled window.
 

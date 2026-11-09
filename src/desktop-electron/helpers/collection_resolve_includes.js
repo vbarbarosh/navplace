@@ -9,6 +9,11 @@ const http_get_utf8 = require('@vbarbarosh/node-helpers/src/http_get_utf8');
 const include_spec_from_text = require('./include_spec_from_text');
 const parse = require('../../../lib/parse');
 
+// An include address gets this long, counted from the request to the last byte of its answer,
+const TIME_LIMIT_MS = 5000;
+// and this many bytes of text: a longer answer is refused, not cut
+const SIZE_LIMIT = 2*1024*1024;
+
 // `% include:` pulls another document into this one. The directive belongs to
 // the desktop app; the web app and the embed widget ignore it.
 //
@@ -18,48 +23,73 @@ const parse = require('../../../lib/parse');
 // the filter of the pulling document gates local and pulled links alike. The
 // request carries no access token: an include url is a stranger.
 //
+// The addresses are pulled side by side, so a reload takes as long as its
+// slowest one and not as all of them in a row; the links stay in the order the
+// file lists its includes.
+//
 // With a folder in `kept_dir` the last good text of every address is kept there
 // and stands in for a pull that fails, however old it is: a laptop without its
 // network keeps the pulled links. Without one a failed pull adds nothing.
-async function collection_resolve_includes(collection, group_uid, {kept_dir = null} = {})
+async function collection_resolve_includes(collection, group_uid, {kept_dir = null, time_limit_ms = TIME_LIMIT_MS, size_limit = SIZE_LIMIT} = {})
 {
     const specs = (collection.meta.include || []).map(include_spec_from_text);
-    const items = [...collection.items];
-    for (const spec of specs) {
-        // A query may carry a token, the address a user and a password: the
-        // logs keep the url without them
-        const url_without_secrets = url_drop_secrets(spec.url);
-        if (!spec.url.startsWith('http://') && !spec.url.startsWith('https://')) {
-            console.error(`[${group_uid}][include_skipped] url=${url_without_secrets}`);
-            continue;
-        }
-        let text = null;
-        let kept = null;
-        try {
-            // Startup waits for this — a silent url must not hold the window back.
-            text = await http_get_utf8(spec.url, {timeout: 5000});
-        }
-        catch (error) {
-            // One dead url keeps the rest of the collection alive.
-            console.error(`[${group_uid}][include_failed] url=${url_without_secrets} reason=${JSON.stringify(error.message)}`);
-            kept = await include_kept_read(kept_dir, spec.url);
-            if (!kept) {
-                continue;
-            }
-            text = kept.text;
-        }
-        const included = parse(text_drop_directives(text), {prefix: spec.prefix, suffix: spec.suffix, tags: spec.tags, ns: collection.meta.ns});
-        if (kept) {
-            console.log(`[${group_uid}][include_kept] url=${url_without_secrets} file=${fs_path_basename(kept.file)} kept_at=${kept.kept_at.toISOString()} items=${included.items.length}`);
-        }
-        else {
-            console.log(`[${group_uid}][include_ok] url=${url_without_secrets} items=${included.items.length}`);
-            await include_kept_write(kept_dir, spec.url, text, group_uid);
-        }
-        items.push(...included.items);
-    }
+    const options = {group_uid, ns: collection.meta.ns, kept_dir, time_limit_ms, size_limit};
+    const lists = await Promise.all(specs.map(v => include_items_pull(v, options)));
 
-    return {meta: collection.meta, items};
+    // flat(), not push(...list): a very long list as arguments does not fit the stack
+    return {meta: collection.meta, items: [collection.items, ...lists].flat()};
+}
+
+// The links of one include: pulled, or of its kept copy when the pull fails, or none. One dead
+// url keeps the rest of the collection alive
+async function include_items_pull(spec, {group_uid, ns, kept_dir, time_limit_ms, size_limit})
+{
+    let text = null;
+    let kept = null;
+
+    // A query may carry a token, the address a user and a password: the
+    // logs keep the url without them
+    const url_without_secrets = url_drop_secrets(spec.url);
+    if (!spec.url.startsWith('http://') && !spec.url.startsWith('https://')) {
+        console.error(`[${group_uid}][include_skipped] url=${url_without_secrets}`);
+        return [];
+    }
+    try {
+        text = await include_text_pull(spec.url, time_limit_ms, size_limit);
+    }
+    catch (error) {
+        console.error(`[${group_uid}][include_failed] url=${url_without_secrets} reason=${JSON.stringify(error.message)}`);
+        kept = await include_kept_read(kept_dir, spec.url);
+        if (!kept) {
+            return [];
+        }
+        text = kept.text;
+    }
+    const included = parse(text_drop_directives(text), {prefix: spec.prefix, suffix: spec.suffix, tags: spec.tags, ns});
+    if (kept) {
+        console.log(`[${group_uid}][include_kept] url=${url_without_secrets} file=${fs_path_basename(kept.file)} kept_at=${kept.kept_at.toISOString()} items=${included.items.length}`);
+    }
+    else {
+        console.log(`[${group_uid}][include_ok] url=${url_without_secrets} items=${included.items.length}`);
+        await include_kept_write(kept_dir, spec.url, text, group_uid);
+    }
+    return included.items;
+}
+
+// The text an address answers with. The time limit is a total: an address that keeps sending
+// a line now and then is cut like a silent one. Startup and every summon wait for this
+async function include_text_pull(url, time_limit_ms, size_limit)
+{
+    const signal = AbortSignal.timeout(time_limit_ms);
+    try {
+        return await http_get_utf8(url, {signal, maxContentLength: size_limit});
+    }
+    catch (error) {
+        if (signal.aborted) {
+            throw new Error(`no whole answer in ${time_limit_ms} ms`);
+        }
+        throw error;
+    }
 }
 
 // The kept copy of an address: {file, text, kept_at}, the time of its last good pull; null when
