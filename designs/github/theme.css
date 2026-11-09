@@ -153,8 +153,12 @@ tbody td {
 
 tbody tr:first-child td { border-top: none; }
 
+/* ↑ stops a row below the stuck .topbar, not under it: the bar's padding (10px), the search box
+   (42px), the hint (8px above it and a line of 12px text, as tall as the font makes it: taken as
+   18px), the padding under it (12px) and the border */
 tbody tr {
     cursor: pointer;
+    scroll-margin-top: calc(10px + 42px + 8px + 18px + 12px + 1px);
 }
 
 tbody tr:hover { background: var(--hover); }

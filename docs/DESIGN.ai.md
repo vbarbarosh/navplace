@@ -63,7 +63,7 @@ navplace({
 ```
 
 - `input` — the search `<input>` element. The runtime listens to its `input` event, re-runs the filter, and calls `update(items)` with the new list. The runtime also auto-focuses this element when the user starts typing anywhere on the page.
-- `update(items, {current})` — called once on init (with the full list), again on every filter change, and on every Up/Down. The design re-renders from this list and puts the class `np-current` on the element of `items[current]`. The runtime owns Up, Down and Enter: Up/Down move `current` (0 after each new search) and scroll `.np-current` into view; Enter opens `items[current]`. Enter and Space on a focused button or link are left to it: the button does its work, the link opens as a click on it does. A default ring styles `.np-current`; restyle it in the design, for both themes. `update` also gets `{item}`, the current link itself. A design that shows other links than it was given, or in another order (a section picked, links grouped), tells the runtime with `navplace.order_set(shown)`, the links it shows in their screen order: ↑ ↓ and Enter then walk those. `navplace.current_set(index)` makes the link at that place in the order the current one (a row under the mouse). Items are sorted: `search1` matches (label + tags) first, then `search2` matches (href) not already included.
+- `update(items, {current})` — called once on init (with the full list), again on every filter change, and on every Up/Down. The design re-renders from this list and puts the class `np-current` on the element of `items[current]`. The runtime owns Up, Down and Enter: Up/Down move `current` (0 after each new search) and scroll `.np-current` into view; Enter opens `items[current]`. Enter and Space on a focused button or link are left to it: the button does its work, the link opens as a click on it does. A design with a bar stuck above its links (`position: sticky` or `fixed`) gives the links a `scroll-margin-top`, or their scroller a `scroll-padding-top`, as tall as that bar, or going Up the current link stops under it. A default ring styles `.np-current`; restyle it in the design, for both themes. `update` also gets `{item}`, the current link itself. A design that shows other links than it was given, or in another order (a section picked, links grouped), tells the runtime with `navplace.order_set(shown)`, the links it shows in their screen order: ↑ ↓ and Enter then walk those. `navplace.current_set(index)` makes the link at that place in the order the current one (a row under the mouse). Items are sorted: `search1` matches (label + tags) first, then `search2` matches (href) not already included.
 - `meta` — optional. Maps directive keys from the collection's `% key: value` lines to CSS selectors in your template. When the source has `% title: Vladimir Barbarosh`, the runtime writes `Vladimir Barbarosh` into the `innerText` of the element matched by `.identity h1`. Useful for designs with author / contact / section labels in the chrome. Only `title`, `email`, `subtitle` are wired in the existing designs, but any key works — and `email` on an `<a>` also updates its `href`.
 - `navigate(item)` — optional. Called for each selected link when the user presses Enter. If omitted, the default behavior is `navplace.navigate(item)` (which respects the multi-open selection — see below).
 
@@ -985,8 +985,12 @@ tbody td {
 
 tbody tr:first-child td { border-top: none; }
 
+/* ↑ stops a row below the stuck .topbar, not under it: the bar's padding (10px), the search box
+   (42px), the hint (8px above it and a line of 12px text, as tall as the font makes it: taken as
+   18px), the padding under it (12px) and the border */
 tbody tr {
     cursor: pointer;
+    scroll-margin-top: calc(10px + 42px + 8px + 18px + 12px + 1px);
 }
 
 tbody tr:hover { background: var(--hover); }
