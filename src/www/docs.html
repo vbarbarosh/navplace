@@ -843,8 +843,8 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
 <p>Type a few letters and press Enter: the top match opens.</p>
 <ul>
     <li>The list shows the links that match what you typed: matches in the label and tags (<code>search1</code>) first, then matches in the url (<code>search2</code>).</li>
-    <li>Matching runs on lower-case text, and what you type is used as typed: type in lower case.</li>
-    <li>Transliteration works one way: <code>git</code> finds an item labelled <code>Гитхаб</code>; Cyrillic typed in the box finds nothing.</li>
+    <li>Capital letters do not matter: <code>Git</code> and <code>git</code> find the same links.</li>
+    <li>Cyrillic letters are read as Latin ones, in the links and in what you type: <code>git</code> and <code>гит</code> both find an item labelled <code>Гитхаб</code>.</li>
 </ul>
 
 <h3 id="several-links">Several links at once</h3>
@@ -1016,8 +1016,6 @@ src/desktop-electron/bin/build    # the AppImage, into src/desktop-electron/buil
 <p>Desktop app: <code>~/.navplace/README.md</code>. Embed widget: in its <code>data-links</code>. Playground: in this browser. There is no server: <code>% include:</code> pulls links from any url.</p>
 <h3 id="faq-collections">Can the desktop app show several collections?</h3>
 <p>It reads one source. <code>% include:</code> pulls other documents into it.</p>
-<h3 id="faq-case">Why does <code>Git</code> find nothing?</h3>
-<p>The links' text is lower case and what you type is matched as typed: type <code>git</code>.</p>
 <h3 id="faq-fonts">Why does my design look different in the desktop app?</h3>
 <p>The desktop app blocks remote fonts, scripts and images. Ship them inside the design's folder or inline them.</p>
 <h3 id="faq-embed-update">Does the embed widget follow changes to my links?</h3>

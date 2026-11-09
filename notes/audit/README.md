@@ -41,7 +41,7 @@ fix lands.
 
 Search and keys:
 
-- [ ] A capital letter in the search finds nothing
+- [x] A capital letter in the search finds nothing
 - [ ] Enter or Space on a focused button or link opens the first link instead
 - [ ] `!git` still lists a link named Git, `git/api` misses a link with
   one word in its name and the other in its address
