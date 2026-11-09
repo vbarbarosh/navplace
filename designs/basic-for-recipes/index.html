@@ -296,22 +296,28 @@
 
             function render_item_html(item, is_current) {
                 return `
-                    <a href="${item.href}" class="recipe-card ${is_current ? 'np-current' : ''}" target="_blank">
-                        ${has_image(item) ? `<div class="image-container"><img src="${item.image_url}" alt="${item.label}" class="recipe-image"></div>` : ''}
+                    <a href="${html_escape(item.href)}" class="recipe-card ${is_current ? 'np-current' : ''}" target="_blank">
+                        ${has_image(item) ? `<div class="image-container"><img src="${html_escape(item.image_url)}" alt="${html_escape(item.label)}" class="recipe-image"></div>` : ''}
                         <div class="recipe-content">
                             <div class="recipe-header">
-                                ${item.icon_url ? `<img src="${item.icon_url}" alt="" class="favicon">` : ''}
+                                ${item.icon_url ? `<img src="${html_escape(item.icon_url)}" alt="" class="favicon">` : ''}
                                 <div>
-                                    <h3 class="recipe-title">${item.label}</h3>
-                                    ${item.meta?.domain ? `<div class="recipe-meta">${item.meta.domain}</div>` : ''}
+                                    <h3 class="recipe-title">${html_escape(item.label)}</h3>
+                                    ${item.meta?.domain ? `<div class="recipe-meta">${html_escape(item.meta.domain)}</div>` : ''}
                                 </div>
                             </div>
-                            ${item.meta?.description ? `<div class="recipe-description">${item.meta.description}</div>` : ''}
-                            ${item.meta?.category ? `<div class="recipe-meta">${item.meta.category}</div>` : ''}
+                            ${item.meta?.description ? `<div class="recipe-description">${html_escape(item.meta.description)}</div>` : ''}
+                            ${item.meta?.category ? `<div class="recipe-meta">${html_escape(item.meta.category)}</div>` : ''}
                         </div>
                     </a>
                 `;
             }
+        }
+
+        // The links file is not trusted: every value from it goes into the HTML through this,
+        // an attribute's value too
+        function html_escape(text) {
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
     }
 </script>
