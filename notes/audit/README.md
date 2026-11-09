@@ -56,7 +56,7 @@ Search and keys:
 
 Opening links:
 
-- [ ] Several words + Enter open only the last link on the web, in place
+- [x] Several words + Enter open only the last link on the web, in place
   of the page
 - [ ] A click in `google-chrome` or `basic-for-kids` loses the page
 - [ ] `file://` links do nothing in the desktop app

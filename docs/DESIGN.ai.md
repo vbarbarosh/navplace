@@ -81,7 +81,7 @@ linkEl.onclick = e => navplace.navigate(item, e);
 
 The user can type space-separated expressions in the input: `gh mail cal`. The runtime compiles each expression separately and selects **one item per expression** (the first match). `update(items)` receives the items matching the **last** expression typed, so the list visible to the user reflects what's currently being narrowed.
 
-On Enter (or on a `navplace.navigate(item, e)` click), the runtime opens **every** selected item — not just the one clicked or the one at the top. This is a signature feature; do not break it by short-circuiting with `<a href target="_blank">` alone.
+On Enter (or on a `navplace.navigate(item, e)` click), the runtime opens **every** selected item — not just the one clicked or the one at the top. This is a signature feature; do not break it by short-circuiting with `<a href target="_blank">` alone. On the web the last one takes the page's place and the others open in new tabs; when the browser blocks pop-ups only the first of those tabs opens, until pop-ups are allowed for the site.
 
 ## Item shape
 
