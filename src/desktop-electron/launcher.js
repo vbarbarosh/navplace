@@ -27,13 +27,30 @@ function main()
             return;
         }
         // ~/.local/share/applications/navplace.desktop
-        child_process.spawn('gtk-launch', ['navplace'], {detached: true, stdio: 'ignore'}).unref();
-        // Booting the AppImage takes a few seconds: say so, or the hotkey seems to do nothing
-        const notify = child_process.spawn('notify-send', ['--app-name=NavPlace', '--expire-time=4000', 'NavPlace is starting…', 'It opens in a few seconds. Next time it starts with your login.'], {detached: true, stdio: 'ignore'});
-        notify.on('error', () => {});
-        notify.unref();
+        const starter = child_process.spawn('gtk-launch', ['navplace'], {detached: true, stdio: 'ignore'});
+        // No gtk-launch on this system: say that, not that the app is starting
+        starter.on('error', function (error) {
+            notification_send(['NavPlace could not start', `gtk-launch: ${error.message}`]);
+        });
+        // gtk-launch ends as soon as it has started the app, or could not
+        starter.on('exit', function (code) {
+            if (code === 0) {
+                // Booting the AppImage takes a few seconds: say so, or the hotkey seems to do nothing
+                notification_send(['--expire-time=4000', 'NavPlace is starting…', 'It opens in a few seconds. Next time it starts with your login.']);
+                return;
+            }
+            notification_send(['NavPlace could not start', `"gtk-launch navplace" ended with code ${code}. Run the AppImage with --configure-gnome to set it up again.`]);
+        });
     });
 
     client.setTimeout(150);
     client.on('timeout', () => client.destroy());
+}
+
+// A desktop notification; a system without notify-send stays silent
+function notification_send(args)
+{
+    const notify = child_process.spawn('notify-send', ['--app-name=NavPlace', ...args], {detached: true, stdio: 'ignore'});
+    notify.on('error', () => {});
+    notify.unref();
 }

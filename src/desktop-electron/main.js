@@ -1,5 +1,6 @@
 const Promise = require('bluebird');
 const autostart_set = require('./helpers/autostart_set');
+const child_process = require('child_process');
 const chrome_window_focus = require('./helpers/chrome_window_focus');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
 const collection_resolve_includes = require('./helpers/collection_resolve_includes');
@@ -28,6 +29,7 @@ const make_socket_server = require('./helpers/make_socket_server');
 const parse = require('../../lib/parse');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
 const settings_from_raw = require('./helpers/settings_from_raw');
+const start_failure_text = require('./helpers/start_failure_text');
 const url_from_path = require('url').pathToFileURL;
 
 const DEFAULT_README = `% design: github
@@ -42,7 +44,9 @@ Node.js          https://nodejs.org/en/docs
 Electron         https://www.electronjs.org/docs/latest/
 `;
 
-cli(main);
+const START_FAILURE_TITLE = 'NavPlace could not start';
+
+cli(main, start_failure_report);
 
 async function main()
 {
@@ -77,7 +81,7 @@ async function main()
 
     await electron.app.whenReady();
 
-    let parsed_collection = await collection_load();
+    let parsed_collection = await start_step('The links file could not be read', config.readme_file, collection_load());
     // Chosen before anything can ask for a reload: a reload reads it and may change it
     let design = await design_of_collection(parsed_collection);
     const refresh_gate = make_newest_gate();
@@ -116,13 +120,13 @@ async function main()
         console.log(`[${app_uid}][second_instance]`);
         await window_show();
     });
-    await using _ = await make_socket_server({
+    await using _ = await start_step('The socket the hotkey talks to could not be opened', config.socket_file, make_socket_server({
         socket_file: config.socket_file,
         connection_accept: async function () {
             console.log(`[${app_uid}][socket_connection]`);
             await window_show();
         },
-    });
+    }));
 
     electron.protocol.handle('private', async function (request) {
         let root = null;
@@ -476,6 +480,36 @@ async function main()
             }
         }`);
     }
+}
+
+// A step of the start: when it fails, the error carries what could not be done and the path
+// concerned, for the box of a failed start
+async function start_step(sentence, file, promise)
+{
+    try {
+        return await promise;
+    }
+    catch (error) {
+        error.start_step = {sentence, file};
+        throw error;
+    }
+}
+
+// A start that fails says so to the user and ends with code 1: started by the hotkey or at login,
+// nobody reads stderr. A box, which holds the app until it is closed; before the app is ready
+// Linux shows none, so a notification then. `--configure-gnome` runs in a terminal: stderr is read
+function start_failure_report(error)
+{
+    console.error(error);
+    if (process.argv.includes('--configure-gnome')) {
+        return;
+    }
+    const text = start_failure_text(error);
+    if (electron.app.isReady()) {
+        electron.dialog.showErrorBox(START_FAILURE_TITLE, text);
+        return;
+    }
+    child_process.spawnSync('notify-send', ['--app-name=NavPlace', START_FAILURE_TITLE, text], {stdio: 'ignore'});
 }
 
 // Only a web address is handed to the system: any other kind (ssh:, smb:, vscode:, mailto:, file:)

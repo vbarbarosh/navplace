@@ -68,7 +68,7 @@ The desktop app:
 - [x] Included links vanish when offline
 - [x] An older reload overwrites a newer one
 - [x] Includes are pulled one after another, with no limit on time or size
-- [ ] A start that fails shows nothing
+- [x] A start that fails shows nothing
 - [ ] Settings open, the links window closed: the hotkey is dead
 - [ ] A space in the AppImage path cuts the login entry in two
 - [ ] After an update, login still starts the old file
