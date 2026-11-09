@@ -29,10 +29,10 @@ Plain text. Parsed by `lib/parse.js`. The grammar uses three prefix characters t
 Grammar:
 
 - `label  url` — link line. `label` optional; if absent, the parser uses the URL host (plus pathname when non-`/`). `url` matches `^(https?|file)://\S+$` and must be the last token on the line.
-- **`% key: value`** — **document-level directive**; starts a line with `%`. Known keys: `design`, `title`, `email`, `ns`, `include`, `picture <name>`. Unknown keys are stored in the document-level `meta` object verbatim. Read by the design via the `navplace({ meta: { … } })` DOM-mapping parameter.
+- **`% key: value`** — **document-level directive**; starts a line with `%`. Known keys: `design`, `title`, `email`, `ns`, `include`, `picture <name>`. Unknown keys are stored in the document-level `meta` object verbatim. Read by the design via the `navplace({ meta: { … } })` DOM-mapping parameter, on the web and in the desktop app alike; a key the file does not have leaves the design's own text and link.
 - **`% ns: a | b`** — restricts output to items whose namespaces include `a` or `b`.
 - **`% picture name: url`** — names a picture for `@name`; `url` is an `http://`, `https://` or `data:image/` url. Repeatable; goes into `meta.picture` as `{name: url}`.
-- **`% include: url`** — desktop app only; pulls the document at `url` and appends its links. Repeatable; goes into `meta.include` as a list.
+- **`% include: url`** — desktop app only; pulls the document at `url` and appends its links. The pulled document's own `%` lines are dropped, so only the user's own file sets `title`, `subtitle` and `email`. Repeatable; goes into `meta.include` as a list.
 - **`# Section`** — **section heading**; starts a line with `#`. Multiple section labels can be joined with `|`: `# Work | Side projects`. A heading block (consecutive `#` lines) attaches its namespaces to every link line that follows it, until the next heading block; a blank line does not end it. Goes into each item's `namespaces` array.
 - **`#tag`** — inline on a link line; **per-item tag** (no value). Goes into the item's `tags` array.
 - **`#tag=value`** — inline on a link line; **per-item tag with a value**. Goes into the item's `meta` object (`{tag: 'value'}`). Despite the field name, this is a tag with a value, not document-level meta.
@@ -83,7 +83,8 @@ Match order: items whose parts all hold on the label and tags first, then the it
 
 Navigation behavior in `lib/navplace.js`:
 
-- Inside Electron (`window.ElectronApp` defined): `window.open(href, '_blank', 'noopener,noreferrer')`. The Electron `setWindowOpenHandler` then routes the URL to `electron.shell.openExternal` — the link opens in the OS default browser. Only `http:` and `https:` addresses are handed over; any other kind is skipped and logged. The window never leaves its page: a navigation (`will-navigate`) is cancelled and opened the same way.
+- Inside Electron (`window.ElectronApp` defined): `window.open(href, '_blank', 'noopener,noreferrer')`. The Electron `setWindowOpenHandler` then routes the URL to `electron.shell.openExternal` — the link opens in the OS default browser. Only `http:` and `https:` addresses and a plain `mailto:` address (one address, nothing after it: no `?`, `&` or `%`, no second address), which opens in the mail program, are handed over; any other kind is skipped and logged. The window never leaves its page: a navigation (`will-navigate`) is cancelled and opened the same way.
+- A `file:` link inside Electron takes another way: `navplace.navigate` calls `window.ElectronApp.api_file_open(href)`, and the app opens it only when the user's own `~/.navplace/README.md` lists that address; a `file:` link that came from an included file is never opened. A folder or a plain file opens in the system's program for it; a program (an executable file, a `.desktop`, `.sh`, `.AppImage` and the like) is shown in its folder instead of being run. On the web a `file:` link stays the browser's, which refuses it from a web page.
 - Outside Electron: `window.open(href, '_top', 'noopener,noreferrer')` for the current link; with several expressions the other links open first, each with `'_blank'`.
 - A click with Ctrl, Cmd, Shift or the middle button on an `<a href>` is left to the browser.
 
@@ -102,6 +103,7 @@ Settings window (`src/desktop-electron/settings/index.html`, opened by the gear 
 IPC channels (`electron.ipcMain.handle`):
 - `api_ping` → returns `pong <formatted date>`.
 - `api_items_all` → returns the collection the app holds: `~/.navplace/README.md` parsed, with the links of its `% include:` urls once they are pulled.
+- `api_file_open` → opens a `file:` link when the user's own links file lists it (see Navigation behavior above).
 - `settings_open` → opens the settings window. The other `settings_…` channels answer the settings window only.
 
 Each reloaded collection is sent to the window on `api_items_changed`.
