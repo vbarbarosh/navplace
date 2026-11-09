@@ -263,12 +263,23 @@
     {
         const search_input = document.querySelector('.search-input');
         const items_container = document.getElementById('items-container');
+        // The links as they are drawn, a card each, in the same order
+        let shown_items = [];
 
         // Initialize with empty state
         refresh_items([]);
 
         if (typeof navplace === 'function') {
             navplace({input: search_input, update: refresh_items});
+            // A click on a card opens its link through the runtime: every selected link, the
+            // clicked one in place of the last
+            items_container.addEventListener('click', function (event) {
+                const card = event.target.closest('.recipe-card');
+                const item = card ? shown_items[Array.from(items_container.children).indexOf(card)] : null;
+                if (item) {
+                    navplace.navigate(item, event);
+                }
+            });
         }
 
         // Fallback for development/demo
@@ -277,6 +288,7 @@
         };
 
         function refresh_items(items, {current} = {}) {
+            shown_items = items || [];
             if (!items || (items.length === 0)) {
                 items_container.innerHTML = `
                         <div class="empty-state">
