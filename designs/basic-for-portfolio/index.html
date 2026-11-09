@@ -254,8 +254,8 @@
 
             function render_item_html(item, is_current) {
                 const icon_html = item.icon_url ? `
-                            <img src="${item.icon_url}"
-                                 alt="${item.label} icon"
+                            <img src="${html_escape(item.icon_url)}"
+                                 alt="${html_escape(item.label)} icon"
                                  class="item-icon"
                                  onerror="this.style.display='none'">
                         ` : '';
@@ -265,13 +265,13 @@
                                 </div>
                             ` : '';
                 const image_html = item.image_url ? `
-                            <img src="${item.image_url}"
-                                 alt="${item.label} preview"
+                            <img src="${html_escape(item.image_url)}"
+                                 alt="${html_escape(item.label)} preview"
                                  class="item-image"
                                  onerror="this.style.display='none'">
                         ` : '';
                 return `
-                    <a href="${item.href}" class="item-card ${is_current ? 'np-current' : ''}" target="_blank" rel="noopener">
+                    <a href="${html_escape(item.href)}" class="item-card ${is_current ? 'np-current' : ''}" target="_blank" rel="noopener">
                         ${icon_html}
 
                         <div class="item-content">
@@ -296,10 +296,10 @@
                                     `;
         }
 
+        // The links file is not trusted: every value from it goes into the HTML through this,
+        // an attribute's value too
         function html_escape(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
     }
 </script>
