@@ -243,6 +243,14 @@ async function main()
         callback({cancel: !prefixes.some(v => params.url.startsWith(v))});
     });
 
+    // A page gets nothing it asks for: no reading of the clipboard, no location, camera, microphone
+    // or notifications, no program of the system started for an address. One thing is left, writing
+    // to the clipboard: a design's Copy button
+    electron.session.defaultSession.setPermissionRequestHandler(function (web_contents, permission, callback) {
+        callback(permission === 'clipboard-sanitized-write');
+    });
+    electron.session.defaultSession.setPermissionCheckHandler((web_contents, permission) => permission === 'clipboard-sanitized-write');
+
     // A link opened, by Enter, a click or several at once: the search starts over, so the window
     // that comes back shows every link with the first one selected
     let search_reset_timer = null;
