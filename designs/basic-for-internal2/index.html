@@ -224,16 +224,23 @@
 
         function render_item_html(item, is_current) {
             return `
-            <a href="${item.href}" class="nav-item ${is_current ? 'np-current' : ''}" target="_blank" rel="noopener noreferrer">
-                <img src="${item.icon_url}" class="nav-icon" onerror="this.style.display='none'">
+            <a href="${html_escape(item.href)}" class="nav-item ${is_current ? 'np-current' : ''}" target="_blank" rel="noopener noreferrer">
+                <img src="${html_escape(item.icon_url)}" class="nav-icon" onerror="this.style.display='none'">
                 <div class="nav-content">
-                    <span class="nav-label">${item.label}</span>
-                    <span class="nav-href">${item.href}</span>
+                    <span class="nav-label">${html_escape(item.label)}</span>
+                    <span class="nav-href">${html_escape(item.href)}</span>
                 </div>
-                ${item.image_url ? `<img src="${item.image_url}" class="nav-image">` : ''}
+                ${item.image_url ? `<img src="${html_escape(item.image_url)}" class="nav-image">` : ''}
             </a>
         `;
         }
+    }
+
+    // The links file is not trusted: every value from it goes into the HTML through this,
+    // an attribute's value too
+    function html_escape(text)
+    {
+        return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 </script>
 
