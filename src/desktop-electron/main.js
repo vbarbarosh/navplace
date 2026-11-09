@@ -1,4 +1,5 @@
 const Promise = require('bluebird');
+const appimage_entries_repoint = require('./helpers/appimage_entries_repoint');
 const autostart_set = require('./helpers/autostart_set');
 const child_process = require('child_process');
 const chrome_window_focus = require('./helpers/chrome_window_focus');
@@ -78,6 +79,10 @@ async function main()
 
     const app_uid = crypto.randomUUID();
     console.log(`[${app_uid}][group_spawn]`);
+
+    if (config.appimage_file) {
+        entries_repoint(app_uid);
+    }
 
     await electron.app.whenReady();
 
@@ -496,6 +501,22 @@ async function main()
                 input.dispatchEvent(new Event('input', {bubbles: true}));
             }
         }`);
+    }
+}
+
+// After an update the AppImage is another file: the entries --configure-gnome wrote for the old
+// one, the hotkey's cold start and the start at login, are pointed at the running one. Never
+// awaited by the start, and never its failure
+async function entries_repoint(group_uid)
+{
+    try {
+        const files = await appimage_entries_repoint({appimage_file: config.appimage_file, desktop_file: config.desktop_file, autostart_file: config.autostart_file});
+        if (files.length) {
+            console.log(`[${group_uid}][entries_repointed] appimage=${config.appimage_file} files=${files.join(',')}`);
+        }
+    }
+    catch (error) {
+        console.error(`[${group_uid}][entries_repoint_failed] reason=${JSON.stringify(error.message)}`);
     }
 }
 

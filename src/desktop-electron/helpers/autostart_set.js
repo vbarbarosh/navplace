@@ -1,4 +1,5 @@
 const config = require('../config');
+const desktop_exec_arg_from_text = require('./desktop_exec_arg_from_text');
 const fs = require('fs');
 const fs_exists = require('@vbarbarosh/node-helpers/src/fs_exists');
 const fs_mkdirp = require('@vbarbarosh/node-helpers/src/fs_mkdirp');
@@ -25,7 +26,7 @@ async function autostart_set(on, {appimage_file, icon})
         'Name=NavPlace',
         'Comment=Waits in the background for its hotkey',
         `Icon=${icon}`,
-        `Exec=${appimage_file} --background`,
+        `Exec=${desktop_exec_arg_from_text(appimage_file)} --background`,
         'NoDisplay=true',
         'X-GNOME-Autostart-enabled=true',
         '',

@@ -70,8 +70,8 @@ The desktop app:
 - [x] Includes are pulled one after another, with no limit on time or size
 - [x] A start that fails shows nothing
 - [x] Settings open, the links window closed: the hotkey is dead
-- [ ] A space in the AppImage path cuts the login entry in two
-- [ ] After an update, login still starts the old file
+- [x] A space in the AppImage path cuts the login entry in two
+- [x] After an update, login still starts the old file
 
 The Playground and the site:
 

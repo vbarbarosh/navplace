@@ -1,6 +1,7 @@
 const autostart_set = require('./autostart_set');
 const command_run = require('./command_run');
 const config = require('../config');
+const desktop_exec_arg_from_text = require('./desktop_exec_arg_from_text');
 const fs = require('fs');
 const fs_exists = require('@vbarbarosh/node-helpers/src/fs_exists');
 const fs_mkdirp = require('@vbarbarosh/node-helpers/src/fs_mkdirp');
@@ -36,7 +37,7 @@ async function gnome_configure({hotkey})
     }
 
     const launcher_file = config.launcher_file;
-    const desktop_file = fs_path_join(config.data_home_dir, 'applications', 'navplace.desktop');
+    const desktop_file = config.desktop_file;
     const autostart_file = config.autostart_file;
 
     await fs_mkdirp(config.user_data_dir);
@@ -58,7 +59,7 @@ async function gnome_configure({hotkey})
         'Name=NavPlace',
         'Comment=The fastest way to open your links',
         `Icon=${icon}`,
-        `Exec=${appimage_file}`,
+        `Exec=${desktop_exec_arg_from_text(appimage_file)}`,
         'Categories=Utility;',
         'StartupWMClass=NavPlace',
         '',

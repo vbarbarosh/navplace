@@ -18,6 +18,7 @@ function make_config(settings)
         settings_file: {type: 'null'},
         settings_page_dir: {type: 'null'},
         autostart_file: {type: 'null'},
+        desktop_file: {type: 'null'},
     });
 
     out.designs_dir = fs_path_resolve(__dirname, '../../../designs');
@@ -29,6 +30,8 @@ function make_config(settings)
     out.settings_page_dir = fs_path_resolve(__dirname, '../settings');
     // XDG autostart: GNOME starts every .desktop of $XDG_CONFIG_HOME/autostart at login
     out.autostart_file = fs_path_resolve(out.user_data_dir, '../autostart/navplace.desktop');
+    // `gtk-launch navplace`, the hotkey's cold start, reads this one
+    out.desktop_file = fs_path_resolve(out.data_home_dir, 'applications/navplace.desktop');
 
     return out;
 }
