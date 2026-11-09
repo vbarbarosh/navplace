@@ -232,15 +232,27 @@
     {
         const container = document.getElementById('items-container');
         const search_input = document.querySelector('input[type="search"]');
+        // The links as they are drawn, a card each, in the same order
+        let shown_items = [];
 
         if (typeof navplace === 'function') {
             navplace({input: search_input, update: refresh_items});
+            // A click on a card opens its link through the runtime: every selected link, the
+            // clicked one in place of the last
+            container.addEventListener('click', function (event) {
+                const card = event.target.closest('.item-card');
+                const item = card ? shown_items[Array.from(container.children).indexOf(card)] : null;
+                if (item) {
+                    navplace.navigate(item, event);
+                }
+            });
         }
 
         // Initial empty state
         refresh_items([]);
 
         function refresh_items(items, {current} = {}) {
+            shown_items = items || [];
             if (!items || (items.length === 0)) {
                 container.innerHTML = `
                         <div class="empty-state">
