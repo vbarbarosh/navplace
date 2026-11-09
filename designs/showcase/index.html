@@ -44,17 +44,22 @@ function main()
         grid.replaceChildren(...items.map(function (item, i) {
             const templ = document.createElement('template');
             templ.innerHTML = `
-                <a href="${item.href}" class="tile">
+                <a class="tile">
                     <div class="icon">
-                        <img src="${item.icon_url}">
+                        <img>
                     </div>
                     <div>
-                        <div class="label">${item.label}</div>
-                        <div class="sub">${new URL(item.href).host}</div>
+                        <div class="label"></div>
+                        <div class="sub"></div>
                     </div>
                 </a>
             `;
             const out = templ.content.firstElementChild;
+            // The links file is not trusted: its text enters as text or a set attribute, never as HTML
+            out.href = item.href;
+            out.querySelector('img').src = item.icon_url;
+            out.querySelector('.label').textContent = item.label;
+            out.querySelector('.sub').textContent = new URL(item.href).host;
             out.classList.toggle('np-current', i === current);
             out.onclick = function (event) {
                 navplace.navigate(item, event);
