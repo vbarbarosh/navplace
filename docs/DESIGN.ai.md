@@ -141,6 +141,7 @@ A design **must**:
 4. Work without network access (see "Desktop network gate" below).
 5. Be a single `index.html` plus a `theme.css` (plus any local assets). No build step.
 6. Have a light and a dark theme with the shared switch: `<script src="/lib/theme_switch.js"></script>` in `<head>`, before the design's CSS; light colours on `:root`, dark ones on `:root[data-theme="dark"]` (the rulebook's UI-01 to UI-04). `bin/self-check` fails the build for a design without it.
+7. Put everything from the links file (`label`, `href`, `icon_url`, `image_url`, `tags`, `meta` values, `namespaces`) into the page as text, never as HTML: `textContent` and set attributes (`a.href = …`, `img.src = …`), or, in an HTML string, every value through an `html_escape` that covers `& < > " '`, attribute values included. The file is not trusted (an embed's `data-links`, another person's file pulled in by `% include:`): a link named `<img src=x onerror=…>` must show as exactly that text.
 
 A design **should**:
 
@@ -214,11 +215,11 @@ Copy this and modify. It's a complete, working design with no dependencies — d
         a.href = item.href;                          // for middle-click / "open in new tab"
         a.className = 'row';
         a.onclick = e => navplace.navigate(item, e); // signature multi-open behavior
-        a.innerHTML = `
-            <img class="row-icon" src="${item.image_url ?? item.icon_url}" alt="">
-            <span class="row-label">${item.label}</span>
-            <span class="row-host">${new URL(item.href).host}</span>
-        `;
+        // The links file is not trusted: its text enters as text or a set attribute, never as HTML
+        a.innerHTML = '<img class="row-icon" alt=""><span class="row-label"></span><span class="row-host"></span>';
+        a.querySelector('.row-icon').src = item.image_url ?? item.icon_url;
+        a.querySelector('.row-label').textContent = item.label;
+        a.querySelector('.row-host').textContent = new URL(item.href).host;
         return a;
     }
 })();
@@ -428,17 +429,22 @@ function main()
         grid.replaceChildren(...items.map(function (item, i) {
             const templ = document.createElement('template');
             templ.innerHTML = `
-                <a href="${item.href}" class="tile">
+                <a class="tile">
                     <div class="icon">
-                        <img src="${item.icon_url}">
+                        <img>
                     </div>
                     <div>
-                        <div class="label">${item.label}</div>
-                        <div class="sub">${new URL(item.href).host}</div>
+                        <div class="label"></div>
+                        <div class="sub"></div>
                     </div>
                 </a>
             `;
             const out = templ.content.firstElementChild;
+            // The links file is not trusted: its text enters as text or a set attribute, never as HTML
+            out.href = item.href;
+            out.querySelector('img').src = item.icon_url;
+            out.querySelector('.label').textContent = item.label;
+            out.querySelector('.sub').textContent = new URL(item.href).host;
             out.classList.toggle('np-current', i === current);
             out.onclick = function (event) {
                 navplace.navigate(item, event);

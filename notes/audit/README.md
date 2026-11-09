@@ -17,7 +17,7 @@ fix lands.
 
 ![What can happen as rows, where as columns: the Playground, an embed on another site, the desktop app, the icon service](unsafe.png)
 
-- [ ] A link's name or address runs as code in 5 designs (`showcase`,
+- [x] A link's name or address runs as code in 5 designs (`showcase`,
   `basic-for-internal2`, `basic-for-kids2`, `basic-for-portfolio`,
   `basic-for-recipes`) and in the example of `docs/DESIGN.ai.md`
 - [x] Any page of the desktop app can read any file on the disk, through
