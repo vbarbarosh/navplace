@@ -427,7 +427,9 @@ async function main()
         if (pass.is_newest()) {
             await design_load(await design_of_collection(collection));
         }
-        const resolved = await collection_resolve_includes(collection, app_uid);
+        // includes/: the last good text of every `% include:` address, for the time it does not answer
+        const kept_dir = fs_path_resolve(electron.app.getPath('userData'), 'includes');
+        const resolved = await collection_resolve_includes(collection, app_uid, {kept_dir});
         if (!pass.leave()) {
             console.log(`[${app_uid}][collection_refresh_dropped] refresh=${pass.number}`);
             return;

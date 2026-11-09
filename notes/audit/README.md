@@ -65,7 +65,7 @@ The desktop app:
 
 - [ ] `% title`, `% subtitle`, `% email` never reach the design
 - [x] `% design` changed in the file waits for a restart
-- [ ] Included links vanish when offline
+- [x] Included links vanish when offline
 - [x] An older reload overwrites a newer one
 - [ ] Includes are pulled one after another, with no limit on time or size
 - [ ] A start that fails shows nothing
