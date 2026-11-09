@@ -23,6 +23,7 @@ const icon_find = require('../../lib/icon_find');
 const icon_library_file = require('../../lib/icon_library_file');
 const letter_tile_svg = require('./helpers/letter_tile_svg');
 const make = require('@vbarbarosh/type-helpers');
+const make_newest_gate = require('./helpers/make_newest_gate');
 const make_socket_server = require('./helpers/make_socket_server');
 const parse = require('../../lib/parse');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
@@ -79,6 +80,7 @@ async function main()
     let parsed_collection = await collection_load();
     // Chosen before anything can ask for a reload: a reload reads it and may change it
     let design = await design_of_collection(parsed_collection);
+    const refresh_gate = make_newest_gate();
 
     electron.ipcMain.handle('api_ping', function () {
         return `pong ${format_date(new Date())}`;
@@ -416,11 +418,21 @@ async function main()
     }
 
     // The file is read again, so `% design:` is too: a design named since the last reload is loaded
-    // before the includes are pulled, the same one again leaves the page as it is
+    // before the includes are pulled, the same one again leaves the page as it is. Every summon
+    // starts a reload while an older one may still pull its includes: the newest one chooses the
+    // design, and links that come back after a newer reload's are dropped
     async function refresh_collection() {
+        const pass = refresh_gate.enter();
         const collection = await collection_load();
-        await design_load(await design_of_collection(collection));
-        parsed_collection = await collection_resolve_includes(collection, app_uid);
+        if (pass.is_newest()) {
+            await design_load(await design_of_collection(collection));
+        }
+        const resolved = await collection_resolve_includes(collection, app_uid);
+        if (!pass.leave()) {
+            console.log(`[${app_uid}][collection_refresh_dropped] refresh=${pass.number}`);
+            return;
+        }
+        parsed_collection = resolved;
         win.webContents.send('api_items_changed', parsed_collection);
     }
 
