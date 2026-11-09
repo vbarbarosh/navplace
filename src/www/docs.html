@@ -646,7 +646,7 @@
     <li><code>% design:</code> picks the folder under <code>designs/</code>. Absent, or not one of them: <code>github</code>. It is read again at every press of the hotkey.</li>
     <li>The window is 1200 × 1000, centred. It starts always on top and zoomed to 125%; the settings change both. Its title is the design's title and the app's version.</li>
     <li>It hides when it loses focus, unless the settings say otherwise, and stays running, so the hotkey brings it back at once. Closing it quits the app.</li>
-    <li>Links open in your default browser, <code>http://</code> and <code>https://</code> ones only.</li>
+    <li>Links open in your default browser. Besides <code>http://</code> and <code>https://</code> ones the app opens a plain <code>mailto:</code> address, in the mail program, and a <code>file://</code> link of your own file; any other kind of address is skipped.</li>
     <li>The gear beside the design's theme switch opens the settings: the links file in an editor, the design, the hotkey, start at login, zoom, always on top, hiding on lost focus, and a check for updates.</li>
     <li>A start that fails says why in an error box.</li>
 </ul>
@@ -733,7 +733,8 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
     <tbody>
         <tr><td><code>% design: x</code></td><td>A folder name under <code>designs/</code>. When absent: <code>github</code> in the desktop app, <code>basic</code> in the embed widget.</td></tr>
         <tr><td><code>% title: x</code></td><td>Text for the design's title element.</td></tr>
-        <tr><td><code>% email: x</code></td><td>Text for the design's email element; when that element is a link, a mail address becomes its <code>mailto:</code> address and anything else leaves it with none.</td></tr>
+        <tr><td><code>% subtitle: x</code></td><td>Text for the design's subtitle element.</td></tr>
+        <tr><td><code>% email: x</code></td><td>Text for the design's email element; when that element is a link, a plain mail address becomes its <code>mailto:</code> address and anything else is shown as text with no link.</td></tr>
         <tr><td><code>% ns: a | b</code></td><td>Keeps only the links that sit under a section named <code>a</code> or <code>b</code>.</td></tr>
         <tr><td><code>% picture name: u</code></td><td>Names a picture for <code>@name</code>: <code>u</code> is an <code>https://</code>, <code>http://</code> or <code>data:image/</code> url. Repeatable, one name per line.</td></tr>
         <tr><td><code>% include: u</code></td><td>Desktop app only. Pulls the document at url <code>u</code> and appends its links.</td></tr>
@@ -745,6 +746,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
     <li>The value is required. <code>% oops</code> is skipped with a warning; the rest of the file still parses.</li>
     <li>The same key twice: the last one wins (<code>% include:</code> adds up instead).</li>
     <li>Keys keep their case. <code>% Design:</code> and <code>% design:</code> are two keys.</li>
+    <li><code>% title:</code>, <code>% subtitle:</code> and <code>% email:</code> reach the design on the web and in the desktop app. Without one, the design keeps its own text and link there; taking one out of the file puts them back.</li>
 </ul>
 
 <h3 id="include-pulling-other-documents"><code>% include:</code> — pulling other documents</h3>
@@ -765,7 +767,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
     <li>Values hold no spaces. Unknown options are ignored.</li>
     <li>Repeatable: every line adds one source, in file order; pulled links land after the local ones.</li>
     <li>The url must return the document as plain text over <code>http://</code> or <code>https://</code>; any other url is skipped.</li>
-    <li>A pulled document gives links and sections only. Its own directives are dropped, so it cannot switch the design, apply <code>% ns:</code> or pull a third document.</li>
+    <li>A pulled document gives links and sections only. Its own directives are dropped, so it cannot switch the design, set the title, apply <code>% ns:</code> or pull a third document.</li>
     <li>The <code>% ns:</code> of the pulling document filters local and pulled links alike.</li>
     <li>The prefix and the suffix are part of the label, so typing the prefix finds the pulled links.</li>
     <li>The request carries no access token.</li>
@@ -781,6 +783,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 
 <h3 id="label-url-links"><code>label  url</code> — links</h3>
 <p>The url ends the line. <code>http://</code>, <code>https://</code> and <code>file://</code> are recognised. Spaces between the label and the url are free: align the columns as you like.</p>
+<p>A <code>file://</code> link opens in the desktop app, and only when it is a link of your own file, not of a pulled one: a folder or a plain file in the system's program for it, a program (an executable file, a <code>.desktop</code>, <code>.sh</code>, <code>.AppImage</code> and the like) shown in its folder, not run. A browser refuses such a link from a web page.</p>
 <p>The label is optional. Without one, NavPlace builds it from the url: the host, plus the path when the path is not <code>/</code>.</p>
 
 <h3 id="tag-and-key-value"><code>#tag</code> and <code>#key=value</code></h3>
@@ -903,7 +906,7 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
     <li><code>update(items, {current})</code>: called with the filtered list whenever it or the current link changes. Each item has the fields in <a href="#what-a-link-becomes">What a link becomes</a>.</li>
     <li><code>items[current]</code> is the current link: ↑ and ↓ move it, Enter opens it, and the design gives its element the class <code>np-current</code>. With no links <code>current</code> is −1.</li>
     <li><code>navplace.order_set(shown)</code>: for a design that shows other links than it was given, or in another order (a section picked, links grouped); ↑ ↓ and Enter then walk <code>shown</code>. <code>navplace.current_set(index)</code> makes the link at that place the current one, a row under the mouse for one.</li>
-    <li><code>meta</code>: maps directive keys to elements; the runtime writes the value into each element's text.</li>
+    <li><code>meta</code>: maps directive keys to elements; the runtime writes the value into each element's text. A key the file does not have leaves the element as the design wrote it.</li>
     <li><code>navigate(item)</code>: optional; called for each link Enter opens, in place of opening it. No design in this repo passes it.</li>
     <li>Clicks call <code>navplace.navigate(item, event)</code>, so a click opens the selection of several words too. A click on a link with Ctrl, Cmd, Shift or the middle button stays the browser's.</li>
     <li><code>/lib/theme_switch.js</code>, loaded in <code>&lt;head&gt;</code>, gives the design its light and dark theme: <code>data-theme</code> on <code>&lt;html&gt;</code> and the switch.</li>
@@ -975,7 +978,7 @@ Gmail   https://mail.google.com/
         <tr><td><code>parse.cli.js</code></td><td>Parses a sample and prints the result.</td></tr>
     </tbody>
 </table>
-<p>In the desktop app, <code>window.ElectronApp</code> (from <code>src/desktop-electron/renderer.js</code>) gives a design <code>api_items_all()</code>, the collection now, and <code>api_items_changed(callback)</code>, called with each new one; it returns a function that stops the calls. <code>api_ping()</code> answers <code>pong &lt;time&gt;</code>. <code>settings_open()</code> opens the app's settings: <code>/lib/theme_switch.js</code> calls it from the gear it puts beside the theme switch, in the app only.</p>
+<p>In the desktop app, <code>window.ElectronApp</code> (from <code>src/desktop-electron/renderer.js</code>) gives a design <code>api_items_all()</code>, the collection now, and <code>api_items_changed(callback)</code>, called with each new one; it returns a function that stops the calls. <code>api_file_open(href)</code> asks the app to open a <code>file://</code> link, which a page cannot do itself: <code>navplace.navigate</code> calls it, and the app opens the link when your own links file lists it. <code>api_ping()</code> answers <code>pong &lt;time&gt;</code>. <code>settings_open()</code> opens the app's settings: <code>/lib/theme_switch.js</code> calls it from the gear it puts beside the theme switch, in the app only.</p>
 
 <!-- ============================================================ -->
 <h2 id="architecture">How it's built</h2>

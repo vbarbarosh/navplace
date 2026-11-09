@@ -117,7 +117,7 @@ text, and a click that keeps the page.
   and `DESIGN.ai.md` name commands and paths that are gone
 - [x] The desktop documents describe an older app: no settings window, no
   login entry, old function names
-- [ ] `src/www/docs.html` says what the code does not do, and leaves out
+- [x] `src/www/docs.html` says what the code does not do, and leaves out
   what it does
 - [x] The site's tests never run in CI, and nothing runs on a pull request
 - [x] `bin/self-check` passes a build with a broken parser
