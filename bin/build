@@ -38,6 +38,19 @@ const options = names.map(v => ({value: v, label: v, files: fs.readdirSync(`buil
 fs.writeFileSync("build/www/designs/index.json", JSON.stringify(options, null, 4) + "\n");
 '
 
+# The app window drawn on the home page has the app's version in its title, as the app has: written
+# here from the app's package.json, so a release leaves no old number in the page
+node -e '
+const fs = require("fs");
+const version = require("./src/desktop-electron/package.json").version;
+const mark = "<!-- app version -->";
+const html = fs.readFileSync("build/www/index.html", "utf8");
+if (html.split(mark).length !== 2) {
+    throw new Error(`build/www/index.html: ${mark} is expected once`);
+}
+fs.writeFileSync("build/www/index.html", html.replace(mark, ` — v${version}`));
+'
+
 # A build that fails its own check ships nothing
 bin/self-check
 

@@ -83,7 +83,7 @@ The Playground and the site:
 - [x] Tab cannot leave the editor
 - [x] Space, Home and End do not scroll the home page
 - [x] `/docs` and `/playground` do not open
-- [ ] The home page shows an old version of the app
+- [x] The home page shows an old version of the app
 - [x] The site sends no security headers
 
 ## The designs
