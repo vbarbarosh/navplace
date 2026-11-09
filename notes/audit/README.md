@@ -51,7 +51,7 @@ Search and keys:
   (`github`, `google-chrome`, `basic-for-internal3-with-groups`)
 - [x] `% email` becomes a dead link
 - [x] The embed takes every key from the page around it
-- [ ] The embed misses an indented `% design`, and shows three sample
+- [x] The embed misses an indented `% design`, and shows three sample
   links for no links
 
 Opening links:
