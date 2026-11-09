@@ -1,5 +1,4 @@
 const autostart_set = require('./autostart_set');
-const command_run = require('./command_run');
 const config = require('../config');
 const desktop_exec_arg_from_text = require('./desktop_exec_arg_from_text');
 const fs = require('fs');
@@ -11,6 +10,7 @@ const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_read = require('@vbarbarosh/node-helpers/src/fs_read');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const gnome_hotkey_set = require('./gnome_hotkey_set');
+const node_bin_find = require('./node_bin_find');
 
 // Install the GNOME hotkey for the AppImage build, invoked as
 // `NavPlace.AppImage --configure-gnome`; and start the app at login, hidden, so the
@@ -29,8 +29,10 @@ async function gnome_configure({hotkey})
         throw new Error('--configure-gnome must be run from the AppImage (APPIMAGE is not set)');
     }
 
-    // The hotkey fires the extracted launcher via its `env node` shebang, so node
-    // must be resolvable on PATH — check before writing anything, fail fast if not.
+    // The hotkey runs the extracted launcher with node. It runs in the session, whose PATH is
+    // not this terminal's (a node from nvm or fnm is on PATH in a shell only), so node is
+    // found here and goes into the hotkey's command by its absolute path — check before
+    // writing anything, fail fast if there is none.
     const node_bin = await node_bin_find();
     if (!node_bin) {
         throw new Error('node was not found in PATH — the hotkey launcher needs Node.js. Install it (or add it to PATH) and run --configure-gnome again.');
@@ -49,7 +51,7 @@ async function gnome_configure({hotkey})
     // 2. extract the app icon (best-effort; the AppImage runtime exposes APPDIR)
     const icon = await icon_extract();
 
-    await gnome_hotkey_set(launcher_file, hotkey);
+    await gnome_hotkey_set(launcher_file, hotkey, node_bin);
 
     // 3. .desktop -> the AppImage; `gtk-launch navplace` (the launcher's cold path) lands here
     await fs_mkdirp(fs_path_dirname(desktop_file));
@@ -87,17 +89,5 @@ async function icon_extract()
     }
     return 'application-x-executable';
 }
-
-async function node_bin_find()
-{
-    try {
-        await command_run(['node', '--version']);
-        return 'node';
-    }
-    catch {
-        return null;
-    }
-}
-
 
 module.exports = gnome_configure;

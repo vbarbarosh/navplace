@@ -38,9 +38,12 @@ and writes `~/.local/share/applications/navplace.desktop`. The launcher pings th
 running NavPlace socket, so the window shows at once; if NavPlace is not already
 running, it falls back to `gtk-launch navplace`, which starts the AppImage.
 
-`node` must be available on `PATH`, because the extracted launcher uses its
-`/usr/bin/env node` shebang. On success, the command prints the launcher path,
-the AppImage path used for cold start, and the resolved node executable.
+`node` must be on the `PATH` of the terminal where the setup runs. The setup
+resolves its absolute path there and writes it into the hotkey's command, so the
+hotkey does not depend on the `PATH` of the session, where a node installed by
+nvm or fnm is not found. If that node moves or is removed, run the setup again.
+On success, the command prints the launcher path, the AppImage path used for
+cold start, and the resolved node executable.
 
 ## Chrome links on Wayland
 
