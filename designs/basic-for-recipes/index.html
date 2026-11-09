@@ -98,6 +98,9 @@
             padding-bottom: 60px;
         }
 
+        /* ↑ stops a card below the stuck search box, not under it: where the box sticks (20px), its
+           border (2px) and padding (18px) above and below, its line of 18px text (as tall as the
+           font makes it: taken as 27px) */
         .recipe-card {
             background: var(--card-bg);
             border-radius: var(--radius-card);
@@ -107,6 +110,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            scroll-margin-top: calc(20px + 2*2px + 2*18px + 27px);
         }
 
         .recipe-card:hover {
@@ -230,6 +234,11 @@
             .search-input {
                 padding: 16px 20px;
                 font-size: 16px;
+            }
+
+            /* The search box is lower here: 16px of padding, a line of 16px text (taken as 24px) */
+            .recipe-card {
+                scroll-margin-top: calc(20px + 2*2px + 2*16px + 24px);
             }
         }
 

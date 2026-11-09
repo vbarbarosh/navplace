@@ -47,7 +47,7 @@ Search and keys:
   one word in its name and the other in its address
 - [x] `hub$` fails once a link has a tag
 - [x] Names with `ь` or `ъ` are not found by Latin typing
-- [ ] Going Up a long list, the current link hides under the top bar
+- [x] Going Up a long list, the current link hides under the top bar
   (`github`, `google-chrome`, `basic-for-internal3-with-groups`)
 - [x] `% email` becomes a dead link
 - [x] The embed takes every key from the page around it
