@@ -1275,6 +1275,14 @@ async function main()
     // What the last pasted or renamed picture did, shown in the status line for a while
     let editor_note = '';
     let editor_note_timer;
+    // What the status line says of the draft, before anything else: why it is no longer saved, or
+    // that it came from another tab; '' while this tab's text is the saved draft
+    let draft_note = '';
+    // Why the browser refused the last save, '' when it kept the text: refused, this tab's text is
+    // in no other place
+    let draft_refusal = '';
+    // Another tab has saved a draft since the refusal: a reload would load that one
+    let is_draft_elsewhere = false;
     // The text before the edit an input event reports; null for an edit made by code, which has no
     // beforeinput, Reset and a paste among them
     let picture_text = null;
@@ -1342,7 +1350,7 @@ async function main()
     });
 
     editor.addEventListener('input', function () {
-        draft_save(editor.value);
+        editor_draft_save();
         clearTimeout(text_refresh_timer);
         text_refresh_timer = setTimeout(refresh_text, 300);
         refresh_cursor_line();
@@ -1642,6 +1650,14 @@ async function main()
         sizes_save(sizes);
     });
     window.addEventListener('resize', refresh_sizes);
+    // One draft per browser: what another tab saves shows in this tab too, and its status line says so
+    window.addEventListener('storage', function (event) {
+        if (event.key === 'navplace.playground') {
+            draft_follow();
+        }
+    });
+    // Looked at again, the tab checks once more: a change it did not hear of while away shows now
+    document.addEventListener('visibilitychange', draft_follow);
 
     refresh_sizes();
     // The first preview waits for the list: a saved draft may name a design that is gone
@@ -1741,7 +1757,7 @@ async function main()
             parsed = parse(editor.value);
         }
         catch (error) {
-            status.textContent = `${error.message}. The preview shows the last text that parsed.`;
+            status.textContent = [draft_note, `${error.message}. The preview shows the last text that parsed.`].filter(Boolean).join(' · ');
             status.dataset.error = '';
             parse_error = {where: {file: 'links.txt', line: line_of_parse_error(editor.value)}, what: error.message, count: 1};
             parse_warnings = [];
@@ -1756,7 +1772,7 @@ async function main()
         // A half-typed name would load a missing page: the design shown stays,
         // or basic when none is shown yet
         if (designs && !designs.includes(name)) {
-            status.textContent = `No design named "${name}". The preview shows "${frame_design ?? 'basic'}".`;
+            status.textContent = [draft_note, `No design named "${name}". The preview shows "${frame_design ?? 'basic'}".`].filter(Boolean).join(' · ');
             status.dataset.error = '';
             if (frame_design) {
                 if (frame_ready) {
@@ -1849,10 +1865,10 @@ async function main()
         const left_out_part = left_out_count ? `${left_out_count} left out by % ns` : '';
         const skipped_part = parse_warnings.length ? plural(parse_warnings.length, '# line skipped, see Warnings', '# lines skipped, see Warnings') : '';
         const edited_part = edited ? `${design.name}, edited in Design` : '';
-        status.textContent = [links_part, left_out_part, skipped_part, edited_part, editor_note].filter(Boolean).join(' · ');
+        status.textContent = [draft_note, links_part, left_out_part, skipped_part, edited_part, editor_note].filter(Boolean).join(' · ');
         // Cut short when the toolbar is narrow; the whole line on hover
         status.title = status.textContent;
-        status.toggleAttribute('data-warn', parse_warnings.length > 0);
+        status.toggleAttribute('data-warn', (parse_warnings.length > 0) || !!draft_note);
     }
 
     function refresh_errors() {
@@ -1998,7 +2014,7 @@ async function main()
         const end = editor.selectionEnd;
         editor.value = result.text;
         editor.setSelectionRange(Math.min(begin, result.text.length), Math.min(end, result.text.length));
-        draft_save(editor.value);
+        editor_draft_save();
         clearTimeout(text_refresh_timer);
         text_refresh_timer = setTimeout(refresh_text, 300);
         editor_colours.innerHTML = render_links_html(editor.value, current_line, left_out_from_text(editor.value)?.note_by_line);
@@ -2036,7 +2052,7 @@ async function main()
             return;
         }
         editor.setRangeText(result.line, range[0], range[1], 'preserve');
-        draft_save(editor.value);
+        editor_draft_save();
         clearTimeout(text_refresh_timer);
         text_refresh_timer = setTimeout(refresh_text, 300);
         editor_colours.innerHTML = render_links_html(editor.value, current_line, left_out_from_text(editor.value)?.note_by_line);
@@ -2600,6 +2616,48 @@ async function main()
         textarea_text_replace(editor, begin, end, text);
     }
 
+    // The text goes to the browser's storage. Refused, the status line says so, and why, until a
+    // later save works again
+    function editor_draft_save() {
+        const error = draft_save(editor.value);
+        draft_refusal = error ? format_draft_error(error) : '';
+        is_draft_elsewhere = is_draft_elsewhere && !!error;
+        refresh_draft_note();
+    }
+
+    function refresh_draft_note() {
+        const elsewhere_part = is_draft_elsewhere ? ' and loads the draft another tab has saved' : '';
+        const note = draft_refusal ? `draft no longer saved: ${draft_refusal}; a reload loses the edits made since${elsewhere_part}` : '';
+        if (note !== draft_note) {
+            draft_note = note;
+            refresh_status();
+        }
+    }
+
+    // The draft another tab saved takes this tab's text, and the status line says so until the next
+    // edit here. A tab whose own text could not be saved keeps it, no other place has it, and says
+    // what a reload would load now
+    function draft_follow() {
+        const text = draft_load();
+        if ((text === null) || (text === editor.value)) {
+            return;
+        }
+        if (draft_refusal) {
+            is_draft_elsewhere = true;
+            refresh_draft_note();
+            return;
+        }
+        editor.value = text;
+        editor.setSelectionRange(0, 0);
+        editor.scrollTop = 0;
+        picture_rename = null;
+        picture_line_entry = null;
+        draft_note = 'the draft was changed in another tab: this is its text now';
+        clearTimeout(text_refresh_timer);
+        refresh_text();
+        refresh_cursor_line();
+    }
+
     function editor_note_show(text) {
         editor_note = text;
         refresh_status();
@@ -2685,7 +2743,7 @@ async function main()
         textarea_text_replace(editor, 0, editor.value.length, text);
         editor.setSelectionRange(0, 0);
         editor.scrollTop = 0;
-        draft_save(editor.value);
+        editor_draft_save();
         clearTimeout(text_refresh_timer);
         refresh_text();
     }
@@ -3501,13 +3559,26 @@ function draft_load()
     }
 }
 
+// null when the browser kept the text, else the error it refused it with
 function draft_save(text)
 {
     try {
         localStorage.setItem('navplace.playground', text);
+        return null;
     }
-    catch {
+    catch (error) {
+        return error;
     }
+}
+
+// Why the browser did not keep the draft, as its error names it: QuotaExceededError is a storage
+// with no room left
+function format_draft_error(error)
+{
+    if (error.name === 'QuotaExceededError') {
+        return "the browser's storage for this site is full";
+    }
+    return `the browser refused it (${error.name})`;
 }
 
 // Kept sizes over the defaults; Basic's split from before the tabs counts as Basic's
