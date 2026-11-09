@@ -23,9 +23,10 @@ official Linux desktop entries. Window selection:
 2. Else the most recently raised Chrome window on any workspace.
 3. Else no focus step; the URL opens as before.
 
-Implemented in `open_external` (`src/desktop-electron/main.js`), which calls
+Implemented in `url_open_external` (`src/desktop-electron/main.js`), which calls
 `src/desktop-electron/helpers/chrome_window_focus.js` before
-`shell.openExternal`. Only `http(s)` URLs on Linux get the focus step.
+`shell.openExternal`. Only `http(s)` URLs are opened at all, and the focus step
+runs on Linux in a Wayland session.
 
 ## Mechanism
 
@@ -47,7 +48,7 @@ Installed web apps report `crx_<id>` and cannot host tabs; the fix skips them.
 ## Without the extension
 
 The extension is optional. Without it the first `gdbus` call fails,
-`open_external` ignores the error, and the URL opens with Chrome's own window
+`url_open_external` ignores the error, and the URL opens with Chrome's own window
 choice — the old behavior. The same happens when a supported Chrome desktop
 entry does not handle the URL scheme, outside Wayland sessions, on any
 non-GNOME Linux, on macOS, and on Windows.
