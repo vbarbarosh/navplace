@@ -90,7 +90,7 @@ The Playground and the site:
 
 ![13 designs against 9 points of the contract and of their siblings](designs.png)
 
-- [ ] A click opens through the runtime: not in `basic`,
+- [x] A click opens through the runtime: not in `basic`,
   `basic-for-internal2`, `basic-for-kids`, `basic-for-kids2`,
   `basic-for-portfolio`, `basic-for-recipes`, `first`, `google-chrome`;
   `basic-for-internal3-with-groups` opens its own way

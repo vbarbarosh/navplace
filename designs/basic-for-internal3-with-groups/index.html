@@ -721,7 +721,7 @@
             button_open.addEventListener('click', function (event) {
                 event.preventDefault();
                 event.stopPropagation();
-                href_open(href);
+                navplace.navigate(item);
             });
 
             const button_copy = make_elem('button', {class: 'btn', type: 'button', title: 'Copy URL', 'aria-label': 'Copy URL'});
@@ -737,29 +737,14 @@
             actions.appendChild(button_copy);
             row.appendChild(actions);
 
+            // A click on the row, or on its Open, opens the link through the runtime: every
+            // selected link, this one in place of the last. The row is not an <a>: it has no
+            // default to prevent or to leave to the browser, so the event stays here
             row.addEventListener('click', function () {
-                href_open(href);
+                navplace.navigate(item);
             });
 
             return row;
-        }
-
-        function href_open(href) {
-            const url = text_from_value(href);
-            if (!url) {
-                return;
-            }
-            try {
-                window.open(url, '_blank', 'noopener,noreferrer');
-            }
-            catch {
-                try {
-                    window.location.href = url;
-                }
-                catch {
-                    // Nowhere left to open it
-                }
-            }
         }
 
         function status_flash(text) {
@@ -875,8 +860,6 @@
                     window.navplace({
                         input,
                         update: refresh_list,
-                        // Enter opens the current link in a new tab, as a click on its row does
-                        navigate: item => href_open(item.href),
                     });
                     status_flash('bound');
                 }
