@@ -75,7 +75,7 @@ The desktop app:
 
 The Playground and the site:
 
-- [ ] A tag added to a link with no name turns it into a section; two
+- [x] A tag added to a link with no name turns it into a section; two
   parts changed at once garble the address
 - [ ] Picking a design replaces the visitor's own links
 - [ ] A full storage stops saving the draft, with no word

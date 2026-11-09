@@ -3265,7 +3265,13 @@ function line_from_json(raw, edited, picture_url_by_name = {})
     else if (image_url && Object.values(picture_url_by_name).includes(image_url)) {
         image_url = `private://${Object.keys(picture_url_by_name).find(v => picture_url_by_name[v] === image_url)}`;
     }
-    return {line: line_from_item(raw, item, {label: edited.label, href: edited.href, tags: edited.tags, image_url, meta: edited.meta})};
+    // What a link line cannot hold is refused by line_from_item, in words for the pane
+    try {
+        return {line: line_from_item(raw, item, {label: edited.label, href: edited.href, tags: edited.tags, image_url, meta: edited.meta})};
+    }
+    catch (error) {
+        return {error: error.message};
+    }
 }
 
 // 1-based line of a character offset
