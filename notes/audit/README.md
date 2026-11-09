@@ -25,7 +25,7 @@ fix lands.
 - [ ] The desktop app hands any kind of link to the system
 - [ ] The desktop app grants every permission a page asks for
 - [ ] A click in the Playground's preview hands the draft to the linked site
-- [ ] Another frame on the page can swap an embedded design's links
+- [x] Another frame on the page can swap an embedded design's links
 - [ ] `% email` takes a `javascript:` address
 - [ ] Private host names go to an outside icon service
 - [ ] A password in an include address lands in the log
