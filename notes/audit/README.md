@@ -43,9 +43,9 @@ Search and keys:
 
 - [x] A capital letter in the search finds nothing
 - [ ] Enter or Space on a focused button or link opens the first link instead
-- [ ] `!git` still lists a link named Git, `git/api` misses a link with
+- [x] `!git` still lists a link named Git, `git/api` misses a link with
   one word in its name and the other in its address
-- [ ] `hub$` fails once a link has a tag
+- [x] `hub$` fails once a link has a tag
 - [x] Names with `ь` or `ъ` are not found by Latin typing
 - [ ] Going Up a long list, the current link hides under the top bar
   (`github`, `google-chrome`, `basic-for-internal3-with-groups`)

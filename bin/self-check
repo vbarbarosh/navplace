@@ -24,7 +24,7 @@ cd $scriptdir/..
 
 (
     set -o nounset -o errexit -o pipefail
-    for file in index.html docs.html playground.html lib/navplace.js lib/parse.js lib/filter1_from_spec.js designs/index.json; do
+    for file in index.html docs.html playground.html lib/navplace.js lib/parse.js lib/filter1_from_spec.js lib/items_search.js designs/index.json; do
         if [ ! -s build/www/$file ]; then
             echo "build/www/$file: missing, run bin/build"
             exit 1

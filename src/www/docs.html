@@ -865,6 +865,7 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
     </tbody>
 </table>
 <p>The operators combine inside one part: <code>^git/!api</code> starts with <code>git</code> and does not contain <code>api</code>.</p>
+<p>Each part looks at the label, at each tag and at the url. A plain part may be found in any of them, and the parts of one expression in different ones: <code>git/api</code> finds a link labelled <code>Git</code> with <code>api</code> in its url. <code>^</code> and <code>$</code> mean the start and the end of the label, of a tag or of the url, so <code>hub$</code> finds <code>GitHub #dev</code>. <code>!git</code> leaves out every link with <code>git</code> in any of them.</p>
 
 <!-- ============================================================ -->
 <h2 id="designs">Designs</h2>
@@ -950,9 +951,10 @@ Gmail   https://mail.google.com/
     <tbody>
         <tr><td><code>parse.js</code></td><td>The parser: text in, <code>{meta, items}</code> out. A Node module and a browser global. Its options <code>{prefix, suffix, tags, ns}</code> serve <code>% include:</code>.</td></tr>
         <tr><td><code>filter1_from_spec.js</code></td><td>Compiles one search expression (<code>^</code>, <code>$</code>, <code>!</code>, <code>/</code>) into a test; a copy from <a href="https://github.com/vbarbarosh/node-helpers">node-helpers</a>.</td></tr>
+        <tr><td><code>items_search.js</code></td><td>What the search box's text finds among the links: the list to show and the top link of each word. A Node module and a browser global, with tests in <code>items_search.test.js</code>.</td></tr>
         <tr><td><code>plural.js</code></td><td>The phrase for a count, <code>plural(n, '# link', '# links')</code>; a copy from <a href="https://github.com/vbarbarosh/node-helpers">node-helpers</a>, loaded by the playground and the designs that count.</td></tr>
         <tr><td><code>icons/</code>, <code>icon_find.js</code>, <code>icon_library_file.js</code>, <code>is_public_domain.js</code></td><td>A link's icon, for navplace.com's <code>/icon/</code> and the desktop app: navplace's own icons first (<code>icons/</code>, 120 sites, an SVG or a picture of 96 px and more, <code>icons/index.json</code> by domain; a subdomain takes its parent's), then the site's own, then Google's. A host that is not public (<code>is_public_domain.js</code>: an address, a port, one label or a private ending such as <code>.local</code>) is asked itself only, over https, and only by the desktop app: navplace's icons, Google and any other host never hear its name, and <code>/icon/</code> looks nothing up for it.</td></tr>
-        <tr><td><code>navplace.js</code></td><td>The runtime every design loads: the search box, filtering, the selection, ↑ ↓, Enter and clicks, the embed messages, and the items from <code>window.ElectronApp</code> in the desktop app. It loads the two files above from its own folder.</td></tr>
+        <tr><td><code>navplace.js</code></td><td>The runtime every design loads: the search box, filtering, the selection, ↑ ↓, Enter and clicks, the embed messages, and the items from <code>window.ElectronApp</code> in the desktop app. It loads <code>filter1_from_spec.js</code>, <code>parse.js</code> and <code>items_search.js</code> from its own folder.</td></tr>
         <tr><td><code>embed.js</code></td><td>The <a href="#embed">embed widget</a>.</td></tr>
         <tr><td><code>parse.test.js</code></td><td>The parser's tests (mocha, <code>npm test</code>).</td></tr>
         <tr><td><code>parse.cli.js</code></td><td>Parses a sample and prints the result.</td></tr>
