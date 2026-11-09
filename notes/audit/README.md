@@ -46,7 +46,7 @@ Search and keys:
 - [ ] `!git` still lists a link named Git, `git/api` misses a link with
   one word in its name and the other in its address
 - [ ] `hub$` fails once a link has a tag
-- [ ] Names with `ь` or `ъ` are not found by Latin typing
+- [x] Names with `ь` or `ъ` are not found by Latin typing
 - [ ] Going Up a long list, the current link hides under the top bar
   (`github`, `google-chrome`, `basic-for-internal3-with-groups`)
 - [x] `% email` becomes a dead link
