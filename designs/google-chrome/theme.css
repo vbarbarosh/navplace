@@ -12,6 +12,11 @@
     --current-ring: #1a73e8;
     --np-scrollbar-thumb: rgba(60, 64, 67, 0.35);
     --np-scrollbar-track: var(--bg);
+
+    /* The search box sticks this far from the top of the view and is this tall: ↑ stops a tile
+       below it, the 3px ring of the current tile included */
+    --search-top: 48px;
+    --search-height: 56px;
 }
 
 :root[data-theme="dark"] {
@@ -56,8 +61,8 @@ body {
 /* -------- SEARCH -------- */
 .search-wrap {
     position: sticky;
-    top: 48px;
-    margin-top: 48px;
+    top: var(--search-top);
+    margin-top: var(--search-top);
     width: 100%;
     display: flex;
     justify-content: center;
@@ -67,7 +72,7 @@ body {
 .search {
     width: 720px;
     max-width: calc(100% - 32px);
-    height: 56px;
+    height: var(--search-height);
     background: var(--search-bg);
     border: 1px solid var(--search-border);
     box-shadow: var(--search-shadow);
@@ -110,6 +115,7 @@ body {
     cursor: pointer;
     position: relative;
     text-decoration: none;
+    scroll-margin-top: calc(var(--search-top) + var(--search-height) + 3px);
 }
 
 .tile:hover {
