@@ -123,7 +123,7 @@ So `%` is for document-wide directives; `#` and `@` are always per-item or per-s
 
 ### Icons
 
-- `item.icon_url` is always set. Inside Electron, it's `app://favicon/<host>?letter=<L>` (served by the desktop app's protocol handler with a disk cache; a letter tile when Google has no icon for the site). On navplace.com it's `/icon/<host>`, answered by the site's Worker for navplace pages only; anywhere else it's `https://icon.horse/icon/<host>`.
+- `item.icon_url` is always set. Inside Electron, it's `app://favicon/<host>?letter=<L>` (served by the desktop app's protocol handler with a disk cache; a letter tile when Google has no icon for the site). On navplace.com it's `/icon/<host>`, answered by the site's Worker for navplace pages only; anywhere else it's `https://icon.horse/icon/<host>`, or, for a host that is not public (an IP address, a port, `localhost`, a private name such as `wiki.corp.internal`), an inline `data:image/svg+xml` letter tile.
 - Use it directly as `<img src="…">`. Don't construct your own favicon URL — you'd break the desktop favicon cache.
 
 ### Images

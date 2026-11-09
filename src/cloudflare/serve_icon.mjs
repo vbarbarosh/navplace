@@ -5,6 +5,7 @@
 
 import icon_find from '../../lib/icon_find.js';
 import icon_library_file from '../../lib/icon_library_file.js';
+import is_public_domain from '../../lib/is_public_domain.js';
 
 const DAY = 86400;
 // A new value drops every icon kept at the edge: what it keeps under the old one is never asked again
@@ -28,7 +29,7 @@ async function serve_icon(request, {cache = null, fetch_fn = fetch, assets = nul
 
     const domain = decodeURIComponent(url.pathname.slice('/icon/'.length)).toLowerCase();
     if (!is_public_domain(domain)) {
-        // localhost, an address, a port: nothing to look up
+        // localhost, an address, a port, a private name: nothing to look up
         return make_icon_response(render_tile_svg(domain), 'image/svg+xml', DAY);
     }
 
@@ -62,11 +63,6 @@ function is_own_page(request, origin)
     catch {
         return false;
     }
-}
-
-function is_public_domain(domain)
-{
-    return (domain.length <= 253) && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(domain) && !/^[\d.]+$/.test(domain);
 }
 
 function make_icon_response(body, type, max_age)

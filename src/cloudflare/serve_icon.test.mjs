@@ -58,6 +58,16 @@ describe('serve_icon', function () {
             assert.equal(response.headers.get('Content-Type'), 'image/svg+xml', domain);
         }
     });
+    it('looks nothing up for an address spelled another way or a private name, and keeps no such key', async function () {
+        const cache = make_cache();
+        for (const domain of ['0x7f.1', '0177.0.0.1', '2130706433', '[::1]', 'foo.localhost', 'router.lan', 'printer.local', 'wiki.corp.internal', 'metadata.google.internal']) {
+            const response = await serve_icon(make_request(domain), {cache, fetch_fn: fail_fetch, assets: {fetch: fail_fetch}});
+            assert.equal(response.status, 200, domain);
+            assert.equal(response.headers.get('Content-Type'), 'image/svg+xml', domain);
+            assert.equal(response.headers.get('Cache-Control'), 'public, max-age=86400, s-maxage=86400', domain);
+        }
+        assert.equal(cache.size(), 0);
+    });
     it('answers from the cache without a lookup', async function () {
         const cache = make_cache();
         await serve_icon(make_request('a.com'), {cache, fetch_fn: make_fetch({'https://a.com/favicon.ico': make_png_route()})});
@@ -125,5 +135,6 @@ function make_cache()
     return {
         match: async v => kept.get(v.url)?.clone() ?? null,
         put: async (request, response) => void kept.set(request.url, response),
+        size: () => kept.size,
     };
 }

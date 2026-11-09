@@ -27,6 +27,8 @@ cp -r lib/ build/www/
 cp -r designs/ build/www/
 rm build/www/lib/*.cli.js
 rm build/www/lib/*.test.js
+# No page loads it: the Worker and the desktop app do, and lib/parse.js keeps its own copy
+rm build/www/lib/is_public_domain.js
 
 # The playground lists the designs from here, each with the files of its folder
 node -e '
