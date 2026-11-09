@@ -351,6 +351,15 @@
         function navplace_init() {
             if (typeof navplace === 'function') {
                 navplace({input: search_input, update: refresh_items});
+                // A click on a card opens its link through the runtime: every selected link, the
+                // clicked one in place of the last
+                items_container.addEventListener('click', function (event) {
+                    const card = event.target.closest('.item-card');
+                    const item = card ? current_items[Array.from(items_container.children).indexOf(card)] : null;
+                    if (item) {
+                        navplace.navigate(item, event);
+                    }
+                });
             }
             else {
                 console.warn('NavPlace runtime not loaded yet');
