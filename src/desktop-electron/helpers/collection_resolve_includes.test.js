@@ -52,6 +52,35 @@ Hidden  https://hidden.example.com/
     assert.deepEqual(actual.items.map(v => v.label), ['Local', 'Jira']);
 });
 
+test('the title, subtitle and e-mail of a pulled document never become the page own', async function () {
+    await using server = await make_text_server(`% title: Stranger
+% subtitle: Strange links
+% email: stranger@example.com
+  %   title : Stranger again
+
+Pulled  https://pulled.example.com/
+`);
+    const named = parse(`% title: Jane Roe
+% subtitle: My links
+% email: jane@example.com
+% include: ${server.url}
+
+Local   https://local.example.com/
+`);
+    const actual = await collection_resolve_includes(named, GROUP_UID);
+    assert.deepEqual([actual.meta.title, actual.meta.subtitle, actual.meta.email], ['Jane Roe', 'My links', 'jane@example.com']);
+    assert.deepEqual(actual.items.map(v => v.label), ['Local', 'Pulled']);
+
+    // A pulling document that names none of them stays without: the design keeps its own words
+    const unnamed = parse(`% include: ${server.url}
+
+Local   https://local.example.com/
+`);
+    const bare = await collection_resolve_includes(unnamed, GROUP_UID);
+    assert.deepEqual(Object.keys(bare.meta), ['include']);
+    assert.deepEqual(bare.items.map(v => v.label), ['Local', 'Pulled']);
+});
+
 test('keeps the collection when a url is dead', async function () {
     const collection = parse(`% include: http://127.0.0.1:1/links.md
 

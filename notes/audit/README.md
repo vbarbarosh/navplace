@@ -63,7 +63,7 @@ Opening links:
 
 The desktop app:
 
-- [ ] `% title`, `% subtitle`, `% email` never reach the design
+- [x] `% title`, `% subtitle`, `% email` never reach the design
 - [x] `% design` changed in the file waits for a restart
 - [x] Included links vanish when offline
 - [x] An older reload overwrites a newer one

@@ -23,6 +23,7 @@ const gnome_configure = require('./helpers/gnome_configure');
 const gnome_hotkey_set = require('./helpers/gnome_hotkey_set');
 const icon_find = require('../../lib/icon_find');
 const icon_library_file = require('../../lib/icon_library_file');
+const is_url_external = require('./helpers/is_url_external');
 const letter_tile_svg = require('./helpers/letter_tile_svg');
 const make = require('@vbarbarosh/type-helpers');
 const make_newest_gate = require('./helpers/make_newest_gate');
@@ -550,7 +551,8 @@ function start_failure_report(error)
     child_process.spawnSync('notify-send', ['--app-name=NavPlace', START_FAILURE_TITLE, text], {stdio: 'ignore'});
 }
 
-// Only a web address is handed to the system: any other kind (ssh:, smb:, vscode:, mailto:, file:)
+// Only a web address or a plain mail address is handed to the system (helpers/is_url_external.js):
+// any other kind (ssh:, smb:, vscode:, file:, a mailto: that says more than whom to write to)
 // would start whatever program the system keeps for it
 async function url_open_external(url, group_uid)
 {
@@ -560,11 +562,12 @@ async function url_open_external(url, group_uid)
     }
     catch {
     }
-    if ((protocol !== 'http:') && (protocol !== 'https:')) {
+    if (!is_url_external(url)) {
         console.error(`[${group_uid}][link_skipped] protocol=${protocol ?? 'invalid-url'}`);
         return;
     }
-    if ((process.platform === 'linux') && config.is_wayland) {
+    // Chrome's window is brought up for a web address only: a mail address opens in the mail program
+    if ((protocol !== 'mailto:') && (process.platform === 'linux') && config.is_wayland) {
         try {
             await chrome_window_focus(protocol.slice(0, -1));
         }
