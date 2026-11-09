@@ -115,7 +115,7 @@ text, and a click that keeps the page.
 
 - [x] `docs/ABOUT.ai.md` still speaks of sync and sign-in; it, `ABOUT.md`
   and `DESIGN.ai.md` name commands and paths that are gone
-- [ ] The desktop documents describe an older app: no settings window, no
+- [x] The desktop documents describe an older app: no settings window, no
   login entry, old function names
 - [ ] `src/www/docs.html` says what the code does not do, and leaves out
   what it does

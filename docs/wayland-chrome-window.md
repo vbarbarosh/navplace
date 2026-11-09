@@ -25,8 +25,8 @@ official Linux desktop entries. Window selection:
 
 Implemented in `url_open_external` (`src/desktop-electron/main.js`), which calls
 `src/desktop-electron/helpers/chrome_window_focus.js` before
-`shell.openExternal`. Only `http(s)` URLs are opened at all, and the focus step
-runs on Linux in a Wayland session.
+`shell.openExternal`. Only `http(s)` URLs get the focus step, on Linux in a
+Wayland session; a `mailto:` address opens without it.
 
 ## Mechanism
 
