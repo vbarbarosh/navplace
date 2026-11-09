@@ -42,7 +42,7 @@ fix lands.
 Search and keys:
 
 - [x] A capital letter in the search finds nothing
-- [ ] Enter or Space on a focused button or link opens the first link instead
+- [x] Enter or Space on a focused button or link opens the first link instead
 - [x] `!git` still lists a link named Git, `git/api` misses a link with
   one word in its name and the other in its address
 - [x] `hub$` fails once a link has a tag
