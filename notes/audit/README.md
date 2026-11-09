@@ -22,7 +22,7 @@ fix lands.
   `basic-for-recipes`) and in the example of `docs/DESIGN.ai.md`
 - [x] Any page of the desktop app can read any file on the disk, through
   the settings address of `navplace://app/`
-- [ ] The desktop app hands any kind of link to the system
+- [x] The desktop app hands any kind of link to the system
 - [ ] The desktop app grants every permission a page asks for
 - [x] A click in the Playground's preview hands the draft to the linked site
 - [x] Another frame on the page can swap an embedded design's links

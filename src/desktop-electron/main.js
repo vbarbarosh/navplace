@@ -247,10 +247,14 @@ async function main()
     // that comes back shows every link with the first one selected
     let search_reset_timer = null;
     win.webContents.setWindowOpenHandler(function (details) {
-        url_open_external(details.url);
-        clearTimeout(search_reset_timer);
-        search_reset_timer = setTimeout(() => search_reset().catch(() => {}), 100);
+        link_open(details.url);
         return {action: 'deny'};
+    });
+    // A design whose link is a plain <a href>, or a page that sets its location: the window never
+    // leaves its page, and the link opens as window.open opens it
+    win.webContents.on('will-navigate', function (event) {
+        event.preventDefault();
+        link_open(event.url);
     });
 
     let design = await design_of_collection(parsed_collection);
@@ -329,6 +333,9 @@ async function main()
         settings_win.on('closed', function () {
             settings_win = null;
         });
+        // The settings page stays what this window shows: it opens no window and goes to no other page
+        settings_win.webContents.setWindowOpenHandler(() => ({action: 'deny'}));
+        settings_win.webContents.on('will-navigate', v => v.preventDefault());
         settings_win.loadURL('navplace://app/settings/index.html');
     }
 
@@ -417,6 +424,13 @@ async function main()
         await search_reset();
     }
 
+    // A link a page asked for: opened outside, and the search starts over
+    function link_open(url) {
+        url_open_external(url, app_uid);
+        clearTimeout(search_reset_timer);
+        search_reset_timer = setTimeout(() => search_reset().catch(() => {}), 100);
+    }
+
     // An empty search box, focused: the design shows every link again, the first one selected
     async function search_reset() {
         await win.webContents.executeJavaScript(`{
@@ -430,12 +444,23 @@ async function main()
     }
 }
 
-async function url_open_external(url)
+// Only a web address is handed to the system: any other kind (ssh:, smb:, vscode:, mailto:, file:)
+// would start whatever program the system keeps for it
+async function url_open_external(url, group_uid)
 {
-    const scheme = url.match(/^(https?):\/\//)?.[1] ?? null;
-    if ((process.platform === 'linux') && config.is_wayland && scheme) {
+    let protocol = null;
+    try {
+        protocol = new URL(url).protocol;
+    }
+    catch {
+    }
+    if ((protocol !== 'http:') && (protocol !== 'https:')) {
+        console.error(`[${group_uid}][link_skipped] protocol=${protocol ?? 'invalid-url'}`);
+        return;
+    }
+    if ((process.platform === 'linux') && config.is_wayland) {
         try {
-            await chrome_window_focus(scheme);
+            await chrome_window_focus(protocol.slice(0, -1));
         }
         catch {
             // Handler lookup and Window Calls are optional; fall back to normal URL opening.
