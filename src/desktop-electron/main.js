@@ -326,6 +326,14 @@ async function main()
         },
     });
 
+    // The links window is the app: the socket the hotkey talks to goes when it closes. A settings
+    // window left open kept the app half alive, with no hotkey and no way to start again. So it
+    // goes too and the app quits: the next press of the hotkey is a clean cold start
+    if (settings_win) {
+        settings_win.destroy();
+    }
+    electron.app.quit();
+
     function settings_window_show() {
         if (settings_win) {
             settings_win.show();
@@ -395,7 +403,7 @@ async function main()
 
     // The design the links file names now: the window loads it only when it is another one
     async function design_load(next) {
-        if (next === design) {
+        if ((next === design) || win.isDestroyed()) {
             return;
         }
         console.log(`[${app_uid}][design_changed] from=${design} to=${next}`);
@@ -415,8 +423,11 @@ async function main()
         if ('autostart' in patch) {
             await autostart_set(!!patch.autostart, {appimage_file: config.appimage_file, icon: await icon_file_find()});
         }
-        win.webContents.setZoomFactor(next.zoom);
-        win.setAlwaysOnTop(next.on_top);
+        // The links window may have closed while the lines above waited: the app is quitting
+        if (!win.isDestroyed()) {
+            win.webContents.setZoomFactor(next.zoom);
+            win.setAlwaysOnTop(next.on_top);
+        }
         settings = next;
         await settings_save(settings);
     }
@@ -439,7 +450,9 @@ async function main()
             return;
         }
         parsed_collection = resolved;
-        win.webContents.send('api_items_changed', parsed_collection);
+        if (!win.isDestroyed()) {
+            win.webContents.send('api_items_changed', parsed_collection);
+        }
     }
 
     // Never awaited by anything that shows the window.
@@ -448,6 +461,10 @@ async function main()
     }
 
     async function window_show() {
+        // A summon that comes while the app quits finds no window
+        if (win.isDestroyed()) {
+            return;
+        }
         // Links change while the app waits in the background, so every summon
         // reloads them. The window goes up first; the renderer redraws when the
         // items arrive.
