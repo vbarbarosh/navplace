@@ -10,7 +10,7 @@ Two existing designs are the canonical, battle-tested references. When generatin
 
 - **`designs/showcase/`** — the canonical **presentation-style** reference. Powers https://vbarbarosh.com in production. Vanilla JS, no framework. Uses `meta` mapping to bind `% title:` / `% email:` / `% subtitle:` into the page chrome. Shows the shared light/dark switch (`/lib/theme_switch.js`) in its topbar. Uses `navplace.navigate(item, e)` on click so multi-open works.
 
-- **`designs/github/`** — the canonical **launcher-style** reference. Default fallback in `desktop-electron/main.js` when `% design:` is missing or unknown. Vanilla JS, no framework. Search input + dense table of rows (icon / label / href). Marks the current link (`np-current`) that the runtime's Up/Down move; opens via `navplace.navigate(item)` to preserve multi-open. Explicit "No matches." empty state.
+- **`designs/github/`** — the canonical **launcher-style** reference. Default fallback in `src/desktop-electron/main.js` when `% design:` is missing or unknown. Vanilla JS, no framework. Search input + dense table of rows (icon / label / href). Marks the current link (`np-current`) that the runtime's Up/Down move; opens via `navplace.navigate(item)` to preserve multi-open. Explicit "No matches." empty state.
 
 Both are single-HTML-file plus a single `theme.css`, with no build step and no external dependencies — match that shape for new designs.
 
@@ -18,11 +18,11 @@ Both are single-HTML-file plus a single `theme.css`, with no build step and no e
 
 ## What a design is
 
-A **design** is a single self-contained HTML file that renders a NavPlace collection. It receives a list of parsed items at runtime and decides how to display them. Designs are swappable per-collection by changing one line in the source: `% design: <name>`.
+A **design** is an HTML page in a folder of its own that renders a NavPlace collection. It receives a list of parsed items at runtime and decides how to display them. Designs are swappable per-collection by changing one line in the source: `% design: <name>`.
 
 A design must work in **three runtime contexts** without any context-specific code:
 
-1. **Desktop app (Electron)** — the file is loaded directly via `file://` from disk. Items come from `window.ElectronApp.api_items_all()`.
+1. **Desktop app (Electron)** — the file is loaded from the app's own folders, at `navplace://app/designs/<name>/index.html`. Items come from `window.ElectronApp.api_items_all()`, and again after every reload of the links.
 2. **navplace.com and its Playground** — the file is served as a static asset from `build/www/` by the Cloudflare Worker. Items come from postMessage.
 3. **Embed widget** — the file runs inside an `<iframe>` on a third-party page. Items come from postMessage.
 
@@ -34,6 +34,7 @@ The NavPlace runtime (`lib/navplace.js`) handles all three transparently. A desi
 designs/<your-design-name>/
   index.html        # required, the entry point
   theme.css         # optional, scoped stylesheet
+  links.txt         # optional, the sample the Playground loads with the design
   <assets…>         # optional, images/svgs you bundle with the design
 ```
 
@@ -41,35 +42,35 @@ designs/<your-design-name>/
 - The design's own files (`theme.css`, pictures) are referenced **relative to the design folder**.
 - The shared libraries are loaded from **`/lib/…`**, the site's root, never `../../lib/…` (`bin/self-check` fails the build on it). The desktop app shows designs at `navplace://app/designs/<name>/`, where `/lib` is its own copy.
 - The shared runtime lives at `/lib/navplace.js`.
-- Optional shared vendor libs (Vue, smcss) live under `/lib/vendor/`, a folder per major: Vue at `vue-3/`, smcss at `smcss-2/` (an upgrade replaces the files; a new major gets a folder of its own) — two existing designs use these, but a design can equally well be vanilla JS with no deps.
+- Optional shared vendor libs (Vue, smcss) live under `/lib/vendor/`, a folder per major: Vue at `vue-3/`, smcss at `smcss-2/` (an upgrade replaces the files; a new major gets a folder of its own) — three existing designs use these (`basic`, `first`, `google-chrome`), but a design can equally well be vanilla JS with no deps.
 
 ## Runtime API
 
-Load `/lib/navplace.js`. It exposes a global function `navplace(...)` and a helper `navplace.navigate(...)`.
+Load `/lib/navplace.js`. It exposes a global function `navplace(...)` and a helper `navplace.navigate(...)`; `navplace.order_set(...)`, `navplace.current_set(...)` and `navplace.selected_items` are described below.
 
 ### `navplace(params)` — call this once on init
 
 ```js
 navplace({
-  input: '#search',                 // string selector OR HTMLElement (required)
+  input: '#search',                 // string selector OR HTMLElement (default: 'input[type=search]')
   update: (items, {current}) => { /* … */ },   // called every time the list or the current link changes (required)
   meta: {                           // optional: map directive keys → CSS selectors
     title: '.identity h1',
     email: '.identity a',
     subtitle: '.section-title',
   },
-  navigate: (item) => { /* … */ }   // optional: override Enter-key navigation
+  navigate: (item) => { /* … */ }   // optional: override Enter-key navigation (no design here does)
 });
 ```
 
-- `input` — the search `<input>` element. The runtime listens to its `input` event, re-runs the filter, and calls `update(items)` with the new list. The runtime also auto-focuses this element when the user starts typing anywhere on the page.
-- `update(items, {current})` — called once on init (with the full list), again on every filter change, and on every Up/Down. The design re-renders from this list and puts the class `np-current` on the element of `items[current]`. The runtime owns Up, Down and Enter: Up/Down move `current` (0 after each new search) and scroll `.np-current` into view; Enter opens `items[current]`. Enter and Space on a focused button or link are left to it: the button does its work, the link opens as a click on it does. A design with a bar stuck above its links (`position: sticky` or `fixed`) gives the links a `scroll-margin-top`, or their scroller a `scroll-padding-top`, as tall as that bar, or going Up the current link stops under it. A default ring styles `.np-current`; restyle it in the design, for both themes. `update` also gets `{item}`, the current link itself. A design that shows other links than it was given, or in another order (a section picked, links grouped), tells the runtime with `navplace.order_set(shown)`, the links it shows in their screen order: ↑ ↓ and Enter then walk those. `navplace.current_set(index)` makes the link at that place in the order the current one (a row under the mouse). Items are sorted: `search1` matches (label + tags) first, then `search2` matches (href) not already included.
-- `meta` — optional. Maps directive keys from the collection's `% key: value` lines to CSS selectors in your template. When the source has `% title: Vladimir Barbarosh`, the runtime writes `Vladimir Barbarosh` into the `innerText` of the element matched by `.identity h1`. Useful for designs with author / contact / section labels in the chrome. Only `title`, `email`, `subtitle` are wired in the existing designs, but any key works — and `email` on an `<a>` also updates its `href`.
-- `navigate(item)` — optional. Called for each selected link when the user presses Enter. If omitted, the default behavior is `navplace.navigate(item)` (which respects the multi-open selection — see below).
+- `input` — the search `<input>` element. The runtime listens to its `input` event, re-runs the filter, and calls `update(items)` with the new list. The runtime also auto-focuses this element when the user starts typing anywhere on the page. When the page has no such element, `navplace()` returns at once and does nothing, without an error.
+- `update(items, {current})` — called once on init (with the full list), again on every filter change, and on every Up/Down. The design re-renders from this list and puts the class `np-current` on the element of `items[current]`. The runtime owns Up, Down and Enter: Up/Down move `current` (0 after each new search, −1 when there are no links) and scroll `.np-current` into view; Enter opens `items[current]`. Enter and Space on a focused button or link are left to it: the button does its work, the link opens as a click on it does. A design with a bar stuck above its links (`position: sticky` or `fixed`) gives the links a `scroll-margin-top`, or their scroller a `scroll-padding-top`, as tall as that bar, or going Up the current link stops under it. A default ring styles `.np-current`; restyle it in the design, for both themes. `update` also gets `{item}`, the current link itself. A design that shows other links than it was given, or in another order (a section picked, links grouped), tells the runtime with `navplace.order_set(shown)`, the links it shows in their screen order: ↑ ↓ and Enter then walk those. The order lasts until the next search, so the design sets it each time it draws. `navplace.current_set(index)` makes the link at that place in the order the current one (a row under the mouse). Items are sorted: the links that match by label and tags first, then those that need the href to match, each group in the file's order.
+- `meta` — optional. Maps directive keys from the collection's `% key: value` lines to CSS selectors in your template. When the source has `% title: Vladimir Barbarosh`, the runtime writes `Vladimir Barbarosh` into the `innerText` of the element matched by `.identity h1`. Useful for designs with author / contact / section labels in the chrome. Only `title`, `email`, `subtitle` are wired in the existing designs, but any key works — and `email` on an `<a>` also sets its `href` to `mailto:…` when the value is a plain mail address; any other value leaves the element without a link.
+- `navigate(item)` — optional, for a design that opens links its own way. Called on Enter once for each link Enter opens: the top link of every expression before the last, then the current link. No design in this repo passes it: the default, `navplace.navigate(item)` (which respects the multi-open selection — see below), is what they use.
 
 ### `navplace.navigate(item, event?)` — call this from click handlers
 
-For click-to-open links in your rendered list, **use `navplace.navigate(item, event)` rather than a raw `<a href>` click**. Only the runtime function honors multi-link selection.
+For click-to-open links in your rendered list, **use `navplace.navigate(item, event)` rather than a raw `<a href>` click**. Only the runtime function honors multi-link selection. With the `event` it also leaves a click with Ctrl, Cmd, Shift or the middle button on an `<a href>` to the browser, which opens that one link its own way.
 
 ```js
 const linkEl = document.createElement('a');
@@ -79,9 +80,9 @@ linkEl.onclick = e => navplace.navigate(item, e);
 
 ### How multi-link works (so you render the right thing)
 
-The user can type space-separated expressions in the input: `gh mail cal`. The runtime compiles each expression separately and selects **one item per expression** (the first match). `update(items)` receives the items matching the **last** expression typed, so the list visible to the user reflects what's currently being narrowed.
+The user can type space-separated expressions in the input: `gh mail cal`. The runtime compiles each expression separately and selects **one item per expression** (the first match). `update(items)` receives the items matching the **last** expression typed, so the list visible to the user reflects what's currently being narrowed. The selected items are in `navplace.selected_items`, one for each expression that matches anything, for a design that shows what Enter will open (`palette` does).
 
-On Enter (or on a `navplace.navigate(item, e)` click), the runtime opens **every** selected item — not just the one clicked or the one at the top. This is a signature feature; do not break it by short-circuiting with `<a href target="_blank">` alone. On the web the last one takes the page's place and the others open in new tabs; when the browser blocks pop-ups only the first of those tabs opens, until pop-ups are allowed for the site.
+On Enter (or on a `navplace.navigate(item, e)` click), the runtime opens **every** selected item, the current or clicked one in place of the last expression's — not just the one clicked or the one at the top. An address selected twice opens once. This is a signature feature; do not break it by short-circuiting with `<a href target="_blank">` alone. On the web the last one takes the page's place and the others open in new tabs; when the browser blocks pop-ups only the first of those tabs opens, until pop-ups are allowed for the site.
 
 ## Item shape
 
@@ -91,7 +92,7 @@ Every item passed to `update(items)` has this shape:
 {
   label:      'node-helpers',                           // string — user-visible name
   href:       'https://vbarbarosh.github.io/node-helpers',
-  icon_url:   'app://favicon/vbarbarosh.github.io?letter=V',     // see "icons" section
+  icon_url:   'app://favicon/vbarbarosh.github.io?letter=N',     // see "icons" section
   image_url:  null,                                     // string|null — set if source had `@image-name`
   tags:       ['frontend'],                             // string[] — from inline `#tag` (no equals)
   meta:       { padding: '1' },                         // object — from inline `#tag=value` (tag-with-value)
@@ -113,7 +114,8 @@ These four per-item fields are populated from different DSL syntax. Don't confla
   Example: `node-helpers #padding=1 https://…` → `meta: { padding: '1' }`.
 - **`item.image_url`** — from inline **`@path`** (an at-sign followed by a relative path) on a link line, **immediately before the URL**. The parser turns it into `private://<path>`, which Electron serves from `~/.navplace/<path>`. The path may contain `/`.
   Example: `Gmail #bb @img/gmail.png https://mail.google.com/` → `image_url: 'private://img/gmail.png'`.
-  Default when absent: `null`. Outside Electron (web/embed surfaces), the `private://` protocol won't resolve, so always fall back: `item.image_url ?? item.icon_url`.
+  When the file names the picture with `% picture <path>: <url>` (an `http://`, `https://` or `data:image/` url, on a line anywhere in the file), `image_url` is that url instead.
+  Default when absent: `null`. Outside Electron (web/embed surfaces), the `private://` protocol won't resolve, so always fall back: `item.image_url ?? item.icon_url` for a link with no picture, and `icon_url` again when the picture fails to load (the `<img>`'s `error` event).
 - **`item.namespaces`** — from a **`# Section`** heading **at the start of a line** that precedes the link.
   Example: `# GitHub` on its own line, then `node-helpers https://…` → `namespaces: ['GitHub']`.
 
@@ -123,13 +125,14 @@ So `%` is for document-wide directives; `#` and `@` are always per-item or per-s
 
 ### Icons
 
-- `item.icon_url` is always set. Inside Electron, it's `app://favicon/<host>?letter=<L>` (served by the desktop app's protocol handler with a disk cache; a letter tile when Google has no icon for the site). On navplace.com it's `/icon/<host>`, answered by the site's Worker for navplace pages only; anywhere else it's `https://icon.horse/icon/<host>`, or, for a host that is not public (an IP address, a port, `localhost`, a private name such as `wiki.corp.internal`), an inline `data:image/svg+xml` letter tile.
+- `item.icon_url` is always set. Inside Electron, it's `app://favicon/<host>?letter=<L>` (served by the desktop app's protocol handler with a disk cache; a letter tile when no icon is found for the site). On navplace.com it's `/icon/<host>`, answered by the site's Worker for navplace pages only; anywhere else it's `https://icon.horse/icon/<host>`, or, for a host that is not public (an IP address, a port, `localhost`, a private name such as `wiki.corp.internal`), an inline `data:image/svg+xml` letter tile.
 - Use it directly as `<img src="…">`. Don't construct your own favicon URL — you'd break the desktop favicon cache.
 
 ### Images
 
-- `item.image_url` is set when the source line has `@filename` before the URL (e.g. `Atari @atari.png https://atari.com`). It resolves to `private://<filename>` and is served from `~/.navplace/<filename>` (Electron only — the web/embed surfaces won't have these files, so `image_url` will be `null` there).
-- Fall back gracefully: `item.image_url ?? item.icon_url`.
+- `item.image_url` is set when the source line has `@filename` before the URL (e.g. `Atari @atari.png https://atari.com`). It resolves to `private://<filename>` and is served from `~/.navplace/<filename>` (Electron only — the web/embed surfaces won't have these files: `image_url` is still `private://<filename>` there, and does not load).
+- With `% picture atari.png: <url>` in the file, `image_url` is that url on every surface. The desktop app shows a `data:` picture and blocks a web one.
+- Fall back gracefully: `item.image_url ?? item.icon_url`, and `item.icon_url` when the picture fails to load.
 
 ## Required behavior
 
@@ -140,7 +143,7 @@ A design **must**:
 3. Make item clicks call `navplace.navigate(item, e)` (not just rely on `<a href>`).
 4. Work without network access (see "Desktop network gate" below).
 5. Be a single `index.html` plus a `theme.css` (plus any local assets). No build step.
-6. Have a light and a dark theme with the shared switch: `<script src="/lib/theme_switch.js"></script>` in `<head>`, before the design's CSS; light colours on `:root`, dark ones on `:root[data-theme="dark"]` (the rulebook's UI-01 to UI-04). `bin/self-check` fails the build for a design without it.
+6. Have a light and a dark theme with the shared switch: `<script src="/lib/theme_switch.js"></script>` in `<head>`, before the design's CSS; light colours on `:root`, dark ones on `:root[data-theme="dark"]` (the rulebook's UI-01 to UI-04). `bin/self-check` fails the build for a design without it, for one that never names `np-current`, for a script that does not parse, and for a `src` or `href` that names a file the build does not have.
 7. Put everything from the links file (`label`, `href`, `icon_url`, `image_url`, `tags`, `meta` values, `namespaces`) into the page as text, never as HTML: `textContent` and set attributes (`a.href = …`, `img.src = …`), or, in an HTML string, every value through an `html_escape` that covers `& < > " '`, attribute values included. The file is not trusted (an embed's `data-links`, another person's file pulled in by `% include:`): a link named `<img src=x onerror=…>` must show as exactly that text.
 
 A design **should**:
@@ -155,8 +158,8 @@ A design **should**:
 The Electron app blocks **all outbound network requests** from the design except for these protocols:
 
 ```
-app://favicon/   blob:   chrome://   chrome-devtools://
-data:            devtools://   file://   private://
+app://favicon/   blob:   chrome://   chrome-devtools://   data:
+devtools://      file://   navplace://app/   private://
 ```
 
 This means:
@@ -165,7 +168,10 @@ This means:
 - ❌ **No CDN libraries** loaded via `<script src="https://…">` (use the bundled `/lib/vendor/...` paths or vanilla JS).
 - ❌ **No remote images** in your design's chrome (decorative SVGs, background art). Inline them as `data:` URLs or local files.
 - ✅ **Item icons via `item.icon_url`** — these go through the allowed `app://favicon/` protocol.
-- ✅ **Item images via `item.image_url`** — these go through the allowed `private://` protocol.
+- ✅ **Item images via `item.image_url`** — these go through the allowed `private://` protocol, or `data:` for a `% picture`.
+- ✅ **The design's own files and `/lib/…`** — these go through `navplace://app/`.
+
+The app also refuses a page every permission but writing to the clipboard, and the window never leaves the design: a navigation is cancelled, and its address opens in the browser when it is an `http://` or `https://` one.
 
 If a design needs external fonts or images, inline them. The web/embed surfaces don't block these, but the desktop app will silently produce a font-of-shame fallback if you forget.
 
@@ -206,14 +212,14 @@ Copy this and modify. It's a complete, working design with no dependencies — d
 
     const listEl = document.getElementById('list');
 
-    function render(items) {
-        listEl.replaceChildren(...items.map(make_row));
+    function render(items, {current}) {
+        listEl.replaceChildren(...items.map((item, i) => make_row(item, i === current)));
     }
 
-    function make_row(item) {
+    function make_row(item, is_current) {
         const a = document.createElement('a');
         a.href = item.href;                          // for middle-click / "open in new tab"
-        a.className = 'row';
+        a.className = is_current ? 'row np-current' : 'row';   // the link ↑ ↓ moved to, which Enter opens
         a.onclick = e => navplace.navigate(item, e); // signature multi-open behavior
         // The links file is not trusted: its text enters as text or a set attribute, never as HTML
         a.innerHTML = '<img class="row-icon" alt=""><span class="row-label"></span><span class="row-host"></span>';
@@ -267,10 +273,10 @@ When designing, decide which family the brief belongs to. Each has a different r
 
 - **Launcher style** — search-first, dense list/table, keyboard-driven. Best for the desktop app. Optimize for typing speed and information density.
   - **Canonical reference: `designs/github/`.** Imitate this for launcher briefs.
-  - Other examples (less polished): `basic`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
+  - Other examples: `palette` (a command palette), and the less polished `basic`, `first`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
 - **Presentation style** — themed page with personality, items as a styled grid or wall, search is secondary. Best for hosted pages and embeds. Optimize for visual identity.
   - **Canonical reference: `designs/showcase/`.** Imitate this for presentation briefs.
-  - Other examples (less polished): `basic-for-portfolio*`, `basic-for-kids2`, `basic-for-recipes`.
+  - Other examples: `cards` (sections as categories), and the less polished `basic-for-portfolio`, `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes`.
 
 ## Common patterns
 
@@ -351,12 +357,12 @@ function render(items) {
 
 1. Drop the folder in `designs/<your-name>/`.
 2. Build the site and open it in the Playground: `bin/build`, then `python3 -m http.server -d build/www` and visit `http://localhost:8000/playground.html`, or open `http://localhost:8000/designs/<your-name>/index.html` directly. Not from disk: on a `file://` page `/lib` is the root of the disk, and nothing loads. The runtime falls back to a built-in demo source (`ChatGPT / GitHub / Gmail`) so you'll see real items right away.
-3. To test with real items, create `~/.navplace/README.md` with `% design: <your-name>` and a few link lines, then `npm start` to open it in the desktop app.
+3. To test with real items, create `~/.navplace/README.md` with `% design: <your-name>` and a few link lines, then `src/desktop-electron/bin/run` to open it in the desktop app.
 4. To test the embed surface, paste into any HTML page:
    ```html
    <script src="http://localhost:<port>/lib/embed.js" data-design="<your-name>" data-links="…"></script>
    ```
-5. Verify: typing in the input filters; clicking a link opens it; typing `gh mail` (or similar) and hitting Enter opens two items.
+5. Verify: typing in the input filters; Up and Down move the current link; clicking a link opens it; typing `gh mail` (or similar) and hitting Enter opens two items.
 
 ## Briefing format for AI-generated designs
 
@@ -366,7 +372,7 @@ When asking an AI agent to produce a new design, pair this file with a brief tha
 2. **Style family** — launcher or presentation.
 3. **Audience and tone** — who reads this, what mood it should evoke.
 4. **Layout sketch** — describe the chrome (header? sidebar? grid? list?), where the search input goes, how items are rendered (tiles? rows? cards?).
-5. **Color palette** — primary, background, foreground, accent. Light only / dark only / both.
+5. **Color palette** — primary, background, foreground, accent, for the light theme and for the dark one.
 6. **Typography** — system fonts only (network gate). Names like "ui-monospace, monospace" or "system-ui, sans-serif".
 7. **Directives to wire** — usually `title`, sometimes `email`, `subtitle`, custom ones.
 8. **Per-item tag/meta handling** — any visual variations driven by tags or meta values.
