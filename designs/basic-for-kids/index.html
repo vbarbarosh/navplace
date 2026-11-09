@@ -152,6 +152,10 @@
             const card = document.createElement('a');
             card.href = item.href;
             card.className = (i === current) ? 'card np-current' : 'card';
+            // A click opens through the runtime: every selected link, this one in place of the last
+            card.addEventListener('click', function (event) {
+                navplace.navigate(item, event);
+            });
             const img = document.createElement('img');
             img.src = item.image_url || item.icon_url;
             img.alt = item.label;
