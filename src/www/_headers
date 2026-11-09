@@ -1,0 +1,21 @@
+# What Cloudflare sends with the site's files. The Worker answers the addresses that are no file
+# and sets the same headers there: src/cloudflare/serve_site.mjs, whose test holds the two together
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+
+# The pages: no other site shows one in a frame. Not /designs/ and not /lib/: a design is made to
+# be framed, the libraries to be loaded
+/index.html
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+
+/docs.html
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+
+/playground.html
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'

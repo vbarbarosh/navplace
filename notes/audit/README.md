@@ -82,9 +82,9 @@ The Playground and the site:
 - [x] Two tabs overwrite each other's draft
 - [x] Tab cannot leave the editor
 - [x] Space, Home and End do not scroll the home page
-- [ ] `/docs` and `/playground` do not open
+- [x] `/docs` and `/playground` do not open
 - [ ] The home page shows an old version of the app
-- [ ] The site sends no security headers
+- [x] The site sends no security headers
 
 ## The designs
 
