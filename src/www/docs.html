@@ -633,7 +633,7 @@
 
 <!-- ============================================================ -->
 <h2 id="desktop-app">Desktop app</h2>
-<p>An Electron app that hosts one design full-window and feeds it your links. It has no interface of its own: what you see is the design. It is built as a Linux AppImage only.</p>
+<p>An Electron app that hosts one design full-window and feeds it your links. Its own interface is one settings window; the rest of what you see is the design. It is built as a Linux AppImage only.</p>
 
 <h3 id="install">Install</h3>
 <p>Download the AppImage from <a href="https://github.com/vbarbarosh/navplace/releases/latest">releases/latest</a>.</p>
@@ -643,10 +643,12 @@
 <h3 id="first-run">First run</h3>
 <ul>
     <li>The app reads <code>~/.navplace/README.md</code>. When the file is missing it writes a starter one: <code>% design: github</code> and eight links (ChatGPT, GitHub, Gmail, Google Calendar, Google Drive, MDN, Node.js, Electron).</li>
-    <li><code>% design:</code> picks the folder under <code>designs/</code>. Absent, or not one of them: <code>github</code>.</li>
-    <li>The window is 1200 × 1000, centred, always on top, zoomed to 125%. Its title is the design's title and the app's version.</li>
-    <li>It hides when it loses focus and stays running, so the hotkey brings it back at once.</li>
-    <li>Links open in your default browser.</li>
+    <li><code>% design:</code> picks the folder under <code>designs/</code>. Absent, or not one of them: <code>github</code>. It is read again at every press of the hotkey.</li>
+    <li>The window is 1200 × 1000, centred. It starts always on top and zoomed to 125%; the settings change both. Its title is the design's title and the app's version.</li>
+    <li>It hides when it loses focus, unless the settings say otherwise, and stays running, so the hotkey brings it back at once. Closing it quits the app.</li>
+    <li>Links open in your default browser, <code>http://</code> and <code>https://</code> ones only.</li>
+    <li>The gear beside the design's theme switch opens the settings: the links file in an editor, the design, the hotkey, start at login, zoom, always on top, hiding on lost focus, and a check for updates.</li>
+    <li>A start that fails says why in an error box.</li>
 </ul>
 
 <h3 id="hotkey">Global hotkey on GNOME</h3>
@@ -654,10 +656,12 @@
 <p>Run it once, from the AppImage itself (it needs the <code>APPIMAGE</code> variable the AppImage runtime sets) with <code>node</code> on <code>PATH</code>. It:</p>
 <ol>
     <li>copies the launcher to <code>${XDG_CONFIG_HOME:-~/.config}/navplace/launcher.js</code>;</li>
-    <li>binds <strong>Ctrl+Shift+Alt+N</strong> to it through <code>dconf</code>;</li>
+    <li>binds <strong>Ctrl+Shift+Alt+N</strong> to it through <code>dconf</code>: the command is <code>node</code>'s absolute path and the launcher;</li>
     <li>writes <code>${XDG_DATA_HOME:-~/.local/share}/applications/navplace.desktop</code>, which starts the AppImage;</li>
-    <li>prints the launcher path, the AppImage path and the <code>node</code> it found.</li>
+    <li>writes <code>${XDG_CONFIG_HOME:-~/.config}/autostart/navplace.desktop</code>, which starts the AppImage at login with <code>--background</code>: its window stays hidden until the hotkey;</li>
+    <li>prints the launcher path, the AppImage path, the <code>node</code> it found and the login entry.</li>
 </ol>
+<p>Both entries hold the AppImage's path in quotes. When an AppImage at another path starts, a newer one after an update, it points both at itself. The settings window changes the keys and switches the start at login off and on.</p>
 <p>Only GNOME is wired up. The launcher is plain Node, so any hotkey tool can run it, but its cold start calls <code>gtk-launch navplace</code>, which needs that desktop entry. A build from source has its own script for the AppImage in <code>src/desktop-electron/build/</code>: <code>src/desktop-electron/bin/configure-gnome</code>.</p>
 
 <h3 id="instant-launch">Instant launch</h3>
@@ -668,16 +672,17 @@
     <li>No socket: <code>gtk-launch navplace</code> starts the app once. From then on the hotkey only pings the socket.</li>
 </ol>
 <p>A second start of the app shows the running window instead of opening another one.</p>
-<p><strong>The window never waits.</strong> Each press of the hotkey reloads the links in the background: the window shows what it already has and the design redraws when the new links arrive. At startup the app reads the file once before the window opens, because its <code>% design:</code> decides what to load. <code>% include:</code> urls always come after the window is up. Measured with an include url delayed by 3 seconds, under Xvfb: window up in 569 ms, the hotkey answered in 4 ms, the pulled links in 3597 ms. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/instant-launch.md">docs/instant-launch.md</a>.</p>
+<p><strong>The window never waits.</strong> Each press of the hotkey reloads the links in the background: the window shows what it already has and the design redraws when the new links arrive. At startup the app reads the file once before the window opens, because its <code>% design:</code> decides what to load. A design named since is loaded at the next press. <code>% include:</code> urls always come after the window is up. Measured with an include url delayed by 3 seconds, under Xvfb: window up in 569 ms, the hotkey answered in 4 ms, the pulled links in 3597 ms. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/instant-launch.md">docs/instant-launch.md</a>.</p>
 
 <h3 id="wayland-chrome">Chrome on Wayland</h3>
 <p>With several workspaces, Chrome on Wayland can open a link in a window on another workspace. When Google Chrome handles http and https links, the app first focuses a Chrome window on the current workspace (else the most recently raised one), then opens the link. It needs the optional GNOME extension <a href="https://extensions.gnome.org/extension/4724/window-calls/">Window Calls</a>; without it, or outside a Wayland session, links open as Chrome decides. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/wayland-chrome-window.md">docs/wayland-chrome-window.md</a>.</p>
 
 <h3 id="network-gate">What a design can reach</h3>
-<p>The window cancels every request except these: <code>app://favicon/</code>, <code>blob:</code>, <code>chrome://</code>, <code>chrome-devtools://</code>, <code>data:</code>, <code>devtools://</code>, <code>file://</code>, <code>private://</code>. Remote fonts, scripts and images do not load in the desktop app.</p>
+<p>The window cancels every request except these: <code>app://favicon/</code>, <code>blob:</code>, <code>chrome://</code>, <code>chrome-devtools://</code>, <code>data:</code>, <code>devtools://</code>, <code>file://</code>, <code>navplace://app/</code>, <code>private://</code>. Remote fonts, scripts and images do not load in the desktop app. A page is refused every permission but writing to the clipboard, and the window never leaves its page: a link that would load in it opens in the browser.</p>
 <ul>
     <li><code>app://favicon/&lt;host&gt;?letter=&lt;L&gt;</code>: the app finds the icon once, as navplace.com's <code>/icon/</code> does (<code>lib/icon_find.js</code>: navplace's own in <code>lib/icons/</code>, then the page's icon links, <code>/apple-touch-icon.png</code>, <code>/favicon.ico</code>, then Google's), and keeps it in its user data folder; for a site with none, a tile of the link's first letter on a colour of that site.</li>
     <li><code>private://&lt;path&gt;</code>: a file under <code>~/.navplace/</code>, nothing outside it. <code>.svg</code> is sent as <code>image/svg+xml</code>, anything else as <code>image/png</code>.</li>
+    <li><code>navplace://app/…</code>: the app's own <code>designs/</code>, <code>lib/</code> and settings page, nothing outside them. A design's <code>/lib/…</code> is the app's copy there.</li>
 </ul>
 
 <!-- ============================================================ -->
@@ -728,7 +733,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
     <tbody>
         <tr><td><code>% design: x</code></td><td>A folder name under <code>designs/</code>. When absent: <code>github</code> in the desktop app, <code>basic</code> in the embed widget.</td></tr>
         <tr><td><code>% title: x</code></td><td>Text for the design's title element.</td></tr>
-        <tr><td><code>% email: x</code></td><td>Text for the design's email element; when that element is a link, its <code>href</code> too.</td></tr>
+        <tr><td><code>% email: x</code></td><td>Text for the design's email element; when that element is a link, a mail address becomes its <code>mailto:</code> address and anything else leaves it with none.</td></tr>
         <tr><td><code>% ns: a | b</code></td><td>Keeps only the links that sit under a section named <code>a</code> or <code>b</code>.</td></tr>
         <tr><td><code>% picture name: u</code></td><td>Names a picture for <code>@name</code>: <code>u</code> is an <code>https://</code>, <code>http://</code> or <code>data:image/</code> url. Repeatable, one name per line.</td></tr>
         <tr><td><code>% include: u</code></td><td>Desktop app only. Pulls the document at url <code>u</code> and appends its links.</td></tr>
@@ -764,12 +769,13 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
     <li>The <code>% ns:</code> of the pulling document filters local and pulled links alike.</li>
     <li>The prefix and the suffix are part of the label, so typing the prefix finds the pulled links.</li>
     <li>The request carries no access token.</li>
-    <li>A url that fails is logged and skipped; the rest still loads. Each url gets 5 seconds.</li>
+    <li>The urls are pulled side by side. Each gets 5 seconds and 2 MB of text.</li>
+    <li>A url that fails is logged, and its last good text, kept by the app, stands in for it; with none kept it is skipped. The rest still loads.</li>
     <li>No pull runs in front of the window: it opens on the local links and redraws when the pulled ones arrive.</li>
 </ul>
 
 <h3 id="section-sections"><code># Section</code> — sections</h3>
-<p>A section applies to every link line below it, until the next section. A blank line does not end it. Sections are metadata: no design in this repo draws them; <code>% ns:</code> filters on them, and a design can read <code>item.namespaces</code>.</p>
+<p>A section applies to every link line below it, until the next section. A blank line does not end it. Sections are metadata: <code>% ns:</code> filters on them, and a design can read <code>item.namespaces</code>. In this repo <code>cards</code> shows them as categories, and <code>basic</code> and <code>first</code> start a new row at each.</p>
 <pre><code data-lang="links"># Work | Internal</code></pre>
 <p>One line, two names. Two heading lines in a row join into one, with a space between them: <code># Work</code> then <code># Fun</code> gives one section named <code>Work Fun</code>. To start a new section, put a link line or a blank line between them.</p>
 
@@ -832,9 +838,9 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
 <ul>
     <li>The url must end the line. Text after it drops the whole line.</li>
     <li>A line that starts with <code>#</code> is a section, never a link. Put tags after the label.</li>
-    <li><code>@name</code> needs a space in front of it. <code>@img.png https://…</code> becomes the label.</li>
+    <li><code>@name</code> needs a space in front of it, or the start of the line. In <code>Kimi@kimi https://…</code> it stays in the label.</li>
     <li>Tag names are ASCII. <code>#дев</code> stays in the label as plain text.</li>
-    <li>A line with no url is skipped in silence. A broken <code>%</code> line throws.</li>
+    <li>A line with no url is skipped in silence. A broken <code>%</code> line is skipped with a warning.</li>
     <li>There is no comment syntax: <code>%</code> starts a directive.</li>
 </ul>
 
@@ -864,7 +870,7 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
         <tr><td><code>gh mail</code></td><td>Two expressions. Enter opens the top match for each.</td></tr>
     </tbody>
 </table>
-<p>The operators combine inside one part: <code>^git/!api</code> starts with <code>git</code> and does not contain <code>api</code>.</p>
+<p>The operators combine inside one expression: <code>^git/!api</code> starts with <code>git</code> and does not contain <code>api</code>.</p>
 <p>Each part looks at the label, at each tag and at the url. A plain part may be found in any of them, and the parts of one expression in different ones: <code>git/api</code> finds a link labelled <code>Git</code> with <code>api</code> in its url. <code>^</code> and <code>$</code> mean the start and the end of the label, of a tag or of the url, so <code>hub$</code> finds <code>GitHub #dev</code>. <code>!git</code> leaves out every link with <code>git</code> in any of them.</p>
 
 <!-- ============================================================ -->
@@ -885,21 +891,26 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
 &lt;script&gt;
     navplace({
         input: 'input[type=search]',
-        update: function (items) {
-            // draw items: the filtered list, best match first
+        update: function (items, {current}) {
+            // draw items: the filtered list, best match first;
+            // the element of items[current] gets the class np-current
         },
         meta: {title: '.title', email: 'a.email'},
     });
 &lt;/script&gt;</code></pre>
 <ul>
     <li><code>input</code>: the search box, a selector or an element. Typing anywhere on the page focuses it.</li>
-    <li><code>update(items)</code>: called with the filtered list whenever it changes. Each item has the fields in <a href="#what-a-link-becomes">What a link becomes</a>.</li>
+    <li><code>update(items, {current})</code>: called with the filtered list whenever it or the current link changes. Each item has the fields in <a href="#what-a-link-becomes">What a link becomes</a>.</li>
+    <li><code>items[current]</code> is the current link: ↑ and ↓ move it, Enter opens it, and the design gives its element the class <code>np-current</code>. With no links <code>current</code> is −1.</li>
+    <li><code>navplace.order_set(shown)</code>: for a design that shows other links than it was given, or in another order (a section picked, links grouped); ↑ ↓ and Enter then walk <code>shown</code>. <code>navplace.current_set(index)</code> makes the link at that place the current one, a row under the mouse for one.</li>
     <li><code>meta</code>: maps directive keys to elements; the runtime writes the value into each element's text.</li>
-    <li><code>navigate(item)</code>: optional; replaces what Enter does for each selected link.</li>
-    <li>Clicks call <code>navplace.navigate(item, event)</code>, so a click opens the selection of several words too.</li>
+    <li><code>navigate(item)</code>: optional; called for each link Enter opens, in place of opening it. No design in this repo passes it.</li>
+    <li>Clicks call <code>navplace.navigate(item, event)</code>, so a click opens the selection of several words too. A click on a link with Ctrl, Cmd, Shift or the middle button stays the browser's.</li>
+    <li><code>/lib/theme_switch.js</code>, loaded in <code>&lt;head&gt;</code>, gives the design its light and dark theme: <code>data-theme</code> on <code>&lt;html&gt;</code> and the switch.</li>
     <li>Fonts, scripts and images ship inside the folder or inline: the desktop app <a href="#network-gate">blocks remote requests</a>.</li>
+    <li><code>bin/build</code> fails for a design without <code>/lib/theme_switch.js</code> or <code>np-current</code>, with a script that does not parse, or naming a file that is not there.</li>
 </ul>
-<p>The same file runs in the desktop app (links from <code>window.ElectronApp</code>), inside the embed widget and in the Playground (links by <code>postMessage</code>). The full guide for writing one: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/DESIGN.ai.md">specs/DESIGN.ai.md</a>.</p>
+<p>The same file runs in the desktop app (links from <code>window.ElectronApp</code>), inside the embed widget and in the Playground (links by <code>postMessage</code>). The full guide for writing one: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/DESIGN.ai.md">docs/DESIGN.ai.md</a>.</p>
 <p>To work on one, open the Playground's <strong>Design</strong> tab: the <code>% design:</code> line opens the design's folder there, a tab per file, and every edit redraws the preview. The edits stay in the browser until <strong>Load</strong> brings a design's files back; copy them into <code>designs/&lt;name&gt;/</code> to keep them.</p>
 
 <!-- ============================================================ -->
@@ -939,7 +950,7 @@ Gmail   https://mail.google.com/
         <tr><td><code>{type: 'navplace:focus', key}</code></td><td>page → design</td><td>A character typed on the host page while nothing there has the focus: the design focuses its search box and types the character. A field, a button or a link of the host page keeps its keys; so do Space and the shortcuts with Ctrl, Alt or Cmd.</td></tr>
     </tbody>
 </table>
-<p>Links open in the top window. The widget shows only its own <code>data-links</code>: <code>% include:</code> does nothing here.</p>
+<p>The links text goes to the design's own origin only, and the design hears only the page around it. Links open in the top window. The widget shows only its own <code>data-links</code>: <code>% include:</code> does nothing here.</p>
 
 <!-- ============================================================ -->
 <h2 id="libraries">Libraries</h2>
@@ -949,13 +960,17 @@ Gmail   https://mail.google.com/
         <tr><th>File</th><th>Role</th></tr>
     </thead>
     <tbody>
-        <tr><td><code>parse.js</code></td><td>The parser: text in, <code>{meta, items}</code> out. A Node module and a browser global. Its options <code>{prefix, suffix, tags, ns}</code> serve <code>% include:</code>.</td></tr>
+        <tr><td><code>parse.js</code></td><td>The parser: text in, <code>{meta, items}</code> out. A Node module and a browser global. Its options <code>{prefix, suffix, tags, ns}</code> serve <code>% include:</code>; <code>{spans: true}</code> adds each link's line and where its parts sit in it, for the Playground.</td></tr>
         <tr><td><code>filter1_from_spec.js</code></td><td>Compiles one search expression (<code>^</code>, <code>$</code>, <code>!</code>, <code>/</code>) into a test; a copy from <a href="https://github.com/vbarbarosh/node-helpers">node-helpers</a>.</td></tr>
         <tr><td><code>items_search.js</code></td><td>What the search box's text finds among the links: the list to show and the top link of each word. A Node module and a browser global, with tests in <code>items_search.test.js</code>.</td></tr>
         <tr><td><code>plural.js</code></td><td>The phrase for a count, <code>plural(n, '# link', '# links')</code>; a copy from <a href="https://github.com/vbarbarosh/node-helpers">node-helpers</a>, loaded by the playground and the designs that count.</td></tr>
         <tr><td><code>icons/</code>, <code>icon_find.js</code>, <code>icon_library_file.js</code>, <code>is_public_domain.js</code></td><td>A link's icon, for navplace.com's <code>/icon/</code> and the desktop app: navplace's own icons first (<code>icons/</code>, 120 sites, an SVG or a picture of 96 px and more, <code>icons/index.json</code> by domain; a subdomain takes its parent's), then the site's own, then Google's. A host that is not public (<code>is_public_domain.js</code>: an address, a port, one label or a private ending such as <code>.local</code>) is asked itself only, over https, and only by the desktop app: navplace's icons, Google and any other host never hear its name, and <code>/icon/</code> looks nothing up for it.</td></tr>
         <tr><td><code>navplace.js</code></td><td>The runtime every design loads: the search box, filtering, the selection, ↑ ↓, Enter and clicks, the embed messages, and the items from <code>window.ElectronApp</code> in the desktop app. It loads <code>filter1_from_spec.js</code>, <code>parse.js</code> and <code>items_search.js</code> from its own folder.</td></tr>
         <tr><td><code>embed.js</code></td><td>The <a href="#embed">embed widget</a>.</td></tr>
+        <tr><td><code>theme_switch.js</code></td><td>The light and dark theme of every design, loaded in its <code>&lt;head&gt;</code>: <code>data-theme</code> on <code>&lt;html&gt;</code>, the switch, thin scrollbars, and in the desktop app the gear that opens the settings.</td></tr>
+        <tr><td><code>colours.js</code></td><td>The coloured layers of the Playground and of the desktop app's settings; this page and the home page colour their examples with it.</td></tr>
+        <tr><td><code>line_from_item.js</code></td><td>Writes an edited link back into its line, part by part, for the Playground's JSON; what did not change keeps its place. Tests in <code>line_from_item.test.js</code>.</td></tr>
+        <tr><td><code>vendor/</code></td><td>Vue and smcss for the designs that use them, and the AVIF encoder of the Playground's pictures; a folder per major version.</td></tr>
         <tr><td><code>parse.test.js</code></td><td>The parser's tests (mocha, <code>npm test</code>).</td></tr>
         <tr><td><code>parse.cli.js</code></td><td>Parses a sample and prints the result.</td></tr>
     </tbody>
@@ -983,15 +998,16 @@ Gmail   https://mail.google.com/
 
 <h3 id="architecture-desktop">The desktop app</h3>
 <ul>
-    <li><code>main.js</code>: the window, loading <code>~/.navplace/README.md</code> and its includes, the socket the launcher pings, the single-instance lock, the <code>private://</code> and <code>app://</code> protocols, the network gate.</li>
+    <li><code>main.js</code>: the window, loading <code>~/.navplace/README.md</code> and its includes, the socket the launcher pings, the single-instance lock, the <code>private://</code>, <code>app://</code> and <code>navplace://</code> protocols, the network gate, the settings window.</li>
     <li><code>launcher.js</code>: the hotkey side; Node built-ins only.</li>
     <li><code>renderer.js</code>: the preload that gives designs <code>window.ElectronApp</code>.</li>
+    <li><code>settings/</code>, <code>settings_preload.js</code>: the settings window's page and its preload.</li>
     <li><code>helpers/</code>: <code>collection_resolve_includes</code> and <code>include_spec_from_text</code> for <code>% include:</code>, <code>gnome_configure</code>, <code>chrome_window_focus</code>, <code>make_socket_server</code>.</li>
 </ul>
 
 <h3 id="architecture-site">The site</h3>
 <ul>
-    <li><code>bin/build</code> puts the site together in <code>build/www/</code>: <code>src/www/</code>, <code>lib/</code> without the tests and the CLI, <code>designs/</code> without the drafts, and <code>designs/index.json</code>, the Playground's list of designs with the files of each.</li>
+    <li><code>bin/build</code> puts the site together in <code>build/www/</code>: <code>src/www/</code>, <code>lib/</code> without the tests, the CLI and <code>is_public_domain.js</code>, <code>designs/</code>, and <code>designs/index.json</code>, the Playground's list of designs with the files of each. It ends with <code>bin/self-check</code>: every built script must parse, and every file a page names must be there.</li>
 </ul>
 
 <!-- ============================================================ -->
@@ -999,7 +1015,7 @@ Gmail   https://mail.google.com/
 <pre><code data-lang="shell"># after every git pull: the packages, and the desktop app's sandbox
 bin/configure
 
-# the parser's tests
+# the tests of lib/ and the Worker
 bin/test
 
 # the static site, into build/www/, then its self-check
@@ -1015,7 +1031,7 @@ src/desktop-electron/bin/build    # the AppImage, into src/desktop-electron/buil
 <h3 id="faq-platforms">Which platforms does the desktop app run on?</h3>
 <p>Linux, as an AppImage. The global hotkey is set up for GNOME only.</p>
 <h3 id="faq-data">Where are my links?</h3>
-<p>Desktop app: <code>~/.navplace/README.md</code>. Embed widget: in its <code>data-links</code>. Playground: in this browser. There is no server: <code>% include:</code> pulls links from any url.</p>
+<p>Desktop app: <code>~/.navplace/README.md</code>. Embed widget: in its <code>data-links</code>. Playground: in this browser. There is no server: <code>% include:</code> pulls links into the desktop app from any url.</p>
 <h3 id="faq-collections">Can the desktop app show several collections?</h3>
 <p>It reads one source. <code>% include:</code> pulls other documents into it.</p>
 <h3 id="faq-fonts">Why does my design look different in the desktop app?</h3>
