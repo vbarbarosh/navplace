@@ -64,6 +64,15 @@ jobs:
         working-directory: src/desktop-electron
         run: npm ci
 
+      # lib/ and designs/ go into the AppImage: their tests run too
+      - name: Install the site's dependencies
+        if: steps.plan.outputs.build == 'true'
+        run: npm ci
+
+      - name: Test the shared code
+        if: steps.plan.outputs.build == 'true'
+        run: bin/test
+
       - name: Test
         if: steps.plan.outputs.build == 'true'
         run: src/desktop-electron/bin/test

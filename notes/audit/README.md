@@ -119,7 +119,7 @@ text, and a click that keeps the page.
   login entry, old function names
 - [ ] `src/www/docs.html` says what the code does not do, and leaves out
   what it does
-- [ ] The site's tests never run in CI, and nothing runs on a pull request
+- [x] The site's tests never run in CI, and nothing runs on a pull request
 - [x] `bin/self-check` passes a build with a broken parser
 - [ ] The rules linter finds 15 faults outside the filter copy
 - [ ] Leftovers: a helper nothing requires, two dependencies nothing

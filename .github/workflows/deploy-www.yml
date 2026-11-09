@@ -11,6 +11,9 @@ on:
       - 'bin/build'
       - 'bin/self-check'
       - 'bin/deploy-www'
+      - 'bin/test'
+      - 'package.json'
+      - 'package-lock.json'
       - 'src/cloudflare/**'
       - '.github/workflows/deploy-www.yml'
   workflow_dispatch:
@@ -45,6 +48,15 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+
+      - name: Install dependencies
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: npm ci
+
+      # A failing test deploys nothing
+      - name: Test
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: bin/test
 
       - name: Build and deploy
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''

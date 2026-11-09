@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install the site's dependencies
+        run: npm ci
+
+      # The tests need no Electron binary
+      - name: Install the desktop app's dependencies
+        working-directory: src/desktop-electron
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+        run: npm ci
+
+      - name: Test the site
+        run: bin/test
+
+      - name: Test the desktop app
+        run: src/desktop-electron/bin/test
+
+      # bin/build ends with bin/self-check
+      - name: Build the site
+        run: bin/build
