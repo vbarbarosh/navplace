@@ -37,7 +37,7 @@ function main()
                 <!-- SHORTCUTS -->
                 <div class="shortcuts">
 
-                    <a v-for="(item, i) in items" v-bind:href="item.href" v-bind:class="{'np-current': i === current}" class="tile">
+                    <a v-for="(item, i) in items" v-on:click="click_tile(item, $event)" v-bind:href="item.href" v-bind:class="{'np-current': i === current}" class="tile">
                         <span class="tile-inner">
                             <img v-if="item.icon_url" v-bind:src="item.icon_url" alt="" />
                         </span>
@@ -50,6 +50,12 @@ function main()
         data: function () {
             // current: the link ↑ ↓ moved to, kept by the runtime; Enter opens it
             return {items: [], current: 0};
+        },
+        methods: {
+            // A click opens through the runtime: every selected link, this one in place of the last
+            click_tile: function (item, event) {
+                navplace.navigate(item, event);
+            },
         },
         mounted: function () {
             navplace({
