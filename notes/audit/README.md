@@ -29,7 +29,7 @@ fix lands.
 - [x] `% email` takes a `javascript:` address
 - [x] Text typed into the Playground's JSON pane is drawn as code
 - [ ] Private host names go to an outside icon service
-- [ ] A password in an include address lands in the log
+- [x] A password in an include address lands in the log
 - [ ] One icon request makes the site fetch without limit, and an odd icon
   address gives an error instead of a tile
 - [ ] The desktop app's browser sandbox is always off (`afterPack.js`);

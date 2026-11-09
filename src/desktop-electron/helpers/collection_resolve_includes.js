@@ -15,22 +15,23 @@ async function collection_resolve_includes(collection, group_uid)
     const specs = (collection.meta.include || []).map(include_spec_from_text);
     const items = [...collection.items];
     for (const spec of specs) {
-        // A query may carry a token: the logs keep the url without it
-        const url_without_query = spec.url.split('?')[0];
+        // A query may carry a token, the address a user and a password: the
+        // logs keep the url without them
+        const url_without_secrets = url_drop_secrets(spec.url);
         if (!spec.url.startsWith('http://') && !spec.url.startsWith('https://')) {
-            console.error(`[${group_uid}][include_skipped] url=${url_without_query}`);
+            console.error(`[${group_uid}][include_skipped] url=${url_without_secrets}`);
             continue;
         }
         try {
             // Startup waits for this — a silent url must not hold the window back.
             const text = await http_get_utf8(spec.url, {timeout: 5000});
             const included = parse(text_drop_directives(text), {prefix: spec.prefix, suffix: spec.suffix, tags: spec.tags, ns: collection.meta.ns});
-            console.log(`[${group_uid}][include_ok] url=${url_without_query} items=${included.items.length}`);
+            console.log(`[${group_uid}][include_ok] url=${url_without_secrets} items=${included.items.length}`);
             items.push(...included.items);
         }
         catch (error) {
             // One dead url keeps the rest of the collection alive.
-            console.error(`[${group_uid}][include_failed] url=${url_without_query} reason=${JSON.stringify(error.message)}`);
+            console.error(`[${group_uid}][include_failed] url=${url_without_secrets} reason=${JSON.stringify(error.message)}`);
         }
     }
 
@@ -40,6 +41,25 @@ async function collection_resolve_includes(collection, group_uid)
 function text_drop_directives(text)
 {
     return text.split('\n').filter(v => !v.trim().startsWith('%')).join('\n');
+}
+
+// An address as the logs may keep it: no query, no fragment, no user and no
+// password. One that does not parse is not repeated at all, and one with no
+// `//` keeps its scheme only: nothing there tells a user and a password from
+// the rest.
+function url_drop_secrets(text)
+{
+    let url = null;
+    try {
+        url = new URL(text);
+    }
+    catch {
+        return 'invalid-url';
+    }
+    if (!url.host && !url.pathname.startsWith('/')) {
+        return url.protocol;
+    }
+    return `${url.protocol}//${url.host}${url.pathname}`;
 }
 
 module.exports = collection_resolve_includes;
