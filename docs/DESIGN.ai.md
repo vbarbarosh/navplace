@@ -690,7 +690,7 @@ a:hover {
 
 ## Appendix B: Reference design — `github` (launcher style)
 
-The canonical launcher-style design. Default fallback in `desktop-electron/main.js`. Vanilla JS, no framework, no build step. Marks the current link that the runtime's Up / Down move; opens via `navplace.navigate(item)` to preserve the multi-open behavior. Has an explicit empty state. Use this as the direct template for launcher-style design briefs.
+The canonical launcher-style design. Default fallback in `src/desktop-electron/main.js`. Vanilla JS, no framework, no build step. Marks the current link that the runtime's Up / Down move; opens via `navplace.navigate(item)` to preserve the multi-open behavior. Has an explicit empty state. Use this as the direct template for launcher-style design briefs.
 
 ### `designs/github/index.html`
 
