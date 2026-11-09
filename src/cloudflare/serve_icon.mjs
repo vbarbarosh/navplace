@@ -29,7 +29,8 @@ async function serve_icon(request, {cache = null, fetch_fn = fetch, assets = nul
 
     const domain = domain_from_pathname(url.pathname);
     if (!is_public_domain(domain)) {
-        // localhost, an address, a port, a private name, a broken path: nothing to look up
+        // localhost, an address, a port, a private name, a broken path: nothing to look up.
+        // icon_find would ask such a host itself: that is for the desktop app, never from here
         return make_icon_response(render_tile_svg(domain), 'image/svg+xml', DAY);
     }
 

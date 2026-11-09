@@ -51,7 +51,7 @@ Parser output shape per item:
 
 - `search1` = transliterated `label + tags` (lowercased, Cyrillic→Latin).
 - `search2` = transliterated `href`.
-- `icon_url` = `app://favicon/<host>?letter=<L>` inside Electron, `/icon/<host>` on navplace.com (its Worker, `src/cloudflare/serve_icon.mjs`), `https://icon.horse/icon/<host>` elsewhere. A host that is not public (`lib/is_public_domain.js`, with a copy inside `lib/parse.js`: an IP address in any spelling, a port, one label, an ending such as `.local`, `.internal`, `.lan`) is never named to an outside service: elsewhere it gets an inline `data:image/svg+xml` letter tile, and `lib/icon_find.js` fetches nothing for it.
+- `icon_url` = `app://favicon/<host>?letter=<L>` inside Electron, `/icon/<host>` on navplace.com (its Worker, `src/cloudflare/serve_icon.mjs`), `https://icon.horse/icon/<host>` elsewhere. A host that is not public (`lib/is_public_domain.js`, with a copy inside `lib/parse.js`: an IP address in any spelling, a port, one label, an ending such as `.local`, `.internal`, `.lan`) is never named to an outside service: elsewhere it gets an inline `data:image/svg+xml` letter tile, navplace.com's Worker answers a tile without a lookup, and `lib/icon_find.js` (the desktop app) asks only that host itself, over https: its page's icon links, `/apple-touch-icon.png`, `/favicon.ico`; no library, no Google, no redirect or icon link to another host.
 
 ## Filter language
 

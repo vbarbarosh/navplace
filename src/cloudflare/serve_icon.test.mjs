@@ -1,4 +1,5 @@
 import assert from 'assert';
+import icon_find from '../../lib/icon_find.js';
 import serve_icon from './serve_icon.mjs';
 
 describe('serve_icon', function () {
@@ -67,6 +68,25 @@ describe('serve_icon', function () {
             assert.equal(response.headers.get('Cache-Control'), 'public, max-age=86400, s-maxage=86400', domain);
         }
         assert.equal(cache.size(), 0);
+    });
+    it('asks no one about a host that is not public, though the lookup alone would ask that host', async function () {
+        const hrefs = [];
+        const routes = {};
+        for (const domain of ['wiki.corp.internal', 'localhost:3000', '192.168.1.1', 'printer.local']) {
+            routes[`https://${domain}/favicon.ico`] = make_png_route('image/x-icon');
+        }
+        const answer = make_fetch(routes);
+        async function fetch_fn(href) {
+            hrefs.push(href);
+            return answer(href);
+        }
+        for (const domain of ['wiki.corp.internal', 'localhost:3000', '192.168.1.1', 'printer.local']) {
+            assert.equal((await icon_find(domain, fetch_fn)).type, 'image/x-icon', domain);
+            assert.deepStrictEqual(hrefs.splice(0), [`https://${domain}/`, `https://${domain}/apple-touch-icon.png`, `https://${domain}/favicon.ico`], domain);
+            const response = await serve_icon(make_request(domain), {fetch_fn});
+            assert.equal(response.headers.get('Content-Type'), 'image/svg+xml', domain);
+            assert.deepStrictEqual(hrefs, [], domain);
+        }
     });
     it('draws a tile for a path with a broken escape, not an error', async function () {
         for (const path of ['%E0%A4%A', '%', 'a.com%', '%ZZ.com']) {
