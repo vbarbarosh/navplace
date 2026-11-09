@@ -76,6 +76,12 @@
         html,
         body { height: 100%; }
 
+        /* On a view too short for the whole page, ↑ stops a row below the stuck .topbar, not under
+           it: the bar's padding (12px and 8px), its header (as tall as the theme switch, 32px, with
+           10px under it) and its search box (10px of padding and a 1px border around an input of
+           14px × 1.2 with 4px above and below) */
+        html { scroll-padding-top: calc(12px + 32px + 10px + 2*11px + 1.2*14px + 2*4px + 8px); }
+
         body {
             margin: 0;
             font-family: var(--font);
@@ -285,11 +291,15 @@
             white-space: nowrap;
         }
 
+        /* ↑ stops a row below the stuck .group__hdr, not under it: where the header sticks, its
+           padding (7px above and below), its line of 12px text (as tall as the font makes it: taken
+           as 18px) and its border */
         .list {
             height: calc(100vh - 170px);
             min-height: 320px;
             overflow: auto;
             scroll-behavior: auto;
+            scroll-padding-top: calc(var(--sticky-top) + 7px + 18px + 7px + 1px);
         }
 
         .group {
