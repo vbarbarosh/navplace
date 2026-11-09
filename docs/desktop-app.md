@@ -20,12 +20,17 @@ chmod +x NavPlace-*.AppImage
 ./NavPlace-*.AppImage
 ```
 
+A start that fails says why in an error box. Closing the window quits the app.
+The gear beside a design's theme switch opens the settings: the links file in
+an editor, the design, the hotkey, start at login, zoom, on top of other
+windows, hiding when the window loses focus, and a check for updates.
+
 ## The GNOME hotkey
 
 The Electron AppImage supports a one-time GNOME setup flag:
 
 ```bash
-./NavPlace.AppImage --configure-gnome
+./NavPlace-*.AppImage --configure-gnome
 ```
 
 Run this from the built AppImage, not from `npm start`. The setup requires the
@@ -38,12 +43,19 @@ and writes `~/.local/share/applications/navplace.desktop`. The launcher pings th
 running NavPlace socket, so the window shows at once; if NavPlace is not already
 running, it falls back to `gtk-launch navplace`, which starts the AppImage.
 
+The setup also writes a login entry, `~/.config/autostart/navplace.desktop`. It
+starts the AppImage with `--background` at login: the window stays hidden until
+the hotkey, so the first press is not a cold start. Both entries hold the
+AppImage's path in quotes. When an AppImage at another path starts, a newer one
+after an update, it points both entries at itself. The settings window changes
+the hotkey and switches the start at login off and on.
+
 `node` must be on the `PATH` of the terminal where the setup runs. The setup
 resolves its absolute path there and writes it into the hotkey's command, so the
 hotkey does not depend on the `PATH` of the session, where a node installed by
 nvm or fnm is not found. If that node moves or is removed, run the setup again.
 On success, the command prints the launcher path, the AppImage path used for
-cold start, and the resolved node executable.
+cold start, the resolved node executable, and the login entry.
 
 ## Chrome links on Wayland
 
