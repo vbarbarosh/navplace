@@ -201,12 +201,24 @@
 <script>
     const results_container = document.getElementById('navplace-results');
 
+    // The links as they are drawn, a card each, in the same order
+    let shown_items = [];
+
     main();
 
     function main()
     {
         if (typeof navplace === 'function') {
             navplace({input: '#ops-search', update: refresh_items});
+            // A click on a card opens its link through the runtime: every selected link, the
+            // clicked one in place of the last
+            results_container.addEventListener('click', function (event) {
+                const card = event.target.closest('.nav-item');
+                const item = card ? shown_items[Array.from(results_container.children).indexOf(card)] : null;
+                if (item) {
+                    navplace.navigate(item, event);
+                }
+            });
         }
         else {
             console.error('NavPlace runtime not detected.');
@@ -215,6 +227,7 @@
 
     function refresh_items(items, {current} = {})
     {
+        shown_items = items || [];
         if (!items || (items.length === 0)) {
             results_container.innerHTML = '<div class="empty-state">No matching operational records found.</div>';
             return;
