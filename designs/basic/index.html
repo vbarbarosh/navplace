@@ -31,6 +31,7 @@ function main()
 <div class="fluid flex-row-center p10 oa">
     <div class="flex-fluid ma container">
         <a v-for="(item, i) in items"
+           v-on:click="click_bookmark(item, $event)"
            v-bind:href="item.href"
            v-bind:class="{break: row_starts(i), 'np-current': (i === current)}"
            target="_blank"
@@ -69,6 +70,10 @@ function main()
             },
             picture_mark_failed: function (item) {
                 this.failed[item.image_url] = true;
+            },
+            // A click opens through the runtime: every selected link, this one in place of the last
+            click_bookmark: function (item, event) {
+                navplace.navigate(item, event);
             },
         },
         mounted: function () {
