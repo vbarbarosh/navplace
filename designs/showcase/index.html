@@ -19,7 +19,10 @@
     </div>
 
     <div class="search">
-        <input id="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search" />
+        <label class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="search" type="search" placeholder="Search" autocomplete="off" spellcheck="false" aria-label="Search" />
+        </label>
     </div>
 
     <h2 class="section-title">Showcase</h2>
@@ -36,13 +39,24 @@ function main()
     navplace({
         input: '#search',
         meta: {title: '.identity h1', email: '.identity a', subtitle: '.section-title'},
-        update: (v, {current = 0} = {}) => refresh_grid(v, current),
+        update: (v, {item = null} = {}) => refresh_grid(v, item),
     });
 
-    // `current`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
-    function refresh_grid(items, current) {
+    // `current_item`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
+    function refresh_grid(items, current_item) {
         const grid = document.getElementById('grid');
-        const tiles = items.map(function (item, i) {
+        // The links of one heading stand together under it, the headings in the order their first
+        // link came: a search puts its best matches first, which would cut a heading in two
+        const items_by_heading = new Map();
+        for (const item of items) {
+            const heading = item.namespaces?.[0] ?? null;
+            if (!items_by_heading.has(heading)) {
+                items_by_heading.set(heading, []);
+            }
+            items_by_heading.get(heading).push(item);
+        }
+        const shown = [...items_by_heading.values()].flat();
+        const tiles = shown.map(function (item) {
             const templ = document.createElement('template');
             templ.innerHTML = `
                 <a class="tile">
@@ -66,26 +80,32 @@ function main()
             out.querySelector('.label').textContent = item.label;
             // A name too long for its tile is cut with an ellipsis: its full text is in the title
             out.querySelector('.label').title = item.label;
-            out.querySelector('.sub').textContent = new URL(item.href).host;
-            out.classList.toggle('np-current', i === current);
+            out.querySelector('.sub').textContent = new URL(item.href).host.replace(/^www\./, '');
+            out.classList.toggle('np-current', item === current_item);
             out.onclick = function (event) {
                 navplace.navigate(item, event);
             };
             return out;
         });
-        // A heading of the links file is drawn once, over the links that follow it
+        // A heading of the links file is drawn once, over its links, with how many of them are shown
         const parts = [];
-        for (const [i, item] of items.entries()) {
-            const heading = item.namespaces?.[0];
-            if (heading && (heading !== items[i - 1]?.namespaces?.[0])) {
+        for (const [i, item] of shown.entries()) {
+            const heading = item.namespaces?.[0] ?? null;
+            if (heading && (heading !== (shown[i - 1]?.namespaces?.[0] ?? null))) {
                 const title = document.createElement('h3');
                 title.className = 'group-title';
                 title.textContent = heading;
+                const count = document.createElement('span');
+                count.className = 'count';
+                count.textContent = items_by_heading.get(heading).length;
+                title.append(count);
                 parts.push(title);
             }
             parts.push(tiles[i]);
         }
         grid.replaceChildren(...parts);
+        // ↑ ↓ and Enter walk the links in the order they stand on the page
+        navplace.order_set?.(shown);
         // No link to show: a search that finds nothing is told apart from a file with no links by the search box
         const empty = document.getElementById('empty');
         empty.hidden = (items.length > 0);

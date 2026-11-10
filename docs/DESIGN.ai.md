@@ -388,7 +388,7 @@ A complete brief plus this spec is enough for an AI agent to produce a working `
 
 ## Appendix A: Reference design — `showcase` (presentation style)
 
-The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla JS, no framework, no build step. Uses the `meta` mapping, the shared light/dark switch in its topbar, and `navplace.navigate(item, e)` on click. Draws each `# Section` heading once, over the links that follow it; a file with no headings is one plain grid. Use this as the direct template for presentation-style design briefs.
+The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla JS, no framework, no build step. Uses the `meta` mapping, the shared light/dark switch in its topbar, and `navplace.navigate(item, e)` on click. Draws each `# Section` heading once, over its links, with their count, keeping a heading's links together when a search reorders them (`navplace.order_set`); a file with no headings is one plain grid. Its search bar sticks to the top of the view. Use this as the direct template for presentation-style design briefs.
 
 ### `designs/showcase/index.html`
 
@@ -414,7 +414,10 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
     </div>
 
     <div class="search">
-        <input id="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search" />
+        <label class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="search" type="search" placeholder="Search" autocomplete="off" spellcheck="false" aria-label="Search" />
+        </label>
     </div>
 
     <h2 class="section-title">Showcase</h2>
@@ -431,13 +434,24 @@ function main()
     navplace({
         input: '#search',
         meta: {title: '.identity h1', email: '.identity a', subtitle: '.section-title'},
-        update: (v, {current = 0} = {}) => refresh_grid(v, current),
+        update: (v, {item = null} = {}) => refresh_grid(v, item),
     });
 
-    // `current`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
-    function refresh_grid(items, current) {
+    // `current_item`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
+    function refresh_grid(items, current_item) {
         const grid = document.getElementById('grid');
-        const tiles = items.map(function (item, i) {
+        // The links of one heading stand together under it, the headings in the order their first
+        // link came: a search puts its best matches first, which would cut a heading in two
+        const items_by_heading = new Map();
+        for (const item of items) {
+            const heading = item.namespaces?.[0] ?? null;
+            if (!items_by_heading.has(heading)) {
+                items_by_heading.set(heading, []);
+            }
+            items_by_heading.get(heading).push(item);
+        }
+        const shown = [...items_by_heading.values()].flat();
+        const tiles = shown.map(function (item) {
             const templ = document.createElement('template');
             templ.innerHTML = `
                 <a class="tile">
@@ -461,26 +475,32 @@ function main()
             out.querySelector('.label').textContent = item.label;
             // A name too long for its tile is cut with an ellipsis: its full text is in the title
             out.querySelector('.label').title = item.label;
-            out.querySelector('.sub').textContent = new URL(item.href).host;
-            out.classList.toggle('np-current', i === current);
+            out.querySelector('.sub').textContent = new URL(item.href).host.replace(/^www\./, '');
+            out.classList.toggle('np-current', item === current_item);
             out.onclick = function (event) {
                 navplace.navigate(item, event);
             };
             return out;
         });
-        // A heading of the links file is drawn once, over the links that follow it
+        // A heading of the links file is drawn once, over its links, with how many of them are shown
         const parts = [];
-        for (const [i, item] of items.entries()) {
-            const heading = item.namespaces?.[0];
-            if (heading && (heading !== items[i - 1]?.namespaces?.[0])) {
+        for (const [i, item] of shown.entries()) {
+            const heading = item.namespaces?.[0] ?? null;
+            if (heading && (heading !== (shown[i - 1]?.namespaces?.[0] ?? null))) {
                 const title = document.createElement('h3');
                 title.className = 'group-title';
                 title.textContent = heading;
+                const count = document.createElement('span');
+                count.className = 'count';
+                count.textContent = items_by_heading.get(heading).length;
+                title.append(count);
                 parts.push(title);
             }
             parts.push(tiles[i]);
         }
         grid.replaceChildren(...parts);
+        // ↑ ↓ and Enter walk the links in the order they stand on the page
+        navplace.order_set?.(shown);
         // No link to show: a search that finds nothing is told apart from a file with no links by the search box
         const empty = document.getElementById('empty');
         empty.hidden = (items.length > 0);
@@ -501,21 +521,22 @@ function main()
 
 ```css
 :root {
+    color-scheme: light;
     --bg: #ffffff;
-    --fg: #111111;
-    --muted: #666666;
-    --border: #e6e6e6;
-    --card-bg: #fafafa;
-    --card-bg-hover: #f2f2f2;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .05);
-    --shadow-hover: 0 6px 18px rgba(0, 0, 0, .08);
-    --radius: 14px;
-    --gap: 14px;
+    --fg: #15161a;
+    --muted: #62656d;
+    --border: #e7e8ec;
+    --card-bg: #f7f7f9;
+    --card-bg-hover: #f0f0f4;
+    --shadow-hover: 0 8px 22px rgba(20, 22, 30, .08);
+    --radius: 10px;
+    --gap: 12px;
     --max: 1100px;
     --accent: #5b2fd6;
-    --input-bg: #f6f6f6;
-    --focus-ring: rgba(0, 0, 0, 0.25); /* light mode */
-    --focus-bg: rgba(0, 0, 0, 0.03);
+    --accent-soft: rgba(91, 47, 214, .09);
+    --input-bg: #f4f4f6;
+    /* The search bar sticks to the top of the view and is this tall: ↑ stops a link below it */
+    --bar: 66px;
     /* /lib/theme_switch.js: its button and the scrollbars */
     --np-switch-bg: var(--card-bg);
     --np-switch-fg: var(--muted);
@@ -525,18 +546,17 @@ function main()
 }
 
 :root[data-theme="dark"] {
+    color-scheme: dark;
     --bg: #0f1115;
     --fg: #f4f5f7;
-    --muted: #a7abb3;
-    --border: #242832;
-    --card-bg: #141824;
-    --card-bg-hover: #191f2d;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .35);
+    --muted: #a1a6b0;
+    --border: #232733;
+    --card-bg: #151925;
+    --card-bg-hover: #1a2030;
     --shadow-hover: 0 10px 26px rgba(0, 0, 0, .45);
-    --accent: #8a6dff;
-    --input-bg: #141824;
-    --focus-ring: rgba(255, 255, 255, 0.25); /* dark mode */
-    --focus-bg: rgba(255, 255, 255, 0.05);
+    --accent: #9b83ff;
+    --accent-soft: rgba(155, 131, 255, .13);
+    --input-bg: #151925;
     --np-scrollbar-thumb: #343a48;
 }
 
@@ -553,14 +573,10 @@ a {
     text-decoration: none;
 }
 
-a:hover {
-    text-decoration: underline;
-}
-
 .page {
     max-width: var(--max);
     margin: 0 auto;
-    padding: 28px 18px 60px;
+    padding: 32px 18px 64px;
 }
 
 /* Header */
@@ -570,18 +586,29 @@ a:hover {
     gap: 12px;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 22px;
+    margin-bottom: 14px;
+}
+
+.identity {
+    min-width: 0;
 }
 
 .identity h1 {
-    margin: 0;
-    font-size: 36px;
-    letter-spacing: -0.02em;
+    margin: 0 0 2px;
+    font-size: clamp(28px, 4.5vw, 40px);
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    overflow-wrap: anywhere;
 }
 
 .identity a {
     color: var(--muted);
-    font-size: 14px;
+    font-size: 15px;
+}
+
+.identity a:hover {
+    color: var(--accent);
+    text-decoration: underline;
 }
 
 /* Theme switch: /lib/theme_switch.js puts its button in [data-theme-switch] */
@@ -596,32 +623,53 @@ a:hover {
     border-color: var(--accent);
 }
 
-/* Search */
+/* Search: it stays at the top of the view while the links scroll under it */
 
 .search {
-    margin: 18px 0 26px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 -18px 14px;
+    padding: 10px 18px;
+    background: var(--bg);
+}
+
+.search-box {
+    position: relative;
+    display: block;
+    max-width: 560px;
+}
+
+.search-box svg {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    width: 18px;
+    height: 18px;
+    color: var(--muted);
+    transform: translateY(-50%);
+    pointer-events: none;
 }
 
 .search input {
+    box-sizing: border-box;
     width: 100%;
-    padding: 14px 16px;
+    height: 46px;
+    padding: 0 16px 0 44px;
+    font: inherit;
     font-size: 15px;
     border-radius: 999px;
     border: 1px solid var(--border);
     background: var(--input-bg);
     color: var(--fg);
+    transition: border-color .12s ease, box-shadow .12s ease;
 }
 
 .search input:focus {
     caret-color: var(--accent);
     outline: none;
-    border-color: var(--border);
-    box-shadow: 0 0 0 2px var(--focus-ring),
-    inset 0 0 0 1px var(--focus-bg);
-}
-
-.search input:focus-visible {
-    transition: box-shadow 80ms ease;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .search input::placeholder {
@@ -631,25 +679,54 @@ a:hover {
 /* Section */
 
 .section-title {
-    margin: 0 0 12px;
-    font-size: 14px;
+    margin: 0 0 14px;
+    font-size: 13px;
     color: var(--muted);
     letter-spacing: .08em;
     text-transform: uppercase;
 }
 
-/* A heading of the links file, over its links */
+/* A heading of the links file, over its links: a mark in the accent, the name, how many links,
+   and a line to the end of the row */
 
 .group-title {
     grid-column: 1 / -1;
-    margin: 12px 0 -2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0 0;
     color: var(--fg);
-    font-size: 15px;
-    font-weight: 650;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    scroll-margin-top: var(--bar);
 }
 
 .group-title:first-child {
     margin-top: 0;
+}
+
+.group-title::before {
+    content: "";
+    flex: none;
+    width: 4px;
+    height: 16px;
+    border-radius: 2px;
+    background: var(--accent);
+}
+
+.group-title::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.group-title .count {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
 }
 
 /* Grid */
@@ -662,36 +739,40 @@ a:hover {
 
 @media (max-width: 900px) {
     .grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 640px) {
     .grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 420px) {
     .grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
 .tile {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: center;
     gap: 12px;
-    padding: 14px;
+    padding: 12px 14px;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: var(--card-bg);
-    transition: .12s ease;
+    scroll-margin-top: calc(var(--bar) + 6px);
+    transition: background .12s ease, border-color .12s ease, box-shadow .12s ease, transform .12s ease;
 }
 
 .tile:hover {
+    border-color: var(--accent);
     background: var(--card-bg-hover);
     box-shadow: var(--shadow-hover);
+    transform: translateY(-1px);
 }
 
 /* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it */
@@ -699,26 +780,25 @@ a:hover {
     border-color: var(--accent);
     outline: 2px solid var(--accent);
     outline-offset: 1px;
-    background: var(--card-bg-hover);
+    background: linear-gradient(var(--accent-soft), var(--accent-soft)), var(--card-bg);
 }
 
 .icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    background: rgba(127, 127, 127, .15);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(127, 127, 127, .14);
     display: grid;
     place-items: center;
 }
 
 .icon img {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
 }
 
 /* An icon that cannot be loaded leaves the link's first letter in its tile: the picture keeps its
-   room, unseen, and the letter lies over it, out of the flow, so nothing moves and the underline
-   of a tile under the mouse stays off it */
+   room, unseen, and the letter lies over it, out of the flow, so nothing moves */
 
 .icon[data-letter] {
     position: relative;
@@ -734,7 +814,7 @@ a:hover {
     inset: 0;
     display: grid;
     place-items: center;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
     color: var(--fg);
 }
@@ -742,13 +822,15 @@ a:hover {
 .label {
     font-size: 15px;
     font-weight: 600;
+    line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .sub {
-    font-size: 12px;
+    font-size: 12.5px;
+    line-height: 1.3;
     color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
@@ -759,6 +841,7 @@ a:hover {
 
 .empty {
     margin: 0;
+    padding: 28px 0;
     font-size: 14px;
     color: var(--muted);
 }
