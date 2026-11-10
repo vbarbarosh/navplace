@@ -180,15 +180,19 @@
             list-style: none;
         }
 
+        /* A card is its link, as tall as the row of cards it stands in */
         .card {
             display: flex;
             flex-direction: column;
             gap: 14px;
+            height: 100%;
             padding: 20px;
             border-left: 5px solid var(--accent);
             border-radius: 12px;
             background: var(--panel);
             box-shadow: var(--shadow);
+            color: inherit;
+            text-decoration: none;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
         }
@@ -203,6 +207,11 @@
             box-shadow: var(--shadow-hover);
             outline: 2px solid var(--accent);
             outline-offset: 2px;
+        }
+
+        /* The card Tab stands on shows the browser's own ring, the current card too */
+        .card:focus-visible {
+            outline: revert;
         }
 
         .head {
@@ -406,17 +415,20 @@
     function make_card(item, i)
     {
         const li = document.createElement('li');
-        li.className = (item === current_item) ? 'card np-current' : 'card';
+        const link = document.createElement('a');
+        link.className = (item === current_item) ? 'card np-current' : 'card';
+        link.href = item.href;
         const head = document.createElement('div');
         head.className = 'head';
         const names_element = document.createElement('div');
         names_element.className = 'names';
         names_element.append(make_text('div', 'label', item.label), make_text('div', 'domain', domain_of(item.href)));
         head.append(make_icon(item), names_element);
-        li.append(head, make_text('span', 'section', item.namespaces.join(' · ')));
-        li.addEventListener('click', function () {
-            item_open(i);
+        link.append(head, make_text('span', 'section', item.namespaces.join(' · ')));
+        link.addEventListener('click', function (event) {
+            item_open(i, event);
         });
+        li.append(link);
         return li;
     }
 
@@ -453,10 +465,12 @@
         }
     }
 
-    function item_open(i)
+    // Through the runtime: every selected link, this one in place of the last. Ctrl, Shift and the
+    // middle button on the card are left to the browser, as on any link
+    function item_open(i, event)
     {
         if (shown[i]) {
-            navplace.navigate(shown[i]);
+            navplace.navigate(shown[i], event);
         }
     }
 </script>
