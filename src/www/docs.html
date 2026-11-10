@@ -799,7 +799,7 @@ Grafana @board  https://grafana.com/
 % picture board: https://example.com/img/board.jpg</code></pre>
 <ul>
     <li>The desktop app shows <code>data:</code> pictures; it blocks every web url, <code>https://</code> pictures too.</li>
-    <li>The same name twice: the last one wins. A value that is not one of the three kinds of url is skipped with a warning, and <code>@name</code> stays a file under <code>~/.navplace/</code>.</li>
+    <li>The same name twice: the last one wins. A line with no name before the colon, or with a value that is not one of the three kinds of url, is skipped with a warning, and <code>@name</code> stays a file under <code>~/.navplace/</code>.</li>
 </ul>
 
 <h3 id="what-a-link-becomes">What a link becomes</h3>
