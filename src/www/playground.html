@@ -591,6 +591,14 @@
             pointer-events: none;
         }
 
+        /* The links' colours are a row a line: a key lays out its own line, not the whole text.
+           As wide as its line, so the room past the end comes after the longest one */
+        .pane-editor pre > span {
+            display: block;
+            width: max-content;
+            min-width: 100%;
+        }
+
         .code > pre.gutter {
             inset: 0 auto 0 0;
             width: 48px;
@@ -1285,6 +1293,12 @@ async function main()
     let draft_refusal = '';
     // Another tab has saved a draft since the refusal: a reload would load that one
     let is_draft_elsewhere = false;
+    // Keys typed since the last save: the text is saved when they rest, or when the page goes
+    let is_draft_waiting = false;
+    let draft_save_timer;
+    // The rows of the coloured layer, one a line of the links: {element, line, note, is_current}
+    const editor_rows = [];
+    let json_file_timer;
     // The text before the edit an input event reports; null for an edit made by code, which has no
     // beforeinput, Reset and a paste among them
     let picture_text = null;
@@ -1355,10 +1369,10 @@ async function main()
     });
 
     editor.addEventListener('input', function () {
-        editor_draft_save();
+        editor_draft_save_soon();
         clearTimeout(text_refresh_timer);
         text_refresh_timer = setTimeout(refresh_text, 300);
-        refresh_cursor_line();
+        refresh_cursor_line(true);
     });
     // Ctrl+V with a picture and no text of its own: a `% picture` line at the end of the file, as a data url
     editor.addEventListener('paste', function (event) {
@@ -1678,6 +1692,8 @@ async function main()
     });
     // Looked at again, the tab checks once more: a change it did not hear of while away shows now
     document.addEventListener('visibilitychange', draft_follow);
+    // A reload or a closed tab right after a key: the keys still waiting are saved before the page goes
+    window.addEventListener('pagehide', editor_draft_save_waiting);
 
     refresh_sizes();
     // The first preview waits for the list: a saved draft may name a design that is gone
@@ -1697,19 +1713,25 @@ async function main()
         refresh_design_pane(true);
     }
 
-    // The colours, the JSON and the lit tile follow the line the cursor is on
-    function refresh_cursor_line() {
+    // The colours, the JSON and the lit tile follow the line the cursor is on. `is_typing`: a key in
+    // the links, and more may follow
+    function refresh_cursor_line(is_typing = false) {
         current_line = line_from_offset(editor.value, editor.selectionStart);
         if (tab === 'design') {
             preview_mark();
             return;
         }
         // Basic has the colours too; the line and its JSON are Advanced's
-        editor_colours.innerHTML = render_links_html(editor.value, (tab === 'advanced') ? current_line : 0, left_out_from_text(editor.value)?.note_by_line);
+        refresh_editor_colours((tab === 'advanced') ? current_line : 0);
         code_scroll_sync(editor, editor_colours);
+        clearTimeout(json_file_timer);
         // What is typed in the JSON is not taken from under the person typing it
         if ((tab === 'advanced') && (json_mode === 'file')) {
-            if (document.activeElement !== json_editor) {
+            // The whole file's JSON is the text's size again, pictures and all: it waits for the keys to rest
+            if (is_typing) {
+                json_file_timer = setTimeout(refresh_cursor_line, 300);
+            }
+            else if (document.activeElement !== json_editor) {
                 refresh_json_file();
             }
         }
@@ -1717,6 +1739,47 @@ async function main()
             refresh_json();
         }
         preview_mark();
+    }
+
+    // The coloured layer is a row a line, and only the rows an edit changed are drawn again: its
+    // own lines, and those whose mark or note moved. The lines above and below the edit keep their
+    // rows, so a key lays out its line and not the pictures' long `data:` lines with it.
+    // `lit_line` is the 1-based line that gets the cursor's mark, 0 for none
+    function refresh_editor_colours(lit_line) {
+        const lines = editor.value.split('\n');
+        const note_by_line = left_out_from_text(editor.value)?.note_by_line;
+        const same_max = Math.min(lines.length, editor_rows.length);
+        let head = 0;
+        let tail = 0;
+        while ((head < same_max) && (editor_rows[head].line === lines[head])) {
+            ++head;
+        }
+        while ((tail < same_max - head) && (editor_rows[editor_rows.length - 1 - tail].line === lines[lines.length - 1 - tail])) {
+            ++tail;
+        }
+        const rows_new = [];
+        for (let i = head, end = lines.length - tail; i < end; ++i) {
+            rows_new.push({element: document.createElement('span'), line: null, note: undefined, is_current: false});
+        }
+        const row_after = editor_rows[editor_rows.length - tail]?.element ?? null;
+        for (const row of editor_rows.splice(head, editor_rows.length - tail - head, ...rows_new)) {
+            row.element.remove();
+        }
+        for (const row of rows_new) {
+            editor_colours.insertBefore(row.element, row_after);
+        }
+        for (let i = 0, end = editor_rows.length; i < end; ++i) {
+            const row = editor_rows[i];
+            const note = note_by_line?.get(i + 1);
+            const is_current = (i + 1 === lit_line);
+            if ((row.line === null) || (row.note !== note) || (row.is_current !== is_current)) {
+                row.element.innerHTML = render_links_html(lines[i], is_current ? 1 : 0, (note === undefined) ? undefined : new Map([[1, note]]));
+                row.note = note;
+                row.is_current = is_current;
+            }
+            // The line as the newest text has it: an older text is not kept for a row cut from it
+            row.line = lines[i];
+        }
     }
 
     function refresh_json_modes() {
@@ -2034,10 +2097,10 @@ async function main()
         const end = editor.selectionEnd;
         editor.value = result.text;
         editor.setSelectionRange(Math.min(begin, result.text.length), Math.min(end, result.text.length));
-        editor_draft_save();
+        editor_draft_save_soon();
         clearTimeout(text_refresh_timer);
         text_refresh_timer = setTimeout(refresh_text, 300);
-        editor_colours.innerHTML = render_links_html(editor.value, current_line, left_out_from_text(editor.value)?.note_by_line);
+        refresh_editor_colours(current_line);
         code_scroll_sync(editor, editor_colours);
         preview_mark();
     }
@@ -2072,10 +2135,10 @@ async function main()
             return;
         }
         editor.setRangeText(result.line, range[0], range[1], 'preserve');
-        editor_draft_save();
+        editor_draft_save_soon();
         clearTimeout(text_refresh_timer);
         text_refresh_timer = setTimeout(refresh_text, 300);
-        editor_colours.innerHTML = render_links_html(editor.value, current_line, left_out_from_text(editor.value)?.note_by_line);
+        refresh_editor_colours(current_line);
         json_locked.textContent = json_view_from_line(editor.value, json_line).locked;
         preview_mark();
     }
@@ -2636,9 +2699,26 @@ async function main()
         textarea_text_replace(editor, begin, end, text);
     }
 
+    // While the keys come the save waits for them to rest: the whole text, pictures and all, is
+    // written once, not at every key. A page that goes saves first, and so does a tab that looks at
+    // another tab's draft
+    function editor_draft_save_soon() {
+        is_draft_waiting = true;
+        clearTimeout(draft_save_timer);
+        draft_save_timer = setTimeout(editor_draft_save, 200);
+    }
+
+    function editor_draft_save_waiting() {
+        if (is_draft_waiting) {
+            editor_draft_save();
+        }
+    }
+
     // The text goes to the browser's storage. Refused, the status line says so, and why, until a
     // later save works again
     function editor_draft_save() {
+        is_draft_waiting = false;
+        clearTimeout(draft_save_timer);
         const error = draft_save(editor.value);
         draft_refusal = error ? format_draft_error(error) : '';
         is_draft_elsewhere = is_draft_elsewhere && !!error;
@@ -2658,6 +2738,8 @@ async function main()
     // edit here. A tab whose own text could not be saved keeps it, no other place has it, and says
     // what a reload would load now
     function draft_follow() {
+        // Keys still waiting are saved first: what was typed here last is not lost to an older draft
+        editor_draft_save_waiting();
         const text = draft_load();
         if ((text === null) || (text === editor.value)) {
             return;
