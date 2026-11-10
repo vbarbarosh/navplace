@@ -59,6 +59,10 @@ function main()
             // The links file is not trusted: its text enters as text or a set attribute, never as HTML
             out.href = item.href;
             out.querySelector('img').src = item.icon_url;
+            // An icon that cannot be loaded: the link's first letter stands in its tile (.icon[data-letter] in theme.css)
+            out.querySelector('img').addEventListener('error', function (event) {
+                event.target.parentElement.dataset.letter = letter_from_label(item.label);
+            });
             out.querySelector('.label').textContent = item.label;
             out.querySelector('.sub').textContent = new URL(item.href).host;
             out.classList.toggle('np-current', i === current);
@@ -71,6 +75,11 @@ function main()
         const empty = document.getElementById('empty');
         empty.hidden = (items.length > 0);
         empty.textContent = document.getElementById('search').value.trim() ? 'Nothing found' : 'No links yet';
+    }
+
+    // The first letter or digit of a link's name, in capitals; ? for a name that has none
+    function letter_from_label(label) {
+        return (String(label).match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase();
     }
 }
 </script>

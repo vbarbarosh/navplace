@@ -450,6 +450,10 @@ function main()
             // The links file is not trusted: its text enters as text or a set attribute, never as HTML
             out.href = item.href;
             out.querySelector('img').src = item.icon_url;
+            // An icon that cannot be loaded: the link's first letter stands in its tile (.icon[data-letter] in theme.css)
+            out.querySelector('img').addEventListener('error', function (event) {
+                event.target.parentElement.dataset.letter = letter_from_label(item.label);
+            });
             out.querySelector('.label').textContent = item.label;
             out.querySelector('.sub').textContent = new URL(item.href).host;
             out.classList.toggle('np-current', i === current);
@@ -462,6 +466,11 @@ function main()
         const empty = document.getElementById('empty');
         empty.hidden = (items.length > 0);
         empty.textContent = document.getElementById('search').value.trim() ? 'Nothing found' : 'No links yet';
+    }
+
+    // The first letter or digit of a link's name, in capitals; ? for a name that has none
+    function letter_from_label(label) {
+        return (String(label).match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase();
     }
 }
 </script>
@@ -672,6 +681,29 @@ a:hover {
 .icon img {
     width: 26px;
     height: 26px;
+}
+
+/* An icon that cannot be loaded leaves the link's first letter in its tile: the picture keeps its
+   room, unseen, and the letter lies over it, out of the flow, so nothing moves and the underline
+   of a tile under the mouse stays off it */
+
+.icon[data-letter] {
+    position: relative;
+}
+
+.icon[data-letter] img {
+    visibility: hidden;
+}
+
+.icon[data-letter]::after {
+    content: attr(data-letter);
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--fg);
 }
 
 .label {
