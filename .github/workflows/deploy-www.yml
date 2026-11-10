@@ -14,6 +14,8 @@ on:
       - 'bin/test'
       - 'package.json'
       - 'package-lock.json'
+      # The home page shows the app's version: a release changes it
+      - 'src/desktop-electron/package.json'
       - 'src/cloudflare/**'
       - '.github/workflows/deploy-www.yml'
   workflow_dispatch:
@@ -35,9 +37,12 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
     steps:
-      - name: Wait for the secrets
+      # A deploy that did not happen is not a green run
+      - name: Stop without the secrets
         if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
-        run: echo "::notice::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set; nothing deployed."
+        run: |
+          echo "::error::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set: nothing was deployed."
+          exit 1
 
       - name: Checkout
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
