@@ -87,8 +87,12 @@
             background: var(--card-bg);
         }
 
+        /* The placeholder is never cut: on a narrow screen it shrinks as the box does. Its 43
+           characters are about 18.3 font sizes wide and the box holds the screen's width less 125px
+           (the page's and its own edges, the corner's theme switch): 5.3vw - 6.7px fits down to 320px */
         .search-input::placeholder {
             color: var(--warm-gray);
+            font-size: min(1em, calc(5.3vw - 6.7px));
         }
 
         .items-container {
@@ -168,6 +172,7 @@
             margin-top: 4px;
         }
 
+        /* A long name wraps inside its card, a word with no spaces too */
         .recipe-title {
             font-size: 20px;
             font-weight: 600;
@@ -176,6 +181,7 @@
             line-height: 1.3;
             text-decoration: none;
             display: block;
+            overflow-wrap: anywhere;
         }
 
         .recipe-title:hover {
@@ -245,6 +251,21 @@
         @media (min-width: 1024px) {
             .items-container {
                 grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            }
+        }
+
+        /* Under 700px the search box, 600px in the middle, would reach the theme switch in the page's
+           corner (/lib/theme_switch.js: 32px, 10px from the edge): the box ends 8px before it */
+        @media (max-width: 700px) {
+            .search-container {
+                margin-right: 34px;
+            }
+        }
+
+        /* In the desktop app a gear stands before the switch: the box ends before both */
+        @media (max-width: 780px) {
+            body:has(.np-app-settings) .search-container {
+                margin-right: 72px;
             }
         }
     </style>
