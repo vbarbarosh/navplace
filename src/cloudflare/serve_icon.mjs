@@ -9,7 +9,7 @@ import is_public_domain from '../../lib/is_public_domain.js';
 
 const DAY = 86400;
 // A new value drops every icon kept at the edge: what it keeps under the old one is never asked again
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 6;
 
 // What any icon answer carries: same-origin only, and an SVG opened as a page runs nothing
 const ICON_HEADERS = {
