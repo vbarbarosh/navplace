@@ -145,6 +145,22 @@ body {
     background: var(--tile-bg-hover);
 }
 
+/* An icon that cannot be loaded leaves the link's first letter in its tile, out of the flow: the
+   underline of a tile under the mouse stays off it */
+.tile-inner[data-letter] { position: relative; }
+
+.tile-inner[data-letter]::after {
+    content: attr(data-letter);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--label);
+}
+
 /* The link ↑ ↓ moved to: Enter opens it */
 .tile.np-current {
     outline: none;

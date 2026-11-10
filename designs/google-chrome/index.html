@@ -38,8 +38,8 @@ function main()
                 <div class="shortcuts">
 
                     <a v-for="(item, i) in items" v-on:click="click_tile(item, $event)" v-bind:href="item.href" v-bind:class="{'np-current': i === current}" class="tile">
-                        <span class="tile-inner">
-                            <img v-if="item.icon_url" v-bind:src="item.icon_url" alt="" />
+                        <span v-bind:data-letter="letter_from_item(item)" class="tile-inner">
+                            <img v-if="item.icon_url" v-on:error="error_icon(item)" v-on:load="load_icon(item)" v-bind:src="item.icon_url" alt="" />
                         </span>
                         <span class="tile-label">{{ item.label }}</span>
                     </a>
@@ -53,12 +53,27 @@ function main()
         data: function () {
             // current: the link ↑ ↓ moved to, kept by the runtime; Enter opens it
             // empty_text: what the page says when it has no link to show
-            return {items: [], current: 0, empty_text: ''};
+            // failed_icons: true under the address of an icon that could not be loaded
+            return {items: [], current: 0, empty_text: '', failed_icons: {}};
         },
         methods: {
             // A click opens through the runtime: every selected link, this one in place of the last
             click_tile: function (item, event) {
                 navplace.navigate(item, event);
+            },
+            error_icon: function (item) {
+                this.failed_icons[item.icon_url] = true;
+            },
+            load_icon: function (item) {
+                delete this.failed_icons[item.icon_url];
+            },
+            // A link whose icon could not be loaded shows the first letter or digit of its name in
+            // its tile (.tile-inner[data-letter] in theme.css), ? for a name that has none
+            letter_from_item: function (item) {
+                if (!this.failed_icons[item.icon_url]) {
+                    return null;
+                }
+                return (String(item.label).match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase();
             },
         },
         mounted: function () {
