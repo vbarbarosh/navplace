@@ -295,6 +295,9 @@
     {
         let current_items = [];
 
+        // Pictures that did not load, by address: their cards are drawn without one
+        const failed_urls = new Set();
+
         const items_container = document.getElementById('items-container');
         const count_element = document.getElementById('count');
         const search_input = document.querySelector('.search-input');
@@ -319,7 +322,7 @@
             items_container.innerHTML = items_html;
 
             function render_item_html(item, is_current) {
-                const has_image = item.image_url && (item.image_url.trim() !== '');
+                const has_image = is_picture_shown(item);
                 return `
                         <a href="${html_escape(item.href)}" class="item-card ${has_image ? 'has-image' : ''} ${is_current ? 'np-current' : ''}" target="_blank">
                             <div class="card-decoration decoration-1"></div>
@@ -336,6 +339,12 @@
                         </a>
                     `;
             }
+        }
+
+        // A link's picture is drawn unless it cannot load: a private:// one outside the desktop app,
+        // or one that failed before
+        function is_picture_shown(item) {
+            return !!item.image_url && (item.image_url.trim() !== '') && (!!window.ElectronApp || !item.image_url.startsWith('private://')) && !failed_urls.has(item.image_url);
         }
 
         // The links file is not trusted: every value from it goes into the HTML through this,
@@ -363,6 +372,16 @@
                         navplace.navigate(item, event);
                     }
                 });
+                // A picture that cannot be loaded leaves its card, now and in every later draw; the
+                // card stays as one with no picture. `error` does not bubble: it is caught on its
+                // way down
+                items_container.addEventListener('error', function (event) {
+                    if (event.target.matches('.item-image')) {
+                        failed_urls.add(event.target.getAttribute('src'));
+                        event.target.closest('.item-card').classList.remove('has-image');
+                        event.target.remove();
+                    }
+                }, true);
             }
             else {
                 console.warn('NavPlace runtime not loaded yet');
