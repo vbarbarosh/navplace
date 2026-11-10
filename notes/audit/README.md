@@ -124,7 +124,8 @@ text, and a click that keeps the page.
 - [x] The rules linter finds 15 faults outside the filter copy
 - [x] Leftovers: a helper nothing requires, two dependencies nothing
   uses, ignore lines for folders nothing writes
-- [ ] No test for the runtime, the embed, the search filter
+- [ ] No test for the runtime and the embed: they need a browser in CI. The search has
+  its tests since `lib/items_search.test.js`
 
 ## Sound
 
