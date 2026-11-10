@@ -1,0 +1,16 @@
+% design: recipes
+% title: The Recipe Box
+
+# Weeknight
+Serious Eats        https://www.seriouseats.com/
+Budget Bytes        https://www.budgetbytes.com/
+NYT Cooking         https://cooking.nytimes.com/
+BBC Good Food       https://www.bbcgoodfood.com/
+
+# Baking
+King Arthur Baking  https://www.kingarthurbaking.com/
+Sally's Baking      https://sallysbakingaddiction.com/
+
+# Vegetarian
+Minimalist Baker    https://minimalistbaker.com/
+Cookie and Kate     https://cookieandkate.com/

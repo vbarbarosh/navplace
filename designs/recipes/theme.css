@@ -1,0 +1,300 @@
+/* A recipe box on a kitchen table: paper cards, a picture on top of each, the sections of the
+   file as the dividers' tabs. */
+
+/* -------- COLOURS: light on :root, dark on :root[data-theme="dark"] (/lib/theme_switch.js) -------- */
+:root {
+    color-scheme: light;
+    --bg: #f3eadb;
+    --card: #fffaf1;
+    --ink: #3b2a1a;
+    --soft: #6b5236;
+    --line: #c9b596;
+    --rule: #8a6a45;
+    --shadow: #d9c7a8;
+    --tab: #e9dcc6;
+    --accent: #a83c24;
+    --on-accent: #ffffff;
+    --plate: #fffaf1;
+    --tone-0: linear-gradient(135deg, #d9822b, #f2c14e);
+    --tone-1: linear-gradient(135deg, #7a9e48, #cfe08a);
+    --tone-2: linear-gradient(135deg, #b5452c, #e9967a);
+    --tone-3: linear-gradient(135deg, #6b4a2b, #c79a63);
+    /* The header sticks to the top of the view and is this tall: ↑ stops a card below it */
+    --bar: 84px;
+    --np-scrollbar-thumb: #b9a583;
+    --np-scrollbar-track: var(--bg);
+    --np-switch-bg: var(--card);
+    --np-switch-fg: var(--soft);
+    --np-switch-border: var(--rule);
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1d1711;
+    --card: #2a2119;
+    --ink: #f3e7d3;
+    --soft: #c9b596;
+    --line: #4a3c2d;
+    --rule: #8a6a45;
+    --shadow: #0f0c08;
+    --tab: #2a2119;
+    --accent: #e9967a;
+    --on-accent: #1d1711;
+    --plate: #f3e7d3;
+    --tone-0: linear-gradient(135deg, #a8611c, #c79a34);
+    --tone-1: linear-gradient(135deg, #5c7a34, #9fb060);
+    --tone-2: linear-gradient(135deg, #8a3320, #c07a62);
+    --tone-3: linear-gradient(135deg, #4f361f, #9c774a);
+    --np-scrollbar-thumb: #4a3c2d;
+}
+
+/* -------- PAGE -------- */
+* { box-sizing: border-box; }
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+}
+
+.page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px 56px;
+}
+
+/* -------- HEADER: the title, the search box and the theme switch, over a double rule; it stays
+   at the top of the view while the cards scroll under it -------- */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 20px;
+    margin: 0 -24px 16px;
+    padding: 20px 24px 10px;
+    background: var(--bg);
+}
+
+header::after {
+    content: "";
+    flex-basis: 100%;
+    border-bottom: 3px double var(--rule);
+}
+
+h1 {
+    margin: 0;
+    min-width: 0;
+    font-size: clamp(26px, 4.6vw, 40px);
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.tools {
+    display: flex;
+    flex: 1 1 240px;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.tools input {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 300px;
+    height: 40px;
+    padding: 0 14px;
+    border: 1.5px solid var(--rule);
+    border-radius: 0;
+    outline: none;
+    background: var(--card);
+    color: var(--ink);
+    font: 16px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.tools input::placeholder {
+    color: var(--soft);
+    opacity: 1;
+}
+
+.tools input:focus {
+    border-color: var(--accent);
+    box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.np-theme-switch {
+    border-radius: 0;
+}
+
+/* -------- TABS: the dividers of the box, one for each section of the file -------- */
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.tab {
+    padding: 7px 14px;
+    border: 1.5px solid var(--rule);
+    border-radius: 0;
+    background: var(--tab);
+    color: var(--soft);
+    font: 700 14px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.tab:hover {
+    color: var(--ink);
+}
+
+.tab.on {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+}
+
+/* -------- CARDS -------- */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 22px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    border: 1.5px solid var(--line);
+    background: var(--card);
+    box-shadow: 3px 3px 0 var(--shadow);
+    color: var(--ink);
+    text-decoration: none;
+    scroll-margin-top: calc(var(--bar) + 10px);
+}
+
+.card:hover {
+    border-color: var(--rule);
+}
+
+/* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it */
+.card.np-current {
+    border-color: var(--accent);
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+}
+
+/* The picture's place: the link's own picture fills it; without one a colour, and the site's
+   icon on a plate in its middle */
+.photo {
+    display: grid;
+    place-items: center;
+    height: 112px;
+    overflow: hidden;
+}
+
+.tone-0 { background: var(--tone-0); }
+
+.tone-1 { background: var(--tone-1); }
+
+.tone-2 { background: var(--tone-2); }
+
+.tone-3 { background: var(--tone-3); }
+
+.photo img.own {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.plate {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--plate);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.35);
+    color: #3b2a1a;
+    font: 700 26px Georgia, serif;
+}
+
+.plate img {
+    display: block;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.name {
+    display: -webkit-box;
+    overflow: hidden;
+    padding: 12px 14px 4px;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.from {
+    overflow: hidden;
+    padding: 0 14px 12px;
+    color: var(--soft);
+    font: 600 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: 0.08em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* -------- NOTHING TO SHOW -------- */
+.empty {
+    margin: 26px 0 0;
+    color: var(--soft);
+    font-size: 20px;
+    font-style: italic;
+}
+
+/* -------- A PHONE -------- */
+@media (max-width: 480px) {
+    .page {
+        padding: 0 16px 40px;
+    }
+
+    header {
+        margin: 0 -16px 12px;
+        padding: 14px 16px 8px;
+    }
+
+    .tools input {
+        max-width: none;
+    }
+
+    .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .photo {
+        height: 88px;
+    }
+
+    .name {
+        font-size: 17px;
+    }
+}

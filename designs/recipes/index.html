@@ -1,0 +1,205 @@
+<!doctype html>
+<!-- A recipe box: a card for each link, its picture on top, tabs for the sections of the file -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recipes | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
+    <link href="theme.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+
+    <header>
+        <h1>The Recipe Box</h1>
+        <div class="tools">
+            <input id="search" type="search" placeholder="Find a recipe…" autocomplete="off" spellcheck="false" aria-label="Search">
+            <span data-theme-switch></span>
+        </div>
+    </header>
+
+    <div id="tabs" class="tabs" role="group" aria-label="Sections"></div>
+    <div id="cards" class="cards"></div>
+    <p id="empty" class="empty" hidden></p>
+</div>
+
+<script src="/lib/navplace.js"></script>
+<script>
+main();
+
+function main()
+{
+    const input = document.getElementById('search');
+    const tabs = document.getElementById('tabs');
+    const cards = document.getElementById('cards');
+    const empty = document.getElementById('empty');
+    // The links the search left, and the section picked with a tab: null is All
+    const matches = [];
+    let section = null;
+    // The links drawn now, in their order on the page, and the card of each
+    let drawn = [];
+    let drawn_cards = [];
+    // The sections the tabs are drawn for, as one text: the tabs are made again only when it changes
+    let tabs_drawn = null;
+    // The number each link got when it was first drawn, one after another: the colour behind its
+    // picture comes from it, so neighbours differ and a link keeps its colour wherever a search puts it
+    const number_by_item = new Map();
+    // The runtime's current link: ↑ ↓ and Enter are its own
+    let current_item = null;
+
+    navplace({
+        input: input,
+        meta: {title: 'h1'},
+        update: function (items, {item = null} = {}) {
+            matches.splice(0, matches.length, ...items);
+            current_item = item;
+            refresh_cards();
+        },
+    });
+
+    function refresh_cards() {
+        refresh_tabs();
+        const shown = section ? matches.filter(v => v.namespaces.includes(section)) : matches.slice();
+        // The same links as are drawn, ↑ or ↓ moved the mark: the cards stay as they are, pictures
+        // and all, and only the mark moves
+        if (shown.length && (shown.length === drawn.length) && shown.every((v, i) => v === drawn[i])) {
+            for (const [i, card] of drawn_cards.entries()) {
+                card.classList.toggle('np-current', shown[i] === current_item);
+            }
+            return;
+        }
+        drawn = shown;
+        drawn_cards = shown.map(make_card);
+        cards.replaceChildren(...drawn_cards);
+        // No link to show: a search that finds nothing is told apart from a file with no links by the search box
+        empty.hidden = (shown.length > 0);
+        empty.textContent = input.value.trim() ? 'Nothing found' : 'No links yet';
+        // ↑ ↓ and Enter walk the cards of the section picked, not the hidden ones
+        navplace.order_set?.(shown);
+    }
+
+    // One tab per section of the links, in the order they first appear, after All; with nothing
+    // typed the matches are all the links, so the tabs follow them
+    function refresh_tabs() {
+        if (input.value.trim() && tabs.childElementCount) {
+            return;
+        }
+        const names = [];
+        for (const item of matches) {
+            for (const name of item.namespaces) {
+                if (!names.includes(name)) {
+                    names.push(name);
+                }
+            }
+        }
+        if (!names.includes(section)) {
+            section = null;
+        }
+        // The same sections as the tabs show: they stay as they are
+        if (tabs_drawn === JSON.stringify(names)) {
+            return;
+        }
+        tabs_drawn = JSON.stringify(names);
+        if (!names.length) {
+            tabs.replaceChildren();
+            return;
+        }
+        tabs.replaceChildren(...[null, ...names].map(function (name) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = (name === section) ? 'tab on' : 'tab';
+            button.textContent = name ?? 'All';
+            button.addEventListener('click', function () {
+                section = name;
+                for (const tab of tabs.children) {
+                    tab.classList.toggle('on', tab === button);
+                }
+                refresh_cards();
+                input.focus();
+            });
+            return button;
+        }));
+    }
+
+    // The links file is not trusted: its text enters as text or a set attribute, never as HTML
+    function make_card(item) {
+        if (!number_by_item.has(item)) {
+            number_by_item.set(item, number_by_item.size);
+        }
+        const card = document.createElement('a');
+        card.className = (item === current_item) ? 'card np-current' : 'card';
+        card.href = item.href;
+        const photo = document.createElement('span');
+        photo.className = `photo tone-${number_by_item.get(item) % 4}`;
+        const plate = document.createElement('span');
+        plate.className = 'plate';
+        // The first letter of the name stands on the plate until the site's icon is there, and
+        // stays when it cannot be loaded
+        plate.textContent = letter_from_label(item.label);
+        photo.append(plate);
+        picture_put(photo, plate, item);
+        const name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = item.label;
+        // A name too long for its card is cut after two lines: its full text is in the title
+        name.title = item.label;
+        const from = document.createElement('span');
+        from.className = 'from';
+        from.textContent = item.namespaces.join(' · ') || host_from_href(item.href);
+        card.append(photo, name, from);
+        card.addEventListener('click', function (event) {
+            navplace.navigate(item, event);
+        });
+        return card;
+    }
+
+    // A link's own picture fills the top of its card; without one, or when it cannot be loaded,
+    // the site's icon lies on a plate in the middle of it
+    function picture_put(photo, plate, item) {
+        if (item.image_url) {
+            const own = document.createElement('img');
+            own.alt = '';
+            own.className = 'own';
+            own.addEventListener('load', () => photo.replaceChildren(own));
+            own.addEventListener('error', () => icon_put(plate, item));
+            own.src = item.image_url;
+            if (own.complete && (own.naturalWidth > 0)) {
+                photo.replaceChildren(own);
+            }
+            return;
+        }
+        icon_put(plate, item);
+    }
+
+    function icon_put(plate, item) {
+        if (!item.icon_url) {
+            return;
+        }
+        const img = document.createElement('img');
+        img.alt = '';
+        img.addEventListener('load', () => plate.replaceChildren(img));
+        img.src = item.icon_url;
+        // An icon the page has loaded before is there at once, with no letter shown in between
+        if (img.complete && (img.naturalWidth > 0)) {
+            plate.replaceChildren(img);
+        }
+    }
+
+    // The first letter or digit of a link's name, in capitals; ? for a name that has none
+    function letter_from_label(label) {
+        return (String(label).match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase();
+    }
+
+    function host_from_href(href) {
+        try {
+            return new URL(href).host.replace(/^www\./, '');
+        }
+        catch {
+            return href;
+        }
+    }
+}
+</script>
+</body>
+</html>
