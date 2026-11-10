@@ -1,0 +1,254 @@
+/* A departures board: capital letters of one width, a cell for each word, one colour for what
+   matters. Black with yellow in the dark theme, a daylight timetable in the light one. */
+
+/* -------- COLOURS: light on :root, dark on :root[data-theme="dark"] (/lib/theme_switch.js) -------- */
+:root {
+    color-scheme: light;
+    --bg: #f1f1ec;
+    --cell: #e2e2db;
+    --cell-fold: #d7d7cf;
+    --text: #111113;
+    --soft: #5c5c62;
+    --line: #c8c8c0;
+    --lamp: #8a6500;
+    --mark: #ffcc00;
+    --mark-fold: #e6b800;
+    --on-mark: #0b0b0d;
+    /* The header and the column names stick to the top of the view, the last line to its bottom:
+       ↑ and ↓ stop a row clear of both */
+    --top: 118px;
+    --bottom: 46px;
+    --np-scrollbar-thumb: #b4b4ab;
+    --np-scrollbar-track: var(--bg);
+    --np-switch-bg: var(--cell);
+    --np-switch-fg: var(--text);
+    --np-switch-border: var(--line);
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0b0b0d;
+    --cell: #151518;
+    --cell-fold: #101013;
+    --text: #f2f2f2;
+    --soft: #8d8d93;
+    --line: #2a2a2f;
+    --lamp: #ffcc00;
+    --np-scrollbar-thumb: #2a2a2f;
+}
+
+/* -------- THE BOARD -------- */
+* { box-sizing: border-box; }
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font: 700 19px/1 ui-monospace, "JetBrains Mono", "Cascadia Code", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+    text-transform: uppercase;
+}
+
+.board {
+    display: flex;
+    flex-direction: column;
+    max-width: 1040px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* -------- HEADER: the board's name and the search box; with the column names it stays at the top -------- */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 0 14px;
+    background: var(--bg);
+}
+
+h1 {
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--lamp);
+    font-size: clamp(22px, 4.2vw, 34px);
+    letter-spacing: 0.14em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+header input {
+    flex: 0 1 300px;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 2px solid var(--line);
+    border-radius: 0;
+    outline: none;
+    background: var(--cell);
+    color: var(--lamp);
+    font: inherit;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+header input::placeholder {
+    color: var(--soft);
+    opacity: 1;
+}
+
+header input:focus {
+    border-color: var(--lamp);
+}
+
+/* -------- COLUMNS: the number, the destination, the way there, the gate -------- */
+.head,
+.row {
+    display: grid;
+    grid-template-columns: calc(2ch + 22px) minmax(0, 1.25fr) minmax(0, 1.35fr) minmax(8ch, 11ch);
+    gap: 12px;
+    align-items: center;
+}
+
+.head {
+    position: sticky;
+    top: 74px;
+    z-index: 2;
+    padding: 0 0 8px;
+    border-bottom: 2px solid var(--line);
+    background: var(--bg);
+    color: var(--soft);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+}
+
+.head .gate {
+    text-align: center;
+}
+
+.rows {
+    padding-top: 8px;
+}
+
+.row {
+    padding: 4px 0;
+    color: var(--text);
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    scroll-margin: var(--top) 0 var(--bottom);
+}
+
+/* A cell: a flap with its fold across the middle */
+.row span {
+    overflow: hidden;
+    padding: 9px 10px;
+    background: linear-gradient(var(--cell) 0 50%, var(--cell-fold) 50% 100%);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.row .no {
+    color: var(--soft);
+}
+
+.row .via {
+    color: var(--soft);
+    font-weight: 500;
+}
+
+.row .gate {
+    color: var(--lamp);
+    text-align: center;
+}
+
+.row:hover .to {
+    text-decoration: underline;
+}
+
+/* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it: its row lit, and no ring around it */
+.row.np-current {
+    outline: none;
+}
+
+.row.np-current span {
+    background: linear-gradient(var(--mark) 0 50%, var(--mark-fold) 50% 100%);
+    color: var(--on-mark);
+}
+
+/* -------- NOTHING TO SHOW -------- */
+.empty {
+    margin: 18px 0 0;
+    color: var(--soft);
+    letter-spacing: 0.12em;
+}
+
+/* -------- THE LAST LINE: it stays at the bottom of the view -------- */
+.foot {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: auto;
+    padding: 10px 0 12px;
+    background: var(--bg);
+    color: var(--soft);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+}
+
+.rows,
+.empty {
+    margin-bottom: 14px;
+}
+
+.foot .keys {
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.np-theme-switch {
+    width: 26px;
+    height: 26px;
+    border-radius: 0;
+}
+
+.np-theme-switch svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* -------- A PHONE: the destination and the gate; the way there has no room -------- */
+@media (max-width: 600px) {
+    body {
+        font-size: 16px;
+    }
+
+    .board {
+        padding: 0 12px;
+    }
+
+    .head,
+    .row {
+        grid-template-columns: calc(2ch + 22px) minmax(0, 1fr) minmax(6ch, 9ch);
+        gap: 8px;
+    }
+
+    .via,
+    .foot .keys {
+        display: none;
+    }
+
+    header input {
+        flex-basis: 150px;
+    }
+}

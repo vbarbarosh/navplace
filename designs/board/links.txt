@@ -1,0 +1,20 @@
+% design: board
+% title: Departures
+
+# Stay
+Booking            https://www.booking.com/
+Airbnb             https://www.airbnb.com/
+
+# Fly
+Skyscanner         https://www.skyscanner.net/
+Google Flights     https://www.google.com/travel/flights
+
+# Rail
+Seat 61            https://www.seat61.com/
+Rome2Rio           https://www.rome2rio.com/
+
+# Maps
+OpenStreetMap      https://www.openstreetmap.org/
+
+# Guide
+Wikivoyage         https://www.wikivoyage.org/
