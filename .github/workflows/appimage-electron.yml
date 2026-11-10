@@ -36,9 +36,16 @@ jobs:
               timestamp=$(date -u +%Y%m%d_%H%M%S)
               master_version="master-${timestamp}-${short_sha}"
 
-              echo "build=true" >> "$GITHUB_OUTPUT"
+              # A release pushes master and its tag: the tag's own run builds that commit, once
+              if [[ "$(git log -1 --format=%s)" == "release: electron-v"* ]]; then
+                echo "build=false" >> "$GITHUB_OUTPUT"
+              else
+                echo "build=true" >> "$GITHUB_OUTPUT"
+              fi
               echo "release=false" >> "$GITHUB_OUTPUT"
               echo "master_version=$master_version" >> "$GITHUB_OUTPUT"
+              # What the app shows as its version: the last release's number, a plus sign, this build
+              echo "master_build=master.${timestamp/_/}.${short_sha}" >> "$GITHUB_OUTPUT"
               echo "artifact_name=NavPlace-Electron-${master_version}-AppImage" >> "$GITHUB_OUTPUT"
               ;;
 
@@ -78,6 +85,21 @@ jobs:
       - name: Test
         if: steps.plan.outputs.build == 'true'
         run: src/desktop-electron/bin/test
+
+      # A build of master is not the release it follows: its title and its check for updates say so
+      - name: Mark a master build in its version
+        if: steps.plan.outputs.build == 'true' && steps.plan.outputs.release != 'true'
+        working-directory: src/desktop-electron
+        env:
+          MASTER_BUILD: ${{ steps.plan.outputs.master_build }}
+        run: |
+          node -e '
+              const fs = require("fs");
+              const package = JSON.parse(fs.readFileSync("package.json", "utf8"));
+              package.version = `${package.version}+${process.env.MASTER_BUILD}`;
+              fs.writeFileSync("package.json", `${JSON.stringify(package, null, 2)}\n`);
+              console.log(package.version);
+          '
 
       - name: Build AppImage
         if: steps.plan.outputs.build == 'true'

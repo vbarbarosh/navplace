@@ -58,6 +58,7 @@ const settings_from_raw = require('./helpers/settings_from_raw');
 const start_failure_text = require('./helpers/start_failure_text');
 const text_design_set = require('./helpers/text_design_set');
 const url_from_path = require('url').pathToFileURL;
+const version_compare = require('./helpers/version_compare');
 
 // This instance quits for a start that takes its place (`second-instance` in main): whatever it
 // was doing then, its own start too, breaks off, and that is no failed start to tell the user of
@@ -1095,18 +1096,6 @@ async function updates_check()
     return {latest, url: release.html_url, newer: version_compare(latest, electron.app.getVersion()) > 0};
 }
 
-// Like a.localeCompare(b) for versions: 1.10.0 after 1.9.0
-function version_compare(a, b)
-{
-    const pa = a.split('.').map(Number);
-    const pb = b.split('.').map(Number);
-    for (let i = 0; i < 3; ++i) {
-        if ((pa[i] ?? 0) !== (pb[i] ?? 0)) {
-            return ((pa[i] ?? 0) > (pb[i] ?? 0)) ? 1 : -1;
-        }
-    }
-    return 0;
-}
 
 async function emitter_once(emitter, handler_by_event)
 {
