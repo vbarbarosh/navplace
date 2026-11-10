@@ -28,7 +28,7 @@ Plain text. Parsed by `lib/parse.js`. The grammar uses three prefix characters t
 
 Grammar:
 
-- `label  url` — link line. `label` optional; if absent, the parser uses the URL host (plus pathname when non-`/`). `url` matches `^(https?|file)://\S+$` and must be the last token on the line.
+- `label  url` — link line. `label` optional; if absent, the name is the url as written, in its own letters, not punycode: without the scheme, a user and password, the query and the fragment, and without a path that is only `/` (`https://пример.рф/путь?x=1` → `пример.рф/путь`). A run of `%XX` escapes is shown decoded when it is valid UTF-8 with no control character, and left as written otherwise. `icon_url` keeps the parsed host. `url` matches `^(https?|file)://\S+$` and must be the last token on the line.
 - **`% key: value`** — **document-level directive**; starts a line with `%`. Known keys: `design`, `title`, `email`, `ns`, `include`, `picture <name>`. Unknown keys are stored in the document-level `meta` object verbatim. Read by the design via the `navplace({ meta: { … } })` DOM-mapping parameter, on the web and in the desktop app alike; a key the file does not have leaves the design's own text and link.
 - **`% ns: a | b`** — restricts output to items whose namespaces include `a` or `b`.
 - **`% picture name: url`** — names a picture for `@name`; `url` is an `http://`, `https://` or `data:image/` url. Repeatable; goes into `meta.picture` as `{name: url}`. A line with no name (`% picture: url`) or with another kind of value is skipped with a warning, so `meta.picture` is never anything but that map.
