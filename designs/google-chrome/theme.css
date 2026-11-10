@@ -164,6 +164,14 @@ body {
     text-overflow: ellipsis;
 }
 
+/* -------- NOTHING TO SHOW -------- */
+.empty {
+    padding: 0 16px;
+    font-size: 13px;
+    color: var(--label);
+    text-align: center;
+}
+
 /* -------- ICONS -------- */
 .icon {
     width: 28px;

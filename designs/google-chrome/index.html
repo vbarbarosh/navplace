@@ -45,11 +45,15 @@ function main()
                     </a>
 
                 </div>
+
+                <!-- NOTHING TO SHOW -->
+                <div v-if="empty_text" class="empty">{{ empty_text }}</div>
             </div>
         `,
         data: function () {
             // current: the link ↑ ↓ moved to, kept by the runtime; Enter opens it
-            return {items: [], current: 0};
+            // empty_text: what the page says when it has no link to show
+            return {items: [], current: 0, empty_text: ''};
         },
         methods: {
             // A click opens through the runtime: every selected link, this one in place of the last
@@ -63,6 +67,13 @@ function main()
                 update: (v, {current} = {}) => {
                     this.items.splice(0, this.items.length, ...v);
                     this.current = current ?? 0;
+                    // A search that finds nothing is told apart from a file with no links by the search box
+                    if (v.length) {
+                        this.empty_text = '';
+                    }
+                    else {
+                        this.empty_text = this.$refs.search.value.trim() ? 'Nothing found' : 'No links yet';
+                    }
                 },
             });
         },
