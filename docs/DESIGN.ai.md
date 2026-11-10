@@ -455,6 +455,8 @@ function main()
                 event.target.parentElement.dataset.letter = letter_from_label(item.label);
             });
             out.querySelector('.label').textContent = item.label;
+            // A name too long for its tile is cut with an ellipsis: its full text is in the title
+            out.querySelector('.label').title = item.label;
             out.querySelector('.sub').textContent = new URL(item.href).host;
             out.classList.toggle('np-current', i === current);
             out.onclick = function (event) {
