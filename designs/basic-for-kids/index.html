@@ -127,6 +127,14 @@
         .card:nth-child(3n+3) {
             background-color: var(--card-3);
         }
+
+        /* In place of the cards when there are none: one line across the columns */
+        .empty-note {
+            grid-column: 1 / -1;
+            margin: 0;
+            font-size: 24px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -164,6 +172,13 @@
             label.textContent = item.label;
             card.appendChild(label);
             container.appendChild(card);
+        }
+        // No cards: a line says why, nothing matches the search or there are no links at all
+        if (!items.length) {
+            const note = document.createElement('p');
+            note.className = 'empty-note';
+            note.textContent = input.value.trim() ? 'Nothing found' : 'No links yet';
+            container.appendChild(note);
         }
     }
 </script>
