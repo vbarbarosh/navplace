@@ -107,6 +107,8 @@
 
             const td_label = document.createElement('td');
             td_label.className = 'label';
+            // A name too long for its cell is cut with an ellipsis: its full text is in the title
+            td_label.title = item.label || '';
             // The row's link: the label is its text and it lies over the whole row (.rowlink in
             // theme.css), so a click, a middle click or a menu anywhere on the row is the link's
             const link = document.createElement('a');
