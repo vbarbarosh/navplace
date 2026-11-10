@@ -6,8 +6,7 @@
     --bg: #ffffff;
     --fg: #202124;
     --label: #000000;
-    /* The wordmark in four colours, a band for each sixth of it */
-    --logo: linear-gradient(90deg, #4285f4 0 17%, #ea4335 17% 34%, #fbbc05 34% 50%, #4285f4 50% 67%, #34a853 67% 84%, #ea4335 84% 100%);
+    --logo: #202124;
     --search-bg: #ffffff;
     --search-fg: #000000;
     --search-shadow: 0 2px 6px rgba(60, 64, 67, 0.16), 0 0 0 1px rgba(60, 64, 67, 0.08);
@@ -27,7 +26,7 @@
     --bg: #3c3c3c;
     --fg: #e8eaed;
     --label: #e8eaed;
-    --logo: linear-gradient(#ffffff, #ffffff);
+    --logo: #ffffff;
     --search-shadow: 0 2px 6px rgba(60, 64, 67, 0.16);
     --icon-bg: #282828;
     --tile-hover: rgba(255, 255, 255, 0.1);
@@ -62,16 +61,13 @@ body {
 }
 
 /* -------- WORDMARK -------- */
-/* Its colours are painted through the letters: four in light, white in dark, as Chrome's own.
-   A low window gives it less room above; a long title gets smaller letters and may wrap */
+/* One plain colour in each theme: dark on light, white on dark. A low window gives it less room
+   above; a long title gets smaller letters and may wrap */
 .logo {
     margin: clamp(20px, 14.5vh, 132px) 0 38px;
     max-width: 100%;
     min-height: 92px;
-    background: var(--logo);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--logo);
     font-size: clamp(40px, 12vw, 76px);
     font-weight: 500;
     line-height: 92px;
