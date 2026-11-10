@@ -80,6 +80,12 @@
             border-color: var(--accent);
         }
 
+        /* The placeholder is never cut: under 356px, where the box cannot hold it at full size, it
+           shrinks with the screen (3.75vw) */
+        input[type="search"]::placeholder {
+            font-size: min(1em, 3.75vw);
+        }
+
         .theme-toggle {
             display: flex;
             margin-left: 1rem;
@@ -177,8 +183,9 @@
             font-family: var(--font-mono);
         }
 
+        /* minmax(0, …): the one column is as wide as the screen, not as its longest name */
         @media (max-width: 600px) {
-            #navplace-results { grid-template-columns: 1fr; }
+            #navplace-results { grid-template-columns: minmax(0, 1fr); }
         }
     </style>
 </head>
@@ -240,7 +247,7 @@
             <a href="${html_escape(item.href)}" class="nav-item ${is_current ? 'np-current' : ''}" target="_blank" rel="noopener noreferrer">
                 <img src="${html_escape(item.icon_url)}" class="nav-icon" onerror="this.style.display='none'">
                 <div class="nav-content">
-                    <span class="nav-label">${html_escape(item.label)}</span>
+                    <span class="nav-label" title="${html_escape(item.label)}">${html_escape(item.label)}</span>
                     <span class="nav-href">${html_escape(item.href)}</span>
                 </div>
                 ${item.image_url ? `<img src="${html_escape(item.image_url)}" class="nav-image">` : ''}
