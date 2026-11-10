@@ -26,6 +26,7 @@ Full documentation: **[navplace.com/docs.html](https://navplace.com/docs.html)**
 * [Chrome window selection on Wayland](docs/wayland-chrome-window.md) — which Chrome window gets a link, and a manual test
 * [About NavPlace](docs/ABOUT.md) — what it is for and who it is for
 * [Writing a design](docs/DESIGN.ai.md) — the guide for a new design
+* [Demos](demos/) — four pages that put a design on a page of their own, the way any site can
 
 ## License
 
