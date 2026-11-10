@@ -388,7 +388,7 @@ A complete brief plus this spec is enough for an AI agent to produce a working `
 
 ## Appendix A: Reference design — `showcase` (presentation style)
 
-The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla JS, no framework, no build step. Uses the `meta` mapping, the shared light/dark switch in its topbar, and `navplace.navigate(item, e)` on click. Use this as the direct template for presentation-style design briefs.
+The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla JS, no framework, no build step. Uses the `meta` mapping, the shared light/dark switch in its topbar, and `navplace.navigate(item, e)` on click. Draws each `# Section` heading once, over the links that follow it; a file with no headings is one plain grid. Use this as the direct template for presentation-style design briefs.
 
 ### `designs/showcase/index.html`
 
@@ -437,7 +437,7 @@ function main()
     // `current`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
     function refresh_grid(items, current) {
         const grid = document.getElementById('grid');
-        grid.replaceChildren(...items.map(function (item, i) {
+        const tiles = items.map(function (item, i) {
             const templ = document.createElement('template');
             templ.innerHTML = `
                 <a class="tile">
@@ -467,7 +467,20 @@ function main()
                 navplace.navigate(item, event);
             };
             return out;
-        }));
+        });
+        // A heading of the links file is drawn once, over the links that follow it
+        const parts = [];
+        for (const [i, item] of items.entries()) {
+            const heading = item.namespaces?.[0];
+            if (heading && (heading !== items[i - 1]?.namespaces?.[0])) {
+                const title = document.createElement('h3');
+                title.className = 'group-title';
+                title.textContent = heading;
+                parts.push(title);
+            }
+            parts.push(tiles[i]);
+        }
+        grid.replaceChildren(...parts);
         // No link to show: a search that finds nothing is told apart from a file with no links by the search box
         const empty = document.getElementById('empty');
         empty.hidden = (items.length > 0);
@@ -623,6 +636,20 @@ a:hover {
     color: var(--muted);
     letter-spacing: .08em;
     text-transform: uppercase;
+}
+
+/* A heading of the links file, over its links */
+
+.group-title {
+    grid-column: 1 / -1;
+    margin: 12px 0 -2px;
+    color: var(--fg);
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.group-title:first-child {
+    margin-top: 0;
 }
 
 /* Grid */

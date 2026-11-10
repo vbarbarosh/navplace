@@ -136,6 +136,20 @@ a:hover {
     text-transform: uppercase;
 }
 
+/* A heading of the links file, over its links */
+
+.group-title {
+    grid-column: 1 / -1;
+    margin: 12px 0 -2px;
+    color: var(--fg);
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.group-title:first-child {
+    margin-top: 0;
+}
+
 /* Grid */
 
 .grid {

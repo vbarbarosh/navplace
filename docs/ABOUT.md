@@ -147,7 +147,7 @@ A small tool that turns a plain-text list of links into a fast launcher, a web p
 A design is an HTML folder under `designs/<name>/` that consumes the parsed items and decides how to draw them. You switch designs by changing one line — `% design: <name>` — at the top of your source. A quick tour of what ships in the repo:
 
 - `basic`, `first`, `github`, `google-chrome`, `palette` — minimal, search-first launchers with an input at the top and a list/grid of links below.
-- `showcase` — a personal page: name header, email link, grid of items. (This is what `vbarbarosh.com` uses.)
+- `showcase` — a personal page: name header, email link, grid of items under the headings of the links file. (This is what `vbarbarosh.com` uses.)
 - `cards` — a grid of cards with the sections as categories.
 - `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes` — themed presentations with their own typography, colors, and layout.
 - `basic-for-portfolio`, `basic-for-internal2`, `basic-for-internal3-with-groups` — a portfolio and two internal-tool launchers.
