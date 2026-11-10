@@ -1,5 +1,5 @@
-// Designs drawn live in small frames of a page: the home page's six designs and its widget, the
-// docs' six. Loaded by a page with <script src="designs-shown.js"></script>.
+// Designs drawn live in small frames of a page: the home page's six designs and its widget, and
+// every design on the docs page. Loaded by a page with <script src="designs-shown.js"></script>.
 //
 // designs_show(shown, focus_holder_find)
 //

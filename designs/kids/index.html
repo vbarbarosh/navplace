@@ -1,0 +1,143 @@
+<!doctype html>
+<!-- For children: big bright stickers under a sky, a picture and a name on each -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kids | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
+    <link href="theme.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+
+    <h1>Where shall we go?</h1>
+
+    <div class="search">
+        <input id="search" type="search" placeholder="Type a name…" autocomplete="off" spellcheck="false" aria-label="Search">
+    </div>
+
+    <div id="links" class="links"></div>
+    <p id="empty" class="empty" hidden></p>
+</div>
+
+<script src="/lib/navplace.js"></script>
+<script>
+main();
+
+function main()
+{
+    const input = document.getElementById('search');
+    const links = document.getElementById('links');
+    const empty = document.getElementById('empty');
+    // The links drawn now, in their order on the page, and the sticker of each
+    let drawn = [];
+    let stickers = [];
+    // The number each link got when it was first drawn, one after another: its colour and its
+    // tilt come from it, so neighbours differ and a link keeps both wherever a search puts it
+    const number_by_item = new Map();
+
+    navplace({
+        input: input,
+        meta: {title: 'h1'},
+        update: (v, {item = null} = {}) => refresh_links(v, item),
+    });
+
+    // `current_item`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
+    function refresh_links(items, current_item) {
+        // The links of one heading stand together under it, the headings in the order their first
+        // link came: a search puts its best matches first, which would cut a heading in two
+        const items_by_heading = new Map();
+        for (const item of items) {
+            const heading = item.namespaces?.[0] ?? null;
+            if (!items_by_heading.has(heading)) {
+                items_by_heading.set(heading, []);
+            }
+            items_by_heading.get(heading).push(item);
+        }
+        const shown = [...items_by_heading.values()].flat();
+        // The same links as are drawn, ↑ or ↓ moved the mark: the stickers stay as they are,
+        // pictures and all, and only the mark moves
+        if (shown.length && (shown.length === drawn.length) && shown.every((v, i) => v === drawn[i])) {
+            for (const [i, sticker] of stickers.entries()) {
+                sticker.classList.toggle('np-current', shown[i] === current_item);
+            }
+            return;
+        }
+        drawn = shown;
+        stickers = shown.map(v => make_sticker(v, v === current_item));
+        // A heading of the links file is drawn once, over its links
+        const parts = [];
+        for (const [i, item] of shown.entries()) {
+            const heading = item.namespaces?.[0] ?? null;
+            if (heading && (heading !== (shown[i - 1]?.namespaces?.[0] ?? null))) {
+                const title = document.createElement('h2');
+                title.className = 'group-title';
+                title.textContent = heading;
+                parts.push(title);
+            }
+            parts.push(stickers[i]);
+        }
+        links.replaceChildren(...parts);
+        // No link to show: a search that finds nothing is told apart from a file with no links by the search box
+        empty.hidden = (shown.length > 0);
+        empty.textContent = input.value.trim() ? 'Nothing found' : 'No links yet';
+        // ↑ ↓ and Enter walk the links in the order they stand on the page
+        navplace.order_set?.(shown);
+    }
+
+    // The links file is not trusted: its text enters as text or a set attribute, never as HTML
+    function make_sticker(item, is_current) {
+        const sticker = document.createElement('a');
+        if (!number_by_item.has(item)) {
+            number_by_item.set(item, number_by_item.size);
+        }
+        const number = number_by_item.get(item);
+        sticker.className = `sticker tone-${number % 6} tilt-${number % 2}`;
+        sticker.classList.toggle('np-current', is_current);
+        sticker.href = item.href;
+        const plate = document.createElement('span');
+        plate.className = 'plate';
+        // The first letter of the name stands on the plate until the picture is there, and stays
+        // when no picture can be loaded
+        plate.textContent = letter_from_label(item.label);
+        picture_put(plate, item.image_url ? [item.image_url, item.icon_url] : [item.icon_url], !!item.image_url);
+        const label = document.createElement('span');
+        label.className = 'label';
+        label.textContent = item.label;
+        // A name too long for its sticker is cut after three lines: its full text is in the title
+        label.title = item.label;
+        sticker.append(plate, label);
+        sticker.addEventListener('click', function (event) {
+            navplace.navigate(item, event);
+        });
+        return sticker;
+    }
+
+    // The first of the addresses that loads takes the plate: a link's own picture fills it, a
+    // site's icon stands in its middle
+    function picture_put(plate, addresses, is_own) {
+        const address = addresses.find(Boolean);
+        if (!address) {
+            return;
+        }
+        const img = document.createElement('img');
+        img.alt = '';
+        img.className = is_own ? 'own' : '';
+        img.addEventListener('load', () => plate.replaceChildren(img));
+        img.addEventListener('error', () => picture_put(plate, addresses.slice(addresses.indexOf(address) + 1), false));
+        img.src = address;
+        // A picture the page has loaded before is there at once, with no letter shown in between
+        if (img.complete && (img.naturalWidth > 0)) {
+            plate.replaceChildren(img);
+        }
+    }
+
+    // The first letter or digit of a link's name, in capitals; ? for a name that has none
+    function letter_from_label(label) {
+        return (String(label).match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase();
+    }
+}
+</script>
+</body>
+</html>

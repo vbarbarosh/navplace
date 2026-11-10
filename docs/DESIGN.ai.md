@@ -280,7 +280,7 @@ When designing, decide which family the brief belongs to. Each has a different r
   - Other examples: `palette` (a command palette), `google-chrome` (the look of Chrome's New Tab page, the file's `% title` as its wordmark), and the less polished `classic`.
 - **Presentation style** — themed page with personality, items as a styled grid or wall, search is secondary. Best for hosted pages and embeds. Optimize for visual identity.
   - **Canonical reference: `designs/showcase/`.** Imitate this for presentation briefs.
-  - Other examples: `cards` (index cards with square corners, a colour for each section).
+  - Other examples: `cards` (index cards with square corners, a colour for each section), `kids` (big stickers for children's sites).
 
 ## Common patterns
 

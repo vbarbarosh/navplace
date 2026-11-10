@@ -1,0 +1,18 @@
+% design: kids
+% title: Where shall we go?
+
+# Watch
+PBS Kids             https://pbskids.org/
+Sesame Street        https://www.sesamestreet.org/
+Storyline Online     https://storylineonline.net/
+
+# Play
+Scratch              https://scratch.mit.edu/
+Funbrain             https://www.funbrain.com/
+ABCya                https://www.abcya.com/
+
+# Learn
+Nat Geo Kids         https://kids.nationalgeographic.com/
+NASA Space Place     https://spaceplace.nasa.gov/
+Khan Academy Kids    https://learn.khanacademy.org/khan-academy-kids/
+Ducksters            https://www.ducksters.com/

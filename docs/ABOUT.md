@@ -100,6 +100,7 @@ Designs that ship in this repo, grouped by intent:
 
 - **Launchers** — `github`, `palette`, `classic`, `google-chrome`.
 - **Showcases / portfolios** — `showcase`, `cards`.
+- **Themed pages** — `kids`.
 
 Each design is a folder under `designs/<name>/` with its own `index.html`; the parser hands it a list of items and the design decides how to draw them.
 
@@ -147,7 +148,8 @@ A design is an HTML folder under `designs/<name>/` that consumes the parsed item
 
 - `classic`, `github`, `google-chrome`, `palette` — minimal, search-first launchers with an input at the top and a list/grid of links below.
 - `showcase` — a personal page: name header, email link, grid of items under the headings of the links file. (This is what `vbarbarosh.com` uses.)
-- `cards` — a grid of cards with the sections as categories.
+- `cards` — index cards with square corners, a colour for each section.
+- `kids` — big bright stickers under a sky, for children's sites.
 
 **Can I embed NavPlace on my own site?**
 Yes. One `<script src="…/embed.js" data-links="…">` tag in any HTML page. The script creates an iframe pointing at the chosen design and pipes the `data-links` text into it via `postMessage`. The iframe sizes itself to its container — the example above pins it to the viewport with `position: fixed; inset: 0`.

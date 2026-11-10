@@ -1,0 +1,263 @@
+/* Stickers under a sky: night in the dark theme, day in the light one. Nothing here is small. */
+
+/* -------- COLOURS: light on :root, dark on :root[data-theme="dark"] (/lib/theme_switch.js) -------- */
+:root {
+    color-scheme: light;
+    --sky: #8fd3ff;
+    --dot: rgba(255, 255, 255, 0.8);
+    --ink: #0d1640;
+    --title: #0d1640;
+    --title-shadow: #ffd43b;
+    --paper: #ffffff;
+    --note: #0d1640;
+    --ring: #0d1640;
+    --ring-gap: #ffffff;
+    --tone-0: #ffd43b;
+    --tone-1: #ff8787;
+    --tone-2: #63e6be;
+    --tone-3: #74c0fc;
+    --tone-4: #b197fc;
+    --tone-5: #ffa94d;
+    /* The search box sticks to the top of the view and is this tall with its room: ↑ stops a
+       sticker below it */
+    --bar: 86px;
+    --np-scrollbar-thumb: rgba(13, 22, 64, 0.45);
+    --np-scrollbar-track: var(--sky);
+    --np-switch-bg: var(--paper);
+    --np-switch-fg: var(--ink);
+    --np-switch-border: var(--ink);
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --sky: #1b2a6b;
+    --dot: rgba(255, 255, 255, 0.34);
+    --title: #ffd43b;
+    --title-shadow: #0d1640;
+    --note: #ffffff;
+    --ring: #ffffff;
+    --ring-gap: #1b2a6b;
+    --np-scrollbar-thumb: rgba(255, 255, 255, 0.4);
+}
+
+/* -------- PAGE -------- */
+* { box-sizing: border-box; }
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    background-color: var(--sky);
+    background-image: radial-gradient(var(--dot) 1.5px, transparent 1.6px);
+    background-size: 46px 46px;
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, Arial, sans-serif;
+}
+
+.page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 26px 24px 56px;
+}
+
+h1 {
+    margin: 0 56px 4px 0;
+    color: var(--title);
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-shadow: 3px 3px 0 var(--title-shadow);
+    overflow-wrap: anywhere;
+}
+
+/* The theme switch stands in the page's corner, drawn as the stickers are */
+.np-theme-switch {
+    border-width: 3px;
+    border-radius: 0;
+    box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* -------- SEARCH: it stays at the top of the view while the stickers scroll under it -------- */
+.search {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 -24px 14px;
+    padding: 12px 24px 14px;
+    background-color: var(--sky);
+}
+
+.search input {
+    display: block;
+    width: 100%;
+    max-width: 560px;
+    height: 56px;
+    padding: 0 18px;
+    border: 4px solid var(--ink);
+    border-radius: 0;
+    outline: none;
+    background: var(--paper);
+    box-shadow: 5px 5px 0 var(--ink);
+    color: var(--ink);
+    font: inherit;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.search input::placeholder {
+    color: #55608f;
+    opacity: 1;
+}
+
+.search input:focus {
+    box-shadow: 5px 5px 0 var(--title-shadow), 5px 5px 0 2px var(--ink);
+}
+
+/* -------- STICKERS -------- */
+.links {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 26px 26px;
+}
+
+/* A heading of the links file, over its links */
+.group-title {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin: 14px 0 -6px;
+    padding: 4px 14px;
+    border: 3px solid var(--ink);
+    background: var(--paper);
+    box-shadow: 4px 4px 0 var(--ink);
+    color: var(--ink);
+    font-size: 20px;
+    font-weight: 900;
+    scroll-margin-top: var(--bar);
+}
+
+.group-title:first-child {
+    margin-top: 0;
+}
+
+.sticker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 176px;
+    padding: 14px 10px;
+    border: 4px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--ink);
+    color: var(--ink);
+    text-align: center;
+    text-decoration: none;
+    scroll-margin-top: calc(var(--bar) + 12px);
+}
+
+.tone-0 { background: var(--tone-0); }
+
+.tone-1 { background: var(--tone-1); }
+
+.tone-2 { background: var(--tone-2); }
+
+.tone-3 { background: var(--tone-3); }
+
+.tone-4 { background: var(--tone-4); }
+
+.tone-5 { background: var(--tone-5); }
+
+/* Stuck on a little askew, each its own way; a sticker never moves after that */
+.tilt-0 { transform: rotate(-1.6deg); }
+
+.tilt-1 { transform: rotate(1.4deg); }
+
+.sticker:hover {
+    box-shadow: 6px 6px 0 var(--ink), 0 0 0 4px var(--paper);
+}
+
+/* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it: a thick ring around the sticker */
+.sticker.np-current {
+    outline: 6px solid var(--ring);
+    outline-offset: 5px;
+}
+
+/* The round plate: the link's own picture fills it, a site's icon stands in its middle, and the
+   first letter of the name stands there when neither can be loaded */
+.plate {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 76px;
+    height: 76px;
+    border: 4px solid var(--ink);
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.plate img {
+    display: block;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.plate img.own {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.label {
+    display: -webkit-box;
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 21px;
+    font-weight: 900;
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+/* -------- NOTHING TO SHOW -------- */
+.empty {
+    margin: 30px 0 0;
+    color: var(--note);
+    font-size: 24px;
+    font-weight: 900;
+}
+
+/* -------- A PHONE -------- */
+@media (max-width: 480px) {
+    .page {
+        padding: 18px 16px 40px;
+    }
+
+    .search {
+        margin: 0 -16px 10px;
+        padding: 10px 16px 12px;
+    }
+
+    .links {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px 18px;
+    }
+
+    .sticker {
+        min-height: 150px;
+    }
+
+    .label {
+        font-size: 18px;
+    }
+}
