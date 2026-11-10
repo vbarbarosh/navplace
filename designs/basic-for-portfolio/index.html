@@ -145,12 +145,14 @@
             min-width: 0;
         }
 
+        /* A long name wraps inside its card, a word with no spaces too */
         .item-label {
             font-weight: 600;
             font-size: 1.125rem;
             margin-bottom: 0.25rem;
             color: var(--text);
             line-height: 1.4;
+            overflow-wrap: anywhere;
         }
 
         .item-href {
@@ -205,6 +207,14 @@
 
             .item-card {
                 padding: 1.25rem;
+            }
+        }
+
+        /* The placeholder is never cut: on the narrowest screens, where the search box cannot hold
+           it at full size, it is smaller */
+        @media (max-width: 360px) {
+            .search-input::placeholder {
+                font-size: 0.875rem;
             }
         }
     </style>
