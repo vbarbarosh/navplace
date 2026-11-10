@@ -1,0 +1,246 @@
+/* The front page of a newspaper: a masthead, a strip under it, then columns of headlines with
+   rules between them. Ink on paper in the light theme, paper on ink in the dark one. */
+
+/* -------- COLOURS: light on :root, dark on :root[data-theme="dark"] (/lib/theme_switch.js) -------- */
+:root {
+    color-scheme: light;
+    --paper: #f4f1ea;
+    --ink: #161412;
+    --soft: #5f594f;
+    --rule: #b9b3a6;
+    --hair: #d2ccbe;
+    --section: #8a1f11;
+    /* The masthead sticks to the top of the view and is this tall: ↑ stops a story below it */
+    --bar: 132px;
+    --np-scrollbar-thumb: #b9b3a6;
+    --np-scrollbar-track: var(--paper);
+    --np-switch-bg: var(--paper);
+    --np-switch-fg: var(--ink);
+    --np-switch-border: var(--ink);
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #171614;
+    --ink: #efeae0;
+    --soft: #a8a294;
+    --rule: #4a463e;
+    --hair: #33302a;
+    --section: #ff9d8a;
+    --np-scrollbar-thumb: #4a463e;
+}
+
+/* -------- PAGE -------- */
+* { box-sizing: border-box; }
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+}
+
+.page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 28px 56px;
+}
+
+/* -------- MASTHEAD: the title over a double rule, then a strip with the count, the search box
+   and the theme switch; it stays at the top of the view -------- */
+.mast {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 -28px 18px;
+    padding: 16px 28px 0;
+    background: var(--paper);
+}
+
+h1 {
+    margin: 0;
+    padding-bottom: 8px;
+    border-bottom: 4px double var(--ink);
+    font-size: clamp(28px, 5.4vw, 52px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    text-align: center;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.strip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--ink);
+    font: 600 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* The count, the search box in the middle, the theme switch: on a narrow page the search box
+   takes what the other two leave */
+.strip #count {
+    flex: 1 0 auto;
+    white-space: nowrap;
+}
+
+.strip input {
+    flex: 0 1 300px;
+    min-width: 60px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    font: 15px Georgia, "Times New Roman", serif;
+}
+
+.strip input::placeholder {
+    color: var(--soft);
+    font-style: italic;
+    opacity: 1;
+}
+
+.strip input:focus {
+    border-color: var(--ink);
+}
+
+.strip [data-theme-switch] {
+    flex: 1 0 auto;
+    justify-content: flex-end;
+}
+
+.np-theme-switch {
+    width: 28px;
+    height: 28px;
+    border-radius: 0;
+}
+
+.np-theme-switch svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* -------- COLUMNS: one for each section, a rule between two -------- */
+.columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.column {
+    padding: 0 20px 18px;
+    border-left: 1px solid var(--rule);
+}
+
+.column:first-child {
+    padding-left: 0;
+    border-left: none;
+}
+
+.column h2 {
+    margin: 0 0 4px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--ink);
+    color: var(--section);
+    font: 700 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+/* -------- A STORY: the link's name as its headline, the address as its byline -------- */
+.story {
+    display: block;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--hair);
+    color: var(--ink);
+    text-decoration: none;
+    scroll-margin-top: calc(var(--bar) + 8px);
+}
+
+.headline {
+    display: block;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.story.lead .headline {
+    font-size: 32px;
+    line-height: 1.05;
+}
+
+.from {
+    display: block;
+    overflow: hidden;
+    margin-top: 3px;
+    color: var(--soft);
+    font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: 0.1em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.story:hover .headline {
+    text-decoration: underline;
+}
+
+/* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it: printed in reverse, in its own place */
+.story.np-current {
+    outline: none;
+    background: var(--ink);
+    box-shadow: -10px 0 0 var(--ink), 10px 0 0 var(--ink);
+    color: var(--paper);
+}
+
+.story.np-current .from {
+    color: var(--rule);
+}
+
+/* -------- NOTHING TO SHOW -------- */
+.empty {
+    margin: 22px 0 0;
+    color: var(--soft);
+    font-size: 22px;
+    font-style: italic;
+    text-align: center;
+}
+
+/* -------- A PHONE: one column after another, a rule over each -------- */
+@media (max-width: 560px) {
+    :root {
+        --bar: 104px;
+    }
+
+    .page {
+        padding: 0 16px 40px;
+    }
+
+    .mast {
+        margin: 0 -16px 14px;
+        padding: 12px 16px 0;
+    }
+
+    .column,
+    .column:first-child {
+        padding: 0 0 14px;
+        border-left: none;
+    }
+
+    .story.lead .headline {
+        font-size: 26px;
+    }
+}

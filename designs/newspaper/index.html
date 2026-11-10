@@ -1,0 +1,122 @@
+<!doctype html>
+<!-- A front page: the file's title as the masthead, a column for each section, a headline for each link -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Newspaper | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
+    <link href="theme.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+
+    <header class="mast">
+        <h1>The Morning Links</h1>
+        <div class="strip">
+            <span id="count"></span>
+            <input id="search" type="search" placeholder="Find a story…" autocomplete="off" spellcheck="false" aria-label="Search">
+            <span data-theme-switch></span>
+        </div>
+    </header>
+
+    <div id="columns" class="columns"></div>
+    <p id="empty" class="empty" hidden></p>
+</div>
+
+<script src="/lib/navplace.js"></script>
+<script>
+main();
+
+function main()
+{
+    const input = document.getElementById('search');
+    const columns = document.getElementById('columns');
+    const empty = document.getElementById('empty');
+    const count = document.getElementById('count');
+    // The links drawn now, in their order on the page, and the story of each
+    let drawn = [];
+    let stories = [];
+
+    navplace({
+        input: input,
+        meta: {title: 'h1'},
+        update: (v, {item = null} = {}) => refresh_columns(v, item),
+    });
+
+    // `current_item`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
+    function refresh_columns(items, current_item) {
+        // A column for each section of the file, in the order their first link came; the links
+        // with no section share a column of their own, with no heading
+        const items_by_heading = new Map();
+        for (const item of items) {
+            const heading = item.namespaces?.[0] ?? null;
+            if (!items_by_heading.has(heading)) {
+                items_by_heading.set(heading, []);
+            }
+            items_by_heading.get(heading).push(item);
+        }
+        const shown = [...items_by_heading.values()].flat();
+        // The same links as are drawn, ↑ or ↓ moved the mark: the page stays as it is and only
+        // the mark moves
+        if (shown.length && (shown.length === drawn.length) && shown.every((v, i) => v === drawn[i])) {
+            for (const [i, story] of stories.entries()) {
+                story.classList.toggle('np-current', shown[i] === current_item);
+            }
+            return;
+        }
+        drawn = shown;
+        stories = [];
+        const parts = [];
+        for (const [heading, group] of items_by_heading) {
+            const column = document.createElement('section');
+            column.className = 'column';
+            if (heading) {
+                const title = document.createElement('h2');
+                title.textContent = heading;
+                column.append(title);
+            }
+            for (const [i, item] of group.entries()) {
+                // The first story of a column is its lead, in larger type
+                const story = make_story(item, i === 0, item === current_item);
+                stories.push(story);
+                column.append(story);
+            }
+            parts.push(column);
+        }
+        columns.replaceChildren(...parts);
+        count.textContent = `${shown.length} ${(shown.length === 1) ? 'link' : 'links'}`;
+        // No link to show: a search that finds nothing is told apart from a file with no links by the search box
+        empty.hidden = (shown.length > 0);
+        empty.textContent = input.value.trim() ? 'Nothing found' : 'No links yet';
+        // ↑ ↓ and Enter walk the stories down each column, then on to the next
+        navplace.order_set?.(shown);
+    }
+
+    // The links file is not trusted: its text enters as text or a set attribute, never as HTML
+    function make_story(item, is_lead, is_current) {
+        const story = document.createElement('a');
+        story.className = is_lead ? 'story lead' : 'story';
+        story.classList.toggle('np-current', is_current);
+        story.href = item.href;
+        const headline = document.createElement('span');
+        headline.className = 'headline';
+        headline.textContent = item.label;
+        const from = document.createElement('span');
+        from.className = 'from';
+        from.textContent = address_from_href(item.href);
+        story.append(headline, from);
+        story.addEventListener('click', function (event) {
+            navplace.navigate(item, event);
+        });
+        return story;
+    }
+
+    // The address without its scheme and its last slash, so its telling part comes first
+    function address_from_href(href) {
+        return String(href).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+    }
+}
+</script>
+</body>
+</html>
