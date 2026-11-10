@@ -446,6 +446,13 @@
             font-size: 15px;
         }
 
+        /* The typed key is as wide as its "a few letters" whatever it holds: the line keeps its
+           rows, so on a phone the page under the demo does not move as the demo types */
+        .desk-keys [data-key="typed"] {
+            min-width: calc(13ch + 0.9em + 2px);
+            text-align: center;
+        }
+
         .opened {
             transition: opacity 200ms ease, transform 200ms ease;
             position: absolute;
