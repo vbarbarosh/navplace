@@ -277,6 +277,102 @@ Local   https://local.example.com/
 
 // A server that answers every request with `text` and `status` after `delay_ms`, all three
 // changeable; close() takes it down
+test('a pulled document keeps its own pictures: one name in three files is three pictures', async function () {
+    await using team = await make_text_server(`% picture logo: https://team.example.com/logo.png
+
+Team    @logo   https://team.example.com/
+`);
+    await using club = await make_text_server(`Club    @logo   https://club.example.com/
+% picture logo: data:image/png;base64,iVBORw0KGgo=
+`);
+    const collection = parse(`% picture logo: https://mine.example.com/logo.png
+% include: ${team.url}
+% include: ${club.url}
+
+Mine    @logo   https://mine.example.com/
+`);
+    const actual = await collection_resolve_includes(collection, GROUP_UID);
+    assert.deepEqual(actual.items.map(v => [v.label, v.image_url]), [
+        ['Mine', 'https://mine.example.com/logo.png'],
+        ['Team', 'https://team.example.com/logo.png'],
+        ['Club', 'data:image/png;base64,iVBORw0KGgo='],
+    ]);
+    // The pulling document's own names stay as it wrote them
+    assert.deepEqual(actual.meta.picture, {logo: 'https://mine.example.com/logo.png'});
+});
+
+test('an @name a pulled document names no picture for is no picture', async function () {
+    await using server = await make_text_server(`% picture board: https://team.example.com/board.png
+
+Named       @board      https://named.example.com/
+Unnamed     @logo       https://unnamed.example.com/
+File        @img/a.png  https://file.example.com/
+Plain                   https://plain.example.com/
+`);
+    // Neither the pulling document's `logo` nor a file of ~/.navplace/ stands in
+    const collection = parse(`% picture logo: https://mine.example.com/logo.png
+% include: ${server.url}
+
+Mine    @logo       https://mine.example.com/
+Local   @img/a.png  https://local.example.com/
+`);
+    const actual = await collection_resolve_includes(collection, GROUP_UID);
+    assert.deepEqual(actual.items.map(v => [v.label, v.image_url]), [
+        ['Mine', 'https://mine.example.com/logo.png'],
+        ['Local', 'private://img/a.png'],
+        ['Named', 'https://team.example.com/board.png'],
+        ['Unnamed', null],
+        ['File', null],
+        ['Plain', null],
+    ]);
+});
+
+test('a picture line of a pulled document is read in every spelling the parser reads', async function () {
+    await using server = await make_text_server(`%picture a: https://team.example.com/a.png
+  %   picture   b  :   https://team.example.com/b.png
+% picture c: https://team.example.com/old.png
+% picture c: https://team.example.com/c.png
+% pictures d: https://team.example.com/d.png
+% picture: https://team.example.com/e.png
+% picture f https://team.example.com/f.png
+% design: showcase
+
+A   @a  https://a.example.com/
+B   @b  https://b.example.com/
+C   @c  https://c.example.com/
+D   @d  https://d.example.com/
+E   @e  https://e.example.com/
+F   @f  https://f.example.com/
+`);
+    const collection = parse(`% design: github
+% include: ${server.url}
+`);
+    const actual = await collection_resolve_includes(collection, GROUP_UID);
+    assert.equal(actual.meta.design, 'github');
+    assert.deepEqual(actual.items.map(v => [v.label, v.image_url]), [
+        ['A', 'https://team.example.com/a.png'],
+        ['B', 'https://team.example.com/b.png'],
+        ['C', 'https://team.example.com/c.png'],
+        ['D', null],
+        ['E', null],
+        ['F', null],
+    ]);
+});
+
+test('the kept copy of a pulled document keeps its pictures too', async function () {
+    await using kept = await make_kept_dir();
+    await using server = await make_text_server(`% picture logo: https://team.example.com/logo.png
+
+Team    @logo   https://team.example.com/
+`);
+    const collection = parse(`% include: ${server.url}\n`);
+    await collection_resolve_includes(collection, GROUP_UID, {kept_dir: kept.dir});
+
+    await server.close();
+    const actual = await collection_resolve_includes(collection, GROUP_UID, {kept_dir: kept.dir});
+    assert.deepEqual(actual.items.map(v => [v.label, v.image_url]), [['Team', 'https://team.example.com/logo.png']]);
+});
+
 async function make_text_server(text)
 {
     const out = await make_server(function (request, response) {

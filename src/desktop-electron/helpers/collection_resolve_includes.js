@@ -8,6 +8,7 @@ const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const http_get_utf8 = require('@vbarbarosh/node-helpers/src/http_get_utf8');
 const include_spec_from_text = require('./include_spec_from_text');
 const parse = require('../../../lib/parse');
+const url_drop_secrets = require('./url_drop_secrets');
 
 // An include address gets this long, counted from the request to the last byte of its answer,
 const TIME_LIMIT_MS = 5000;
@@ -22,6 +23,11 @@ const SIZE_LIMIT = 2*1024*1024;
 // or pull further documents. The pull happens first and `% ns:` runs after it:
 // the filter of the pulling document gates local and pulled links alike. The
 // request carries no access token: an include url is a stranger.
+//
+// Its `% picture` lines stay, and belong to it alone: an `@name` of a pulled
+// document is the picture that document names, whatever the pulling one or
+// another pulled one calls by the same name. An `@name` it names no picture for
+// is no picture: the files under ~/.navplace/ are for the user's own links.
 //
 // The addresses are pulled side by side, so a reload takes as long as its
 // slowest one and not as all of them in a row; the links stay in the order the
@@ -73,7 +79,7 @@ async function include_items_pull(spec, {group_uid, ns, kept_dir, time_limit_ms,
         console.log(`[${group_uid}][include_ok] url=${url_without_secrets} items=${included.items.length}`);
         await include_kept_write(kept_dir, spec.url, text, group_uid);
     }
-    return included.items;
+    return included.items.map(v => v.image_url?.startsWith('private://') ? {...v, image_url: null} : v);
 }
 
 // The text an address answers with. The time limit is a total: an address that keeps sending
@@ -135,28 +141,17 @@ function kept_file_from_url(kept_dir, url)
     return fs_path_resolve(kept_dir, `${crypto.createHash('sha256').update(url).digest('hex')}.md`);
 }
 
+// The lines of a pulled document without its directives, the `% picture` ones left in
 function text_drop_directives(text)
 {
-    return text.split('\n').filter(v => !v.trim().startsWith('%')).join('\n');
+    return text.split('\n').filter(v => !v.trim().startsWith('%') || is_picture_line(v)).join('\n');
 }
 
-// An address as the logs may keep it: no query, no fragment, no user and no
-// password. One that does not parse is not repeated at all, and one with no
-// `//` keeps its scheme only: nothing there tells a user and a password from
-// the rest.
-function url_drop_secrets(text)
+// `% picture <name>: <url>`, as lib/parse.js tells it from the other directives: `picture` and
+// then a space or the colon
+function is_picture_line(line)
 {
-    let url = null;
-    try {
-        url = new URL(text);
-    }
-    catch {
-        return 'invalid-url';
-    }
-    if (!url.host && !url.pathname.startsWith('/')) {
-        return url.protocol;
-    }
-    return `${url.protocol}//${url.host}${url.pathname}`;
+    return /^%\s*picture(\s[^:]*)?:/.test(line.trim());
 }
 
 module.exports = collection_resolve_includes;
