@@ -16,6 +16,7 @@ function make_config(settings)
         socket_file: {type: 'null'},
         launcher_file: {type: 'null'},
         settings_file: {type: 'null'},
+        instance_file: {type: 'null'},
         settings_page_dir: {type: 'null'},
         autostart_file: {type: 'null'},
         desktop_file: {type: 'null'},
@@ -27,6 +28,8 @@ function make_config(settings)
     out.socket_file = fs_path_resolve(out.user_data_dir, 'navplace.sock');
     out.launcher_file = fs_path_resolve(out.user_data_dir, 'launcher.js');
     out.settings_file = fs_path_resolve(out.user_data_dir, 'settings.json');
+    // Who runs now, {pid, appimage_file, version}: the next start reads it to know whose place it takes
+    out.instance_file = fs_path_resolve(out.user_data_dir, 'instance.json');
     out.settings_page_dir = fs_path_resolve(__dirname, '../settings');
     // XDG autostart: GNOME starts every .desktop of $XDG_CONFIG_HOME/autostart at login
     out.autostart_file = fs_path_resolve(out.user_data_dir, '../autostart/navplace.desktop');

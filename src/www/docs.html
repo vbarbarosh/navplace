@@ -671,7 +671,7 @@
     <li>The running app shows its window, focuses it and clears the search box.</li>
     <li>No socket: <code>gtk-launch navplace</code> starts the app once. From then on the hotkey only pings the socket.</li>
 </ol>
-<p>A second start of the app shows the running window instead of opening another one.</p>
+<p>A second start of the same AppImage shows the running window instead of opening another one. A start of another AppImage file, or of another version, takes the running one's place: the running one quits and the new one starts, so a downloaded update only has to be run.</p>
 <p><strong>The window never waits.</strong> Each press of the hotkey reloads the links in the background: the window shows what it already has and the design redraws when the new links arrive. At startup the app reads the file once before the window opens, because its <code>% design:</code> decides what to load. A design named since is loaded at the next press. <code>% include:</code> urls always come after the window is up. Measured with an include url delayed by 3 seconds, under Xvfb: window up in 569 ms, the hotkey answered in 4 ms, the pulled links in 3597 ms. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/instant-launch.md">docs/instant-launch.md</a>.</p>
 
 <h3 id="wayland-chrome">Chrome on Wayland</h3>

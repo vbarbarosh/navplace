@@ -8,6 +8,7 @@ const collection_resolve_includes = require('./helpers/collection_resolve_includ
 const config = require('./config');
 const crypto = require('crypto');
 const electron = require('electron');
+const env_from_text = require('./helpers/env_from_text');
 const file_from_href = require('./helpers/file_from_href');
 const file_hrefs_from_collection = require('./helpers/file_hrefs_from_collection');
 const file_is_inside = require('./helpers/file_is_inside');
@@ -20,22 +21,33 @@ const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_read = require('@vbarbarosh/node-helpers/src/fs_read');
 const fs_read_utf8 = require('@vbarbarosh/node-helpers/src/fs_read_utf8');
 const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
+const fs_readlink = require('@vbarbarosh/node-helpers/src/fs_readlink');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const gnome_configure = require('./helpers/gnome_configure');
 const gnome_hotkey_set = require('./helpers/gnome_hotkey_set');
 const icon_find = require('../../lib/icon_find');
 const icon_library_file = require('../../lib/icon_library_file');
+const instance_from_raw = require('./helpers/instance_from_raw');
+const is_app_process = require('./helpers/is_app_process');
+const is_instance_takeover = require('./helpers/is_instance_takeover');
 const is_program_file = require('./helpers/is_program_file');
 const is_url_external = require('./helpers/is_url_external');
 const letter_tile_svg = require('./helpers/letter_tile_svg');
+const log_value_from_text = require('./helpers/log_value_from_text');
 const make = require('@vbarbarosh/type-helpers');
 const make_newest_gate = require('./helpers/make_newest_gate');
 const make_socket_server = require('./helpers/make_socket_server');
+const os = require('os');
 const parse = require('../../lib/parse');
+const pid_from_lock_target = require('./helpers/pid_from_lock_target');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
 const settings_from_raw = require('./helpers/settings_from_raw');
 const start_failure_text = require('./helpers/start_failure_text');
 const url_from_path = require('url').pathToFileURL;
+
+// This instance quits for a start that takes its place (`second-instance` in main): whatever it
+// was doing then, its own start too, breaks off, and that is no failed start to tell the user of
+let is_giving_way = false;
 
 const DEFAULT_README = `% design: github
 
@@ -50,6 +62,14 @@ Electron         https://www.electronjs.org/docs/latest/
 `;
 
 const START_FAILURE_TITLE = 'NavPlace could not start';
+
+// A takeover (lock_take_over): how often the running instance is looked at, how long one that
+// knows the takeover has to quit by itself, how long one told to end has to end, and how many
+// times the lock is asked for once it is gone
+const TAKEOVER_POLL_MS = 100;
+const TAKEOVER_QUIT_MS = 2000;
+const TAKEOVER_TERM_MS = 5000;
+const TAKEOVER_LOCK_TRIES = 20;
 
 cli(main, start_failure_report);
 
@@ -76,13 +96,21 @@ async function main()
         return;
     }
 
-    if (!electron.app.requestSingleInstanceLock()) {
-        electron.app.quit();
-        process.exit(0);
-    }
-
     const app_uid = crypto.randomUUID();
     console.log(`[${app_uid}][group_spawn]`);
+
+    // One instance runs at a time. The lock is told who starts: a running instance of another
+    // AppImage file or of another version quits on hearing it (`second-instance` below) and this
+    // start takes its place; a running one of this very file and version shows its window, and
+    // this start ends
+    const instance = {pid: process.pid, appimage_file: config.appimage_file, version: electron.app.getVersion()};
+    if (!electron.app.requestSingleInstanceLock(instance)) {
+        if (!await lock_take_over(instance, app_uid)) {
+            electron.app.quit();
+            process.exit(0);
+        }
+    }
+    await instance_write(instance, app_uid);
 
     if (config.appimage_file) {
         entries_repoint(app_uid);
@@ -131,7 +159,18 @@ async function main()
         win.setTitle(`${title} — v${electron.app.getVersion()}`);
     });
 
-    electron.app.on('second-instance', async function () {
+    // A second start says who it is. Another AppImage file or another version was started on
+    // purpose: this one quits and that one takes its place. A release from before the takeover
+    // (1.4.2 and older) says nothing and ends by itself: it only gets the window, as a second
+    // start of this very file does
+    electron.app.on('second-instance', async function (event, argv, cwd, raw) {
+        const starter = instance_from_raw(raw);
+        if (starter && is_instance_takeover(instance, starter)) {
+            console.log(`[${app_uid}][second_instance_takes_over] pid=${starter.pid} appimage=${log_value_from_text(starter.appimage_file)} version=${log_value_from_text(starter.version)}`);
+            is_giving_way = true;
+            electron.app.quit();
+            return;
+        }
         console.log(`[${app_uid}][second_instance]`);
         await window_show();
     });
@@ -530,6 +569,162 @@ async function main()
     }
 }
 
+// Another instance holds the lock; whether this start has it when this returns. A running one of
+// this very file and version has shown its window by now, and this start ends as it always did.
+// One of another AppImage file or version gives way: the user started this one on purpose
+async function lock_take_over(instance, group_uid)
+{
+    let holder = await lock_holder_read();
+    // No link any more: the instance that refused the lock a moment ago quit while this start
+    // looked, a running one that gave way at once. The lock is free, unless another start was
+    // faster and holds it now
+    if (holder.target === null) {
+        if (electron.app.requestSingleInstanceLock(instance)) {
+            console.log(`[${group_uid}][lock_found_free]`);
+            return true;
+        }
+        holder = await lock_holder_read();
+    }
+    if (holder.pid === null) {
+        console.error(`[${group_uid}][lock_holder_unknown] target=${log_value_from_text(holder.target)}`);
+        return false;
+    }
+    if (!is_instance_takeover(instance, holder)) {
+        console.log(`[${group_uid}][instance_summoned] pid=${holder.pid}`);
+        return false;
+    }
+    console.log(`[${group_uid}][takeover_begin] pid=${holder.pid} appimage=${log_value_from_text(holder.appimage_file)} version=${log_value_from_text(holder.version)}`);
+    let failure = await lock_holder_end(holder, group_uid);
+    if (!failure && !await lock_wait(instance)) {
+        failure = `the lock stayed taken after pid ${holder.pid} was gone`;
+    }
+    if (failure) {
+        console.error(`[${group_uid}][takeover_end_error] reason=${JSON.stringify(failure)}`);
+        return false;
+    }
+    console.log(`[${group_uid}][takeover_end_ok]`);
+    return true;
+}
+
+// The instance that holds the lock, by what this machine knows of it: its pid from the
+// SingletonLock link Electron keeps in userData, its program and its AppImage file from /proc,
+// and whether those prove it to be NavPlace (helpers/is_app_process.js). An instance that wrote
+// instance.json says its file and version itself, and knows the takeover; a release from before
+// it (1.4.2 and older) wrote none: its version stays null. `pid` is null when the lock names no
+// other process of this machine
+async function lock_holder_read()
+{
+    let target = null;
+    let said = null;
+    let program = null;
+    let appimage_file = null;
+    let is_app = false;
+
+    try {
+        target = await fs_readlink(fs_path_resolve(electron.app.getPath('userData'), 'SingletonLock'));
+    }
+    catch {
+    }
+    const pid = pid_from_lock_target(target, os.hostname());
+    if ((pid === null) || (pid === process.pid)) {
+        return {pid: null, target};
+    }
+    try {
+        const environ_text = await fs_read_utf8(`/proc/${pid}/environ`);
+        const cmdline_text = await fs_read_utf8(`/proc/${pid}/cmdline`);
+        program = cmdline_text.split('\0')[0];
+        appimage_file = env_from_text(environ_text).APPIMAGE ?? null;
+        is_app = is_app_process({environ_text, cmdline_text}, process.execPath);
+    }
+    catch {
+    }
+    try {
+        said = instance_from_raw(JSON.parse(await fs_read_utf8(config.instance_file)));
+    }
+    catch {
+    }
+    if (said?.pid === pid) {
+        return {pid, target, program, is_app, appimage_file: said.appimage_file, version: said.version, knows_takeover: true};
+    }
+    return {pid, target, program, is_app, appimage_file, version: null, knows_takeover: false};
+}
+
+// The running instance brought to its end: null when it is gone, else why it is still there. One
+// that knows the takeover heard who starts and quits by itself; any may be gone already, by its
+// own doing. One that still runs is sent SIGTERM, on which Electron quits as when its window is
+// closed; but only a process that /proc proves to be NavPlace: any other is never signalled
+async function lock_holder_end(holder, group_uid)
+{
+    if (await pid_wait_end(holder.pid, holder.knows_takeover ? TAKEOVER_QUIT_MS : 0)) {
+        return null;
+    }
+    if (!holder.is_app) {
+        return `pid ${holder.pid} is not proved to be NavPlace, its program is ${holder.program}: nothing was signalled`;
+    }
+    try {
+        process.kill(holder.pid, 'SIGTERM');
+    }
+    catch (error) {
+        return (error.code === 'ESRCH') ? null : `pid ${holder.pid} could not be signalled: ${error.code}`;
+    }
+    console.log(`[${group_uid}][takeover_sigterm_sent] pid=${holder.pid} program=${log_value_from_text(holder.program)} appimage=${log_value_from_text(holder.appimage_file)}`);
+    if (!await pid_wait_end(holder.pid, TAKEOVER_TERM_MS)) {
+        return `pid ${holder.pid} still runs after SIGTERM`;
+    }
+    return null;
+}
+
+// The lock asked for until it is given, a few times: the instance that held it is gone, and what
+// it left of the lock Electron clears by itself
+async function lock_wait(instance)
+{
+    for (let i = 0; i < TAKEOVER_LOCK_TRIES; ++i) {
+        if (electron.app.requestSingleInstanceLock(instance)) {
+            return true;
+        }
+        await Promise.delay(TAKEOVER_POLL_MS);
+    }
+    return false;
+}
+
+// Waits until no process has this pid, `ms` at most; whether it is gone
+async function pid_wait_end(pid, ms)
+{
+    const time0 = Date.now();
+    while (is_pid_running(pid)) {
+        if ((Date.now() - time0) >= ms) {
+            return false;
+        }
+        await Promise.delay(TAKEOVER_POLL_MS);
+    }
+    return true;
+}
+
+// A process of another user cannot be asked (EPERM), and is there
+function is_pid_running(pid)
+{
+    try {
+        process.kill(pid, 0);
+        return true;
+    }
+    catch (error) {
+        return error.code === 'EPERM';
+    }
+}
+
+// Who runs, kept for the next start to read (lock_holder_read). Never the failure of this start:
+// an instance that could not write it is taken for a release from before the takeover
+async function instance_write(instance, group_uid)
+{
+    try {
+        await fs_mkdirp(config.user_data_dir);
+        await fs_write(config.instance_file, `${JSON.stringify(instance)}\n`);
+    }
+    catch (error) {
+        console.error(`[${group_uid}][instance_write_failed] reason=${JSON.stringify(error.message)}`);
+    }
+}
+
 // After an update the AppImage is another file: the entries --configure-gnome wrote for the old
 // one, the hotkey's cold start and the start at login, are pointed at the running one. Never
 // awaited by the start, and never its failure
@@ -564,6 +759,9 @@ async function start_step(sentence, file, promise)
 // Linux shows none, so a notification then. `--configure-gnome` runs in a terminal: stderr is read
 function start_failure_report(error)
 {
+    if (is_giving_way) {
+        return;
+    }
     console.error(error);
     if (process.argv.includes('--configure-gnome')) {
         return;
