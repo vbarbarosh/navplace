@@ -134,6 +134,7 @@
             list-style: none;
         }
 
+        /* A row is its link */
         .row {
             display: flex;
             align-items: center;
@@ -141,6 +142,8 @@
             height: 44px;
             padding: 0 12px;
             border-radius: 9px;
+            color: inherit;
+            text-decoration: none;
             cursor: pointer;
         }
 
@@ -152,6 +155,11 @@
 
         .row:hover:not(.np-current) {
             background: color-mix(in srgb, var(--row-on) 50%, transparent);
+        }
+
+        /* The row Tab stands on shows the browser's own ring, the current row too */
+        .row:focus-visible {
+            outline: revert;
         }
 
         .icon {
@@ -285,7 +293,7 @@
         <input type="search" placeholder="Search your links…" autocomplete="off" spellcheck="false" aria-label="Search links">
     </label>
     <div class="opens" hidden></div>
-    <ul class="rows" role="listbox" aria-label="Links"></ul>
+    <ul class="rows" aria-label="Links"></ul>
     <div class="empty" hidden>No matches</div>
     <div class="foot">
         <span id="count"></span>
@@ -358,17 +366,21 @@
     function make_row(item, i)
     {
         const li = document.createElement('li');
-        li.className = (i === current) ? 'row np-current' : 'row';
-        li.setAttribute('role', 'option');
-        li.setAttribute('aria-selected', String(i === current));
-        li.append(make_icon(item), make_text('label', item.label), make_text('domain', domain_of(item.href)));
-        li.addEventListener('click', function () {
-            item_open(i);
+        const link = document.createElement('a');
+        link.className = (i === current) ? 'row np-current' : 'row';
+        link.href = item.href;
+        if (i === current) {
+            link.setAttribute('aria-current', 'true');
+        }
+        link.append(make_icon(item), make_text('label', item.label), make_text('domain', domain_of(item.href)));
+        link.addEventListener('click', function (event) {
+            item_open(i, event);
         });
         // The mouse picks a row as ↑ ↓ do: the runtime makes it the current one
-        li.addEventListener('mousemove', function () {
+        link.addEventListener('mousemove', function () {
             navplace.current_set?.(i);
         });
+        li.append(link);
         return li;
     }
 
@@ -405,10 +417,12 @@
         }
     }
 
-    function item_open(i)
+    // Through the runtime: every selected link, this one in place of the last. Ctrl, Shift and the
+    // middle button on the row are left to the browser, as on any link
+    function item_open(i, event)
     {
         if (items[i]) {
-            navplace.navigate(items[i]);
+            navplace.navigate(items[i], event);
         }
     }
 </script>
