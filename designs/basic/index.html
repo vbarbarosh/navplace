@@ -45,7 +45,7 @@ function main()
             <span v-else style="padding-bottom: 28px;" class="flex-fluid flex-row-center">
                 <img v-bind:src="item.icon_url" style="width: 48px; height: 48px;" class="fit-contain" />
             </span>
-            <span class="bookmark-label">{{ item.label }}</span>
+            <span v-bind:title="item.label" class="bookmark-label">{{ item.label }}</span>
         </a>
         <div v-if="empty_note" class="empty-note">{{ empty_note }}</div>
     </div>

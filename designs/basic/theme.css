@@ -113,18 +113,27 @@ a {
     grid-column: 1 / 1;
 }
 
+/* A long name wraps, a word with no spaces too, and ends with … after five lines, all a tile holds;
+   the whole name is in the label's title. The 5px under the text is a border, not padding: a cut
+   name's sixth line would show in padding */
 .bookmark-label {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
+    display: -webkit-box;
+    overflow: hidden;
     color: white;
     text-align: center;
     font-size: 14px;
-    padding: 5px;
+    overflow-wrap: anywhere;
+    padding: 5px 5px 0;
+    border-bottom: 5px solid transparent;
     background: rgba(0,0,0,0.5);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px); /* for Safari */
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
 }
 
 /* In place of the bookmarks when there are none: one line in the label's look, across the columns */
