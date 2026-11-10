@@ -215,3 +215,11 @@ a:hover {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* No link to show */
+
+.empty {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+}

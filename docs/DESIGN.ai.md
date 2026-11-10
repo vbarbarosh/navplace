@@ -415,6 +415,7 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
 
     <h2 class="section-title">Showcase</h2>
     <div id="grid" class="grid"></div>
+    <p id="empty" class="empty" hidden></p>
 </div>
 
 <script src="/lib/navplace.js"></script>
@@ -457,6 +458,10 @@ function main()
             };
             return out;
         }));
+        // No link to show: a search that finds nothing is told apart from a file with no links by the search box
+        const empty = document.getElementById('empty');
+        empty.hidden = (items.length > 0);
+        empty.textContent = document.getElementById('search').value.trim() ? 'Nothing found' : 'No links yet';
     }
 }
 </script>
@@ -683,6 +688,14 @@ a:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* No link to show */
+
+.empty {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
 }
 ```
 
