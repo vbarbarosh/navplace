@@ -138,7 +138,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 
 | Directive | Effect |
 |---|---|
-| `% design: x` | A folder name under `designs/`. When absent: `github` in the desktop app, `basic` in the embed widget. |
+| `% design: x` | A folder name under `designs/`. When absent: `github` in the desktop app, `classic` in the embed widget. |
 | `% title: x` | Text for the design's title element. |
 | `% subtitle: x` | Text for the design's subtitle element. |
 | `% email: x` | Text for the design's email element; when that element is a link, a plain mail address becomes its `mailto:` address and anything else is shown as text with no link. |
@@ -183,7 +183,7 @@ The url first, then optional decorations for every pulled link:
 
 ### `# Section` — sections
 
-A section applies to every link line below it, until the next section. A blank line does not end it. Sections are metadata: `% ns:` filters on them, and a design can read `item.namespaces`. In this repo `cards` shows them as categories, and `basic` and `first` start a new row at each.
+A section applies to every link line below it, until the next section. A blank line does not end it. Sections are metadata: `% ns:` filters on them, and a design can read `item.namespaces`. In this repo `cards` shows them as categories, and `classic` starts a new row at each.
 
 ```text
 # Work | Internal
@@ -219,7 +219,7 @@ Grafana @board  https://grafana.com/
 ```
 
 - The desktop app fetches a picture from the web once and keeps it: the design shows the kept copy, with no network too. It asks over `https`, a public host only, and keeps a picture of 5 MB at most (PNG, JPEG, GIF, WebP, AVIF, ICO, or an SVG with no script). Anything else leaves the link without its picture; the log says why. A picture that failed is asked again at a later press of the hotkey, a minute apart at least. To fetch a kept one again, change its url.
-- `% picture background:` is the picture behind the links. The designs with a photo of their own, `basic` and `first`, show yours in its place, and keep their own when yours does not load; the others have no picture behind their links and stay as they are. A link written `@background` gets the same picture on its tile. In a file pulled by `% include:`, it is a picture for that file's own `@background` links only.
+- `% picture background:` is the picture behind the links. The design with a photo of its own, `classic`, shows yours in its place, and keeps its own when yours does not load; the others have no picture behind their links and stay as they are. A link written `@background` gets the same picture on its tile. In a file pulled by `% include:`, it is a picture for that file's own `@background` links only.
 - The same name twice: the last one wins. A line with no name before the colon, or with a value that is not one of the three kinds of url, is skipped with a warning, and `@name` stays a file under `~/.navplace/`.
 
 <a id="what-a-link-becomes"></a>
@@ -329,8 +329,8 @@ A design is a folder under `designs/` with its own `index.html`; the parser give
 
 | Kind | Designs |
 |---|---|
-| Launchers: a search box on top, a dense list below; best in the desktop app | `github` (the desktop default), `palette` (a command palette for the hotkey), `basic` (the embed default), `first` (the very first page, from a CodePen, with its own links), `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups` |
-| Presentation: themed pages, content first | `showcase`, `cards` (sections as categories), `basic-for-portfolio`, `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes` |
+| Launchers: a search box on top, a dense list below; best in the desktop app | `github` (the desktop default), `palette` (a command palette for the hotkey), `classic` (the embed default: the very first page, from a CodePen, with its own links), `google-chrome` |
+| Presentation: themed pages, content first | `showcase`, `cards` (sections as categories) |
 
 ### Writing a design
 
@@ -386,7 +386,7 @@ The script puts an iframe right after itself, 100% wide and tall: give its paren
 | Attribute | Effect |
 |---|---|
 | `data-links` | The collection's text; its lines may be indented. An empty one shows no links; with no `data-links` at all the design shows its three sample links. |
-| `data-design` | Overrides `% design:`. Default `basic`. |
+| `data-design` | Overrides `% design:`. Default `classic`. |
 | `data-src` | A url to load in the iframe instead of the design's page. |
 | `src` | The design is found next to it: `<folder of embed.js>/../designs/<design>/index.html`. |
 
@@ -414,6 +414,7 @@ The shared code in `lib/`: plain files with no build step, loaded by the desktop
 | `icons/`, `icon_find.js`, `icon_library_file.js`, `is_public_domain.js` | A link's icon, for navplace.com's `/icon/` and the desktop app: navplace's own icons first (`icons/`, 120 sites, an SVG or a picture of 96 px and more, `icons/index.json` by domain; a subdomain takes its parent's), then the site's own, then Google's. A host that is not public (`is_public_domain.js`: an address, a port, one label or a private ending such as `.local`) is asked itself only, over https, and only by the desktop app: navplace's icons, Google and any other host never hear its name, and `/icon/` looks nothing up for it. |
 | `navplace.js` | The runtime every design loads: the search box, filtering, the selection, ↑ ↓, Enter and clicks, the embed messages, and the items from `window.ElectronApp` in the desktop app. It loads `filter1_from_spec.js`, `parse.js` and `items_search.js` from its own folder. |
 | `embed.js` | The [embed widget](#embed). |
+| `design_from_name.js` | The design a name leads to: `classic` for a name that is gone (`first`, `basic` and the six themes of it), for navplace.com's Worker and the desktop app. |
 | `theme_switch.js` | The light and dark theme of every design, loaded in its `<head>`: `data-theme` on `<html>`, the switch, thin scrollbars, and in the desktop app the gear that opens the settings. |
 | `colours.js` | The coloured layers of the Playground and of the desktop app's settings; this page and the home page colour their examples with it. |
 | `line_from_item.js` | Writes an edited link back into its line, part by part, for the Playground's JSON; what did not change keeps its place. Tests in `line_from_item.test.js`. |

@@ -6,11 +6,13 @@
 //     /docs, /playground      308 to /docs.html and /playground.html, with a slash at the end too
 //     /designs/<name>/        that design's index.html: its own files keep their short addresses
 //     /designs/<name>         308 to /designs/<name>/, where those addresses are right
+//     /designs/<gone>/...     308 to the same address under the design that name leads to now
 //     anything else           404, a small page that says so
 //
 // _headers does not reach what a Worker answers, so the same headers are set here;
 // serve_site.test.mjs holds the two together
 
+import design_from_name from '../../lib/design_from_name.js';
 import serve_icon from './serve_icon.mjs';
 
 // On every answer
@@ -45,6 +47,11 @@ async function serve_site(request, {assets, cache = null, fetch_fn = fetch} = {}
     }
     if (Object.hasOwn(REDIRECTS, url.pathname)) {
         return make_redirect(`${REDIRECTS[url.pathname]}${url.search}`);
+    }
+    // A design that was renamed or removed: a page that still names it keeps working
+    const gone_match = url.pathname.match(/^\/designs\/([^/]+)(\/.*)?$/);
+    if (gone_match && (design_from_name(gone_match[1]) !== gone_match[1])) {
+        return make_redirect(`/designs/${design_from_name(gone_match[1])}${gone_match[2] ?? '/'}${url.search}`);
     }
     const design_match = url.pathname.match(/^\/designs\/([^/]+)(\/?)$/);
     if (design_match) {

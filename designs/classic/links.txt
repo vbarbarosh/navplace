@@ -1,4 +1,4 @@
-% design: first
+% design: classic
 
 # ChatGPT
 ChatGPT @chatgpt  https://chatgpt.com/

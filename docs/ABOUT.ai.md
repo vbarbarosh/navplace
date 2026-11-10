@@ -31,7 +31,7 @@ Grammar:
 - `label  url` — link line. `label` optional; if absent, the name is the url as written, in its own letters, not punycode: without the scheme, a user and password, the query and the fragment, and without a path that is only `/` (`https://пример.рф/путь?x=1` → `пример.рф/путь`). A run of `%XX` escapes is shown decoded when it is valid UTF-8 with no control character, and left as written otherwise. `icon_url` keeps the parsed host. `url` matches `^(https?|file)://\S+$` and must be the last token on the line.
 - **`% key: value`** — **document-level directive**; starts a line with `%`. Known keys: `design`, `title`, `email`, `ns`, `include`, `picture <name>`. Unknown keys are stored in the document-level `meta` object verbatim. Read by the design via the `navplace({ meta: { … } })` DOM-mapping parameter, on the web and in the desktop app alike; a key the file does not have leaves the design's own text and link.
 - **`% ns: a | b`** — restricts output to items whose namespaces include `a` or `b`.
-- **`% picture name: url`** — names a picture for `@name`; `url` is an `http://`, `https://` or `data:image/` url. Repeatable; goes into `meta.picture` as `{name: url}`. A line with no name (`% picture: url`) or with another kind of value is skipped with a warning, so `meta.picture` is never anything but that map. In the desktop app a web url is fetched by the app itself, once, and kept: the design gets `app://picture/<key>` in `image_url` and shows the kept copy. Asked over https on a public host only; kept when it is a picture of 5 MB at most (PNG, JPEG, GIF, WebP, AVIF, ICO, or an SVG with no script). The name `background` is the picture behind the links: the runtime sets it on the page as `--picture-background: url("…")` (the desktop's kept copy too), and a design with a photo of its own (`basic`, `first`) takes it in its place, keeping its own when the picture does not load; an included file's `background` names only that file's `@background` links' picture.
+- **`% picture name: url`** — names a picture for `@name`; `url` is an `http://`, `https://` or `data:image/` url. Repeatable; goes into `meta.picture` as `{name: url}`. A line with no name (`% picture: url`) or with another kind of value is skipped with a warning, so `meta.picture` is never anything but that map. In the desktop app a web url is fetched by the app itself, once, and kept: the design gets `app://picture/<key>` in `image_url` and shows the kept copy. Asked over https on a public host only; kept when it is a picture of 5 MB at most (PNG, JPEG, GIF, WebP, AVIF, ICO, or an SVG with no script). The name `background` is the picture behind the links: the runtime sets it on the page as `--picture-background: url("…")` (the desktop's kept copy too), and a design with a photo of its own (`classic`) takes it in its place, keeping its own when the picture does not load; an included file's `background` names only that file's `@background` links' picture.
 - **`% include: url`** — desktop app only; pulls the document at `url` and appends its links. The pulled document's own `%` lines are dropped, so only the user's own file sets `title`, `subtitle` and `email`; its `% picture` lines stay and name the pictures of its own `@name` links only, and an `@name` it names no picture for is no picture (`image_url: null`), never a file of the user's `~/.navplace/`. Repeatable; goes into `meta.include` as a list.
 - **`# Section`** — **section heading**; starts a line with `#`. Multiple section labels can be joined with `|`: `# Work | Side projects`. A heading block (consecutive `#` lines) attaches its namespaces to every link line that follows it, until the next heading block; a blank line does not end it. Goes into each item's `namespaces` array.
 - **`#tag`** — inline on a link line; **per-item tag** (no value). Goes into the item's `tags` array. It starts a word: a `#` inside a word (`F#minor`) is label text.
@@ -139,7 +139,7 @@ navplace.com is a Cloudflare Worker (`src/cloudflare/worker.js`) serving `build/
 File: `lib/embed.js`. Behavior:
 
 1. Reads the host `<script>` element's `data-links` attribute.
-2. Parses `% design:` lines from `data-links` to decide which design to load (override: `data-design` attribute on the script; default `basic`).
+2. Parses `% design:` lines from `data-links` to decide which design to load (override: `data-design` attribute on the script; default `classic`).
 3. Creates an `<iframe>` pointing at `<script-src>/../designs/<name>/index.html` (override: `data-src`), with `width:100%; height:100%; border:0`.
 4. Listens for `postMessage({type:'navplace:ready'})` from the iframe and replies with `postMessage({type:'navplace:items-text', text: <data-links>})`, sent to the iframe's own origin only.
 5. Forwards a character typed while nothing on the host page has the focus to the iframe as `postMessage({type:'navplace:focus', key})`: the design focuses its search input and types the character. Space and keys with Ctrl, Alt or Cmd stay with the host page.
@@ -153,8 +153,8 @@ Each design is a folder under `designs/<name>/` with its own `index.html`, loadi
 Inventory (as of this writing):
 
 - **Canonical / battle-tested** — `showcase` (presentation) and `github` (launcher). These are the production-quality references; use them as the template for new designs and lead with them when recommending designs to users.
-- Launcher-style (search input + list/grid): `github` ★, `palette`, `basic`, `first`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
-- Presentation-style (themed, content-first): `showcase` ★, `cards`, `basic-for-portfolio`, `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes`.
+- Launcher-style (search input + list/grid): `github` ★, `palette`, `classic`, `google-chrome`.
+- Presentation-style (themed, content-first): `showcase` ★, `cards`.
 
 `showcase` is used by https://vbarbarosh.com (a single embed tag, no build step). `github` is the default fallback in `src/desktop-electron/main.js` when `% design:` is missing or unknown.
 
@@ -169,6 +169,7 @@ lib/                   shared frontend code (parser, filter, runtime, embed)
   navplace.js          input → filter → navigate runtime
   theme_switch.js      the light/dark switch every design loads
   embed.js             third-party embed script
+  design_from_name.js  the design an old name leads to (classic)
 src/desktop-electron/  desktop app
   main.js              window, IPC, protocols, socket server
   launcher.js          tiny hotkey-side socket pinger
@@ -178,7 +179,7 @@ src/desktop-electron/  desktop app
 src/cloudflare/        the Worker on navplace.com: build/www and /icon/
 designs/               one folder per design, each with index.html
 src/www/               the site: index, docs, playground
-demos/                 standalone HTML demos of four designs
+demos/                 standalone HTML demos of two designs
 bin/                   scripts (configure, build, self-check, deploy-www, test, cover)
 docs/                  the product brief, the design guide, the desktop app, the full reference
 notes/                 working notes: design prompts, similar projects, findings
@@ -305,11 +306,9 @@ For design pickers, tab strips, and gallery tiles.
 | Design | Tab label | One-liner |
 |---|---|---|
 | `showcase` | Showcase | Personal portfolio |
-| `basic-for-recipes` | Recipes | Warm card grid |
 | `github` | Dev tools | Search + dense table |
-| `basic-for-kids2` | For kids | Bright tile launcher |
 | `google-chrome` | Start page | New-tab-style search |
-| `basic` | Basic | Minimal search + tiles |
+| `classic` | Classic | Picture tiles over a photo |
 
 ### Call-to-action button labels
 
@@ -343,7 +342,7 @@ Each Q/A is self-contained. Do not edit answers to imply features that don't exi
 A tool that turns a plain-text list of links into a fast launcher, a web page, and an embeddable widget — all from one shared source. The DSL is intentionally minimal: `label  url` lines, `# Section` headings, and `% key: value` directives. Inline `#tag`, `#key=value`, and `@image` give per-item metadata when needed.
 
 **Q: How do designs work?**
-A design is an HTML folder under `designs/<name>/` that consumes the parsed items and decides how to draw them. Switch designs by changing one line — `% design: <name>` — at the top of your source. Launcher-style designs (`basic`, `github`, `google-chrome`) put a search input on top of a dense list; presentation-style designs (`showcase`, `basic-for-portfolio`, `basic-for-kids2`, `basic-for-recipes`) treat the same links as a themed page.
+A design is an HTML folder under `designs/<name>/` that consumes the parsed items and decides how to draw them. Switch designs by changing one line — `% design: <name>` — at the top of your source. Launcher-style designs (`classic`, `github`, `google-chrome`) put a search input on top of a dense list; presentation-style designs (`showcase`, `cards`) treat the same links as a themed page.
 
 **Q: Can I embed NavPlace on my own site?**
 Yes. One `<script src="…/embed.js" data-links="…">` tag in any HTML page. The script creates an iframe pointing at the chosen design and pipes the `data-links` text into it via `postMessage`. The iframe sizes itself to its container.

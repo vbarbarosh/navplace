@@ -12,6 +12,7 @@ const collection_route_pictures = require('./helpers/collection_route_pictures')
 const config = require('./config');
 const config_appimage_file_set = require('./config/config_appimage_file_set');
 const crypto = require('crypto');
+const design_from_name = require('../../lib/design_from_name');
 const desktop_exec_args_from_entry = require('./helpers/desktop_exec_args_from_entry');
 const electron = require('electron');
 const env_from_text = require('./helpers/env_from_text');
@@ -1095,10 +1096,11 @@ async function settings_save(settings)
     await fs_write(config.settings_file, `${JSON.stringify(settings, null, 4)}\n`);
 }
 
-// The design a collection names with `% design:`, github when it names none or one the app has not
+// The design a collection names with `% design:`, github when it names none or one the app has not;
+// a name that is gone leads to the design it became
 async function design_of_collection(collection)
 {
-    return make(collection.meta.design, {type: 'enum', options: ['github', ...await fs_readdir(config.designs_dir)]});
+    return make(design_from_name(collection.meta.design), {type: 'enum', options: ['github', ...await fs_readdir(config.designs_dir)]});
 }
 
 function design_url(design)

@@ -1282,7 +1282,7 @@ async function main()
     let design_undo = null;
     let design_request = null;
     let design_timer;
-    let text_design = 'basic';
+    let text_design = 'classic';
     // The sample put into the editor; the text is a sample while it is still this
     let sample_text = null;
     // The design this tab was opened for, `?design=<name>` in its address: the tab shows the
@@ -1915,12 +1915,12 @@ async function main()
         parse_error = null;
         parse_warnings = (parsed.warnings ?? []).map(v => ({where: {file: 'links.txt', line: v.line}, what: v.message, count: 1, warning: true}));
         refresh_errors();
-        let name = parsed.meta.design || 'basic';
+        let name = parsed.meta.design || 'classic';
         design_select.value = name;
         // A half-typed name would load a missing page: the design shown stays,
-        // or basic when none is shown yet
+        // or classic when none is shown yet
         if (designs && !designs.includes(name)) {
-            status.textContent = [draft_note, design_draft_note, `No design named "${name}". The preview shows "${frame_design ?? 'basic'}".`].filter(Boolean).join(' · ');
+            status.textContent = [draft_note, design_draft_note, `No design named "${name}". The preview shows "${frame_design ?? 'classic'}".`].filter(Boolean).join(' · ');
             status.dataset.error = '';
             if (frame_design) {
                 if (frame_ready) {
@@ -1928,7 +1928,7 @@ async function main()
                 }
                 return;
             }
-            name = 'basic';
+            name = 'classic';
         }
         else {
             delete status.dataset.error;
@@ -3530,7 +3530,7 @@ function line_from_json(raw, edited, picture_url_by_name = {})
     if (line[0] === '%') {
         const entries = Object.entries(edited);
         if ((entries.length !== 1) || (typeof entries[0][1] !== 'string') || !entries[0][1].trim() || entries[0][0].includes(':')) {
-            return {error: 'A directive is one key and its text value, as {"design": "basic"}.'};
+            return {error: 'A directive is one key and its text value, as {"design": "cards"}.'};
         }
         return {line: `${lead}% ${entries[0][0]}: ${entries[0][1]}`};
     }

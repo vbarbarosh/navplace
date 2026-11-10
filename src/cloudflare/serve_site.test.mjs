@@ -45,6 +45,23 @@ describe('serve_site', function () {
         assert.equal(response.status, 308);
         assert.equal(response.headers.get('Location'), '/designs/cards/');
     });
+    it('leads an address of a design that is gone to the same address under classic', async function () {
+        const location_by_pathname = {
+            '/designs/basic/': '/designs/classic/',
+            '/designs/first': '/designs/classic/',
+            '/designs/first/links.txt': '/designs/classic/links.txt',
+            '/designs/basic-for-kids2/index.html': '/designs/classic/index.html',
+            '/designs/basic/theme.css': '/designs/classic/theme.css',
+        };
+        for (const [pathname, location] of Object.entries(location_by_pathname)) {
+            const response = await serve_site(make_request(pathname), {assets: make_assets()});
+            assert.equal(response.status, 308, pathname);
+            assert.equal(response.headers.get('Location'), location, pathname);
+            assert.deepStrictEqual(headers_pick(response, Object.keys(SITE_HEADERS)), SITE_HEADERS, pathname);
+        }
+        const response = await serve_site(make_request('/designs/basic/index.html?theme=dark'), {assets: make_assets()});
+        assert.equal(response.headers.get('Location'), '/designs/classic/index.html?theme=dark');
+    });
     it('answers 404 with a small page for anything else, a design that is not there too', async function () {
         for (const pathname of ['/nothing', '/designs/nothing/', '/designs/nothing', '/designs/', '/designs/cards/more/', '/docs.html/', '/lib/nothing.js']) {
             const response = await serve_site(make_request(pathname), {assets: make_assets()});

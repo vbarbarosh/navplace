@@ -53,7 +53,7 @@ test('collection_route_pictures: no link, no picture: nothing to do', function (
 });
 
 test('collection_route_pictures: the named pictures, background among them, get the app\'s address too', function () {
-    const collection = parse(`% design: basic
+    const collection = parse(`% design: classic
 % picture background: https://example.com/sea.jpg
 % picture drawn: data:image/png;base64,iVBORw0KGgo=
 
@@ -61,11 +61,11 @@ Mail https://mail.example.com/
 `);
     const actual = collection_route_pictures(collection, v => `app://picture/${v.length}`);
     assert.deepEqual(actual.meta.picture, {background: 'app://picture/27', drawn: 'data:image/png;base64,iVBORw0KGgo='});
-    assert.equal(actual.meta.design, 'basic');
+    assert.equal(actual.meta.design, 'classic');
     assert.equal(collection.meta.picture.background, 'https://example.com/sea.jpg');
 });
 
 test('collection_route_pictures: no named picture: the meta stays as it is', function () {
-    const collection = parse('% design: basic\n\nMail https://mail.example.com/\n');
+    const collection = parse('% design: classic\n\nMail https://mail.example.com/\n');
     assert.equal(collection_route_pictures(collection, assert.fail).meta, collection.meta);
 });

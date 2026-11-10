@@ -820,23 +820,16 @@ Grafana  @board  https://grafana.com/
 
 <!-- ============================================================ -->
 <h2 id="designs">Designs</h2>
-<p>A design is the look of your links, and one line picks it: <code>% design: cards</code>. Thirteen come with NavPlace. A click opens one in the Playground.</p>
+<p>A design is the look of your links, and one line picks it: <code>% design: cards</code>. Six come with NavPlace. A click opens one in the Playground.</p>
 <ul class="design-grid">
     <li><div class="design-view" inert><iframe title="The github design" tabindex="-1" data-design="github"></iframe></div><a href="playground.html?design=github"><code>github</code></a></li>
     <li><div class="design-view" inert><iframe title="The palette design" tabindex="-1" data-design="palette"></iframe></div><a href="playground.html?design=palette"><code>palette</code></a></li>
-    <li><div class="design-view" inert><iframe title="The basic design" tabindex="-1" data-design="basic"></iframe></div><a href="playground.html?design=basic"><code>basic</code></a></li>
-    <li><div class="design-view" inert><iframe title="The first design" tabindex="-1" data-design="first"></iframe></div><a href="playground.html?design=first"><code>first</code></a></li>
+    <li><div class="design-view" inert><iframe title="The classic design" tabindex="-1" data-design="classic"></iframe></div><a href="playground.html?design=classic"><code>classic</code></a></li>
     <li><div class="design-view" inert><iframe title="The google-chrome design" tabindex="-1" data-design="google-chrome"></iframe></div><a href="playground.html?design=google-chrome"><code>google-chrome</code></a></li>
-    <li><div class="design-view" inert><iframe title="The basic-for-internal2 design" tabindex="-1" data-design="basic-for-internal2"></iframe></div><a href="playground.html?design=basic-for-internal2"><code>basic-for-internal2</code></a></li>
-    <li><div class="design-view" inert><iframe title="The basic-for-internal3-with-groups design" tabindex="-1" data-design="basic-for-internal3-with-groups"></iframe></div><a href="playground.html?design=basic-for-internal3-with-groups"><code>basic-for-internal3-with-groups</code></a></li>
     <li><div class="design-view" inert><iframe title="The showcase design" tabindex="-1" data-design="showcase"></iframe></div><a href="playground.html?design=showcase"><code>showcase</code></a></li>
     <li><div class="design-view" inert><iframe title="The cards design" tabindex="-1" data-design="cards"></iframe></div><a href="playground.html?design=cards"><code>cards</code></a></li>
-    <li><div class="design-view" inert><iframe title="The basic-for-portfolio design" tabindex="-1" data-design="basic-for-portfolio"></iframe></div><a href="playground.html?design=basic-for-portfolio"><code>basic-for-portfolio</code></a></li>
-    <li><div class="design-view" inert><iframe title="The basic-for-kids design" tabindex="-1" data-design="basic-for-kids"></iframe></div><a href="playground.html?design=basic-for-kids"><code>basic-for-kids</code></a></li>
-    <li><div class="design-view" inert><iframe title="The basic-for-kids2 design" tabindex="-1" data-design="basic-for-kids2"></iframe></div><a href="playground.html?design=basic-for-kids2"><code>basic-for-kids2</code></a></li>
-    <li><div class="design-view" inert><iframe title="The basic-for-recipes design" tabindex="-1" data-design="basic-for-recipes"></iframe></div><a href="playground.html?design=basic-for-recipes"><code>basic-for-recipes</code></a></li>
 </ul>
-<p>The first seven are launchers: a search box and a dense list, at their best in the desktop app. The other six are pages, with the content first. With no <code>% design:</code> line, the desktop app shows <code>github</code> and a widget on a page <code>basic</code>.</p>
+<p>The first four are launchers: a search box and a dense list, at their best in the desktop app. The other two are pages, with the content first. With no <code>% design:</code> line, the desktop app shows <code>github</code> and a widget on a page <code>classic</code>.</p>
 
 <h3 id="writing-a-design">Writing your own</h3>
 <p>A design is a folder with one <code>index.html</code>. It loads NavPlace's script, says where its search box is, and draws the links it is given:</p>
@@ -872,7 +865,7 @@ navplace({
     </thead>
     <tbody>
         <tr><td><code>data-links</code></td><td>Your links, written as in the file.</td></tr>
-        <tr><td><code>data-design</code></td><td>The design, in place of a <code>% design:</code> line. <code>basic</code> when neither is there.</td></tr>
+        <tr><td><code>data-design</code></td><td>The design, in place of a <code>% design:</code> line. <code>classic</code> when neither is there.</td></tr>
     </tbody>
 </table>
 <p>The widget shows the links in its tag and nothing else: <code>% include:</code> does nothing there. A link opens in the page's own tab.</p>

@@ -6,7 +6,7 @@ produce a working `index.html`.
 
 ## Reference designs (read these first)
 
-Two existing designs are the canonical, battle-tested references. When generating a new design, base patterns on these — not on the less polished `basic-for-*` designs.
+Two existing designs are the canonical, battle-tested references. When generating a new design, base patterns on these.
 
 - **`designs/showcase/`** — the canonical **presentation-style** reference. Powers https://vbarbarosh.com in production. Vanilla JS, no framework. Uses `meta` mapping to bind `% title:` / `% email:` / `% subtitle:` into the page chrome. Shows the shared light/dark switch (`/lib/theme_switch.js`) in its topbar. Uses `navplace.navigate(item, e)` on click so multi-open works.
 
@@ -42,7 +42,7 @@ designs/<your-design-name>/
 - The design's own files (`theme.css`, pictures) are referenced **relative to the design folder**.
 - The shared libraries are loaded from **`/lib/…`**, the site's root, never `../../lib/…` (`bin/self-check` fails the build on it). The desktop app shows designs at `navplace://app/designs/<name>/`, where `/lib` is its own copy.
 - The shared runtime lives at `/lib/navplace.js`.
-- Optional shared vendor libs (Vue, smcss) live under `/lib/vendor/`, a folder per major: Vue at `vue-3/`, smcss at `smcss-2/` (an upgrade replaces the files; a new major gets a folder of its own) — three existing designs use these (`basic`, `first`, `google-chrome`), but a design can equally well be vanilla JS with no deps.
+- Optional shared vendor libs (Vue, smcss) live under `/lib/vendor/`, a folder per major: Vue at `vue-3/`, smcss at `smcss-2/` (an upgrade replaces the files; a new major gets a folder of its own) — two existing designs use these (`classic`, `google-chrome`), but a design can equally well be vanilla JS with no deps.
 
 ## Runtime API
 
@@ -277,10 +277,10 @@ When designing, decide which family the brief belongs to. Each has a different r
 
 - **Launcher style** — search-first, dense list/table, keyboard-driven. Best for the desktop app. Optimize for typing speed and information density.
   - **Canonical reference: `designs/github/`.** Imitate this for launcher briefs.
-  - Other examples: `palette` (a command palette), and the less polished `basic`, `first`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
+  - Other examples: `palette` (a command palette), and the less polished `classic`, `google-chrome`.
 - **Presentation style** — themed page with personality, items as a styled grid or wall, search is secondary. Best for hosted pages and embeds. Optimize for visual identity.
   - **Canonical reference: `designs/showcase/`.** Imitate this for presentation briefs.
-  - Other examples: `cards` (sections as categories), and the less polished `basic-for-portfolio`, `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes`.
+  - Other examples: `cards` (sections as categories).
 
 ## Common patterns
 

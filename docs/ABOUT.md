@@ -98,9 +98,8 @@ A **design** is a swappable visual theme applied to a collection. The same links
 
 Designs that ship in this repo, grouped by intent:
 
-- **Launchers** — `github`, `palette`, `basic`, `first`, `google-chrome`, `basic-for-internal2`, `basic-for-internal3-with-groups`.
-- **Showcases / portfolios** — `showcase`, `cards`, `basic-for-portfolio`.
-- **Themed grids** — `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes`.
+- **Launchers** — `github`, `palette`, `classic`, `google-chrome`.
+- **Showcases / portfolios** — `showcase`, `cards`.
 
 Each design is a folder under `designs/<name>/` with its own `index.html`; the parser hands it a list of items and the design decides how to draw them.
 
@@ -146,11 +145,9 @@ A small tool that turns a plain-text list of links into a fast launcher, a web p
 **How do designs work?**
 A design is an HTML folder under `designs/<name>/` that consumes the parsed items and decides how to draw them. You switch designs by changing one line — `% design: <name>` — at the top of your source. A quick tour of what ships in the repo:
 
-- `basic`, `first`, `github`, `google-chrome`, `palette` — minimal, search-first launchers with an input at the top and a list/grid of links below.
+- `classic`, `github`, `google-chrome`, `palette` — minimal, search-first launchers with an input at the top and a list/grid of links below.
 - `showcase` — a personal page: name header, email link, grid of items under the headings of the links file. (This is what `vbarbarosh.com` uses.)
 - `cards` — a grid of cards with the sections as categories.
-- `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes` — themed presentations with their own typography, colors, and layout.
-- `basic-for-portfolio`, `basic-for-internal2`, `basic-for-internal3-with-groups` — a portfolio and two internal-tool launchers.
 
 **Can I embed NavPlace on my own site?**
 Yes. One `<script src="…/embed.js" data-links="…">` tag in any HTML page. The script creates an iframe pointing at the chosen design and pipes the `data-links` text into it via `postMessage`. The iframe sizes itself to its container — the example above pins it to the viewport with `position: fixed; inset: 0`.
