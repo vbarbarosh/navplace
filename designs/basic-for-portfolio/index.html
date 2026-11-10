@@ -10,7 +10,7 @@
             --bg: #f8f9fa;
             --surface: #ffffff;
             --text: #2c3e50;
-            --muted: #6c757d;
+            --muted: #6a737b;
             --tag-fg: #495057;
             --border: #e9ecef;
             --border-strong: #ced4da;
@@ -92,6 +92,11 @@
         .search-input:focus {
             border-color: var(--muted);
             box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        /* The browser's own grey is too faint on the dark box */
+        .search-input::placeholder {
+            color: var(--muted);
         }
 
         .items-grid {
