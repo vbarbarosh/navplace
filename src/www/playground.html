@@ -1285,6 +1285,13 @@ async function main()
     let text_design = 'basic';
     // The sample put into the editor; the text is a sample while it is still this
     let sample_text = null;
+    // The design this tab was opened for, `?design=<name>` in its address: the tab shows the
+    // browser's draft in that design, whichever design the draft itself names. null: none, or the
+    // visitor has since chosen another design here
+    let design_pinned = null;
+    // In such a tab, the browser's draft as the tab last read or wrote it: it follows another tab
+    // only when the draft has changed since
+    let draft_seen = null;
     let preview_key = null;
     let links_count = 0;
     // Links % ns leaves out of items
@@ -1528,24 +1535,7 @@ async function main()
         refresh_design_pane(true);
         refresh_preview();
     });
-    // Picking a design changes the `% design:` line and nothing else: the links are the visitor's own.
-    // A sample nobody has touched is not, nor is no text at all: there the picked design's sample
-    // loads; without one, only the design line changes
-    design_select.addEventListener('change', async function () {
-        const design_name = design_select.value;
-        const text = editor.value;
-        const sample_shown = text.trim() ? await sample_load(text_design) : '';
-        if (sample_shown === undefined) {
-            return;
-        }
-        const sample = (!text.trim() || (text === sample_shown)) ? await sample_load(design_name) : null;
-        if (sample === undefined) {
-            return;
-        }
-        // What was typed while the samples loaded is kept too
-        sample_text = ((editor.value === text) && sample) || null;
-        text_replace(sample_text || text_design_set(editor.value, design_name));
-    });
+    design_select.addEventListener('change', () => design_pick(design_select.value, true));
     document.querySelector('[data-action="reset"]').addEventListener('click', async function () {
         const sample = await sample_load(frame_design ?? 'showcase');
         if (typeof sample === 'string') {
@@ -1735,15 +1725,47 @@ async function main()
             refresh_status();
         }
     }
-    // A link here with ?design=<name>, the home page's designs: that design is picked as the
-    // list picks it. The address then loses the name, so a reload keeps what the visitor made of it
+    // A link here with ?design=<name>, the home page's designs: the tab shows the draft in that
+    // design, picked as the list picks it but not saved, and keeps it: several such tabs, opened
+    // side by side, each show their own. The address keeps the name while the tab keeps the
+    // design, so a reload shows the same; it loses it once the visitor chooses another design here
     const design_asked = new URLSearchParams(location.search).get('design');
     if (design_asked !== null) {
-        history.replaceState(null, '', `${location.pathname}${location.hash}`);
-        if (designs?.includes(design_asked) && (design_select.value !== design_asked)) {
-            design_select.value = design_asked;
-            design_select.dispatchEvent(new Event('change'));
+        if (designs?.includes(design_asked) && (text_design !== design_asked)) {
+            await design_pick(design_asked, false);
         }
+        if (text_design === design_asked) {
+            design_pinned = design_asked;
+            draft_seen = draft_load();
+        }
+        else {
+            history.replaceState(null, '', `${location.pathname}${location.hash}`);
+        }
+    }
+
+    // Picking a design changes the `% design:` line and nothing else: the links are the visitor's own.
+    // A sample nobody has touched is not, nor is no text at all: there the picked design's sample
+    // loads; without one, only the design line changes. `is_saved`: the visitor picked it, so it is
+    // the browser's draft from now on; a design the address asked for is shown and nothing more
+    async function design_pick(design_name, is_saved) {
+        const text = editor.value;
+        const sample_shown = text.trim() ? await sample_load(text_design) : '';
+        if (sample_shown === undefined) {
+            return;
+        }
+        const sample = (!text.trim() || (text === sample_shown)) ? await sample_load(design_name) : null;
+        if (sample === undefined) {
+            return;
+        }
+        // What was typed while the samples loaded is kept too
+        sample_text = ((editor.value === text) && sample) || null;
+        text_replace(sample_text || text_design_set(editor.value, design_name), is_saved);
+    }
+
+    // The tab is no longer one design's: its address says so too, and a reload loads the draft
+    function design_unpin() {
+        design_pinned = null;
+        history.replaceState(null, '', `${location.pathname}${location.hash}`);
     }
 
     function refresh_tab() {
@@ -1914,6 +1936,10 @@ async function main()
         links_count = parsed.items.length;
         left_out_count = left_out_from_text(editor.value)?.count ?? 0;
         text_design = name;
+        // Another design chosen in a tab opened for one, in the list or in the text
+        if ((design_pinned !== null) && (name !== design_pinned)) {
+            design_unpin();
+        }
         // The code follows the text's design until it is edited; then only Load replaces it
         if (!design_is_edited(design) && (design?.name !== name)) {
             design_load(name);
@@ -2765,6 +2791,7 @@ async function main()
         is_draft_waiting = false;
         clearTimeout(draft_save_timer);
         const error = draft_save(editor.value);
+        draft_seen = error ? draft_seen : editor.value;
         draft_refusal = error ? format_draft_error(error) : '';
         is_draft_elsewhere = is_draft_elsewhere && !!error;
         refresh_draft_note();
@@ -2781,11 +2808,18 @@ async function main()
 
     // The draft another tab saved takes this tab's text, and the status line says so until the next
     // edit here. A tab whose own text could not be saved keeps it, no other place has it, and says
-    // what a reload would load now
+    // what a reload would load now. A tab opened for a design takes the draft in that design, and
+    // only a draft changed since it last looked: the design it shows was never saved, so the draft
+    // differs from its text all along
     function draft_follow() {
         // Keys still waiting are saved first: what was typed here last is not lost to an older draft
         editor_draft_save_waiting();
-        const text = draft_load();
+        const saved = draft_load();
+        if ((design_pinned !== null) && (saved === draft_seen)) {
+            return;
+        }
+        draft_seen = saved;
+        const text = ((saved !== null) && (design_pinned !== null)) ? text_design_set(saved, design_pinned) : saved;
         if ((text === null) || (text === editor.value)) {
             return;
         }
@@ -2799,7 +2833,7 @@ async function main()
         editor.scrollTop = 0;
         picture_rename = null;
         picture_line_entry = null;
-        draft_note = 'the draft was changed in another tab: this is its text now';
+        draft_note = (design_pinned === null) ? 'the draft was changed in another tab: this is its text now' : 'the draft was changed in another tab: this is its text now, in the design of this tab';
         clearTimeout(text_refresh_timer);
         refresh_text();
         refresh_cursor_line();
@@ -2932,12 +2966,19 @@ async function main()
     }
 
     // Through the editing commands, so Ctrl+Z brings the previous text back
-    function text_replace(text) {
+    // `is_saved` false: the text is shown and not saved, the save its own input asked for called off
+    function text_replace(text, is_saved = true) {
         editor.focus();
         textarea_text_replace(editor, 0, editor.value.length, text);
         editor.setSelectionRange(0, 0);
         editor.scrollTop = 0;
-        editor_draft_save();
+        if (is_saved) {
+            editor_draft_save();
+        }
+        else {
+            is_draft_waiting = false;
+            clearTimeout(draft_save_timer);
+        }
         clearTimeout(text_refresh_timer);
         refresh_text();
     }
