@@ -51,6 +51,7 @@ const make_socket_server = require('./helpers/make_socket_server');
 const os = require('os');
 const parse = require('../../lib/parse');
 const pid_from_lock_target = require('./helpers/pid_from_lock_target');
+const private_paths_from_url = require('./helpers/private_paths_from_url');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
 const settings_from_raw = require('./helpers/settings_from_raw');
 const start_failure_text = require('./helpers/start_failure_text');
@@ -217,12 +218,21 @@ async function main()
         let root = null;
         let abs = null;
 
-        const rel = decodeURIComponent(request.url.slice('private://'.length));
         try {
             root = `${await fs.promises.realpath(config.config_dir)}/`;
-            abs = await fs.promises.realpath(fs_path_resolve(root, rel));
         }
         catch {
+            return new Response('Not found', {status: 404});
+        }
+        // The name with its escapes undone, then as it came: the first that is a file (helpers/private_paths_from_url.js)
+        for (const rel of private_paths_from_url(request.url)) {
+            try {
+                abs = abs ?? await fs.promises.realpath(fs_path_resolve(root, rel));
+            }
+            catch {
+            }
+        }
+        if (!abs) {
             return new Response('Not found', {status: 404});
         }
         if (!abs.startsWith(root)) {
