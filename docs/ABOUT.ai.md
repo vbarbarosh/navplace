@@ -34,8 +34,8 @@ Grammar:
 - **`% picture name: url`** — names a picture for `@name`; `url` is an `http://`, `https://` or `data:image/` url. Repeatable; goes into `meta.picture` as `{name: url}`.
 - **`% include: url`** — desktop app only; pulls the document at `url` and appends its links. The pulled document's own `%` lines are dropped, so only the user's own file sets `title`, `subtitle` and `email`. Repeatable; goes into `meta.include` as a list.
 - **`# Section`** — **section heading**; starts a line with `#`. Multiple section labels can be joined with `|`: `# Work | Side projects`. A heading block (consecutive `#` lines) attaches its namespaces to every link line that follows it, until the next heading block; a blank line does not end it. Goes into each item's `namespaces` array.
-- **`#tag`** — inline on a link line; **per-item tag** (no value). Goes into the item's `tags` array.
-- **`#tag=value`** — inline on a link line; **per-item tag with a value**. Goes into the item's `meta` object (`{tag: 'value'}`). Despite the field name, this is a tag with a value, not document-level meta.
+- **`#tag`** — inline on a link line; **per-item tag** (no value). Goes into the item's `tags` array. It starts a word: a `#` inside a word (`F#minor`) is label text.
+- **`#tag=value`** — inline on a link line; **per-item tag with a value**. Goes into the item's `meta` object (`{tag: 'value'}`). Despite the field name, this is a tag with a value, not document-level meta. The value runs to the next space: it may hold `#` (`#color=#fff`) and may be empty (`#k=` gives `{k: ''}`).
 - **`@path`** — inline on a link line, **immediately before the URL**; **per-item image**. The parser turns it into `private://<path>`, which Electron serves from `~/.navplace/<path>`. The path may contain `/` (e.g. `@img/gmail.png` → `private://img/gmail.png`). Goes into the item's `image_url` field. When the file has `% picture <path>: <url>`, `image_url` is that url instead. Outside Electron the `private://` protocol won't resolve, so designs should fall back to `icon_url` when the picture fails to load.
 
 **Two `meta` objects exist** in the parser output and must not be confused:

@@ -788,7 +788,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
 
 <h3 id="tag-and-key-value"><code>#tag</code> and <code>#key=value</code></h3>
 <p>Both live inside a link line, before or after the label, and both drop out of the label. Tags join the label in the search text. <code>#key=value</code> pairs do not; they reach the design as <code>item.meta.key</code>. Designs in this repo read <code>padding</code>, <code>domain</code>, <code>description</code> and <code>category</code> this way.</p>
-<p>Names accept <code>a..z</code>, <code>A..Z</code>, <code>0..9</code>, <code>_</code> and <code>-</code>. A value runs to the next space or <code>#</code>.</p>
+<p>Names accept <code>a..z</code>, <code>A..Z</code>, <code>0..9</code>, <code>_</code> and <code>-</code>. Both start a word: a <code>#</code> inside a word, as in <code>F#minor</code>, stays in the label. A value runs to the next space, so it can hold a <code>#</code>, as in <code>#color=#fff</code>; <code>#key=</code> is a key with an empty value.</p>
 
 <h3 id="name-images"><code>@name</code> — images</h3>
 <p><code>@name</code> must stand right before the url, after a space, or open a line with no label. When the file names it with <code>% picture name:</code>, the link gets that url; anywhere in the file will do, the end too. Otherwise it points at a file under <code>~/.navplace/</code>: the parser turns it into <code>private://name</code>, which only the desktop app serves. In the Playground, Ctrl+V with a picture on the clipboard writes the <code>% picture</code> line for you. Designs that show artwork use <code>item.image_url</code> and fall back to <code>item.icon_url</code>.</p>
