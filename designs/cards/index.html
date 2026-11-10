@@ -271,23 +271,21 @@
             color: inherit;
             text-decoration: none;
             cursor: pointer;
-            transition: transform 0.12s, box-shadow 0.12s;
+            transition: box-shadow 0.12s;
         }
 
         .card:hover {
             box-shadow: 6px 6px 0 var(--shadow);
-            transform: translate(-2px, -2px);
         }
 
-        /* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it: lifted, its shadow in the
-           section's colour, the ink around it */
+        /* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it: its shadow in the section's
+           colour, the ink around it. It stays in its place: nothing on the page moves */
         .card.np-current {
             border-color: var(--ink);
             border-top-color: var(--tone);
             box-shadow: 6px 6px 0 var(--tone);
             outline: 2px solid var(--ink);
             outline-offset: -1px;
-            transform: translate(-2px, -2px);
         }
 
         /* The card Tab stands on shows the browser's own ring, the current card too */
@@ -425,6 +423,8 @@
     const matches = [];
     // The colour of each section, 0 to 5 by its place among the sections (the --tone-* of the styles)
     const tone_by_section = new Map();
+    // The sections the chips are drawn for, as one text: the chips are made again only when it changes
+    let chips_drawn = null;
 
     main();
 
@@ -455,7 +455,16 @@
     function refresh_grid()
     {
         refresh_chips();
-        shown = section ? matches.filter(v => v.namespaces.includes(section)) : matches.slice();
+        const next = section ? matches.filter(v => v.namespaces.includes(section)) : matches.slice();
+        // The same cards as are drawn, ↑ or ↓ moved the mark: they stay as they are, pictures and
+        // all, and only the mark moves
+        if (next.length && (next.length === shown.length) && (grid.childElementCount === next.length) && next.every((v, i) => v === shown[i])) {
+            for (const [i, li] of Array.from(grid.children).entries()) {
+                li.firstElementChild.classList.toggle('np-current', next[i] === current_item);
+            }
+            return;
+        }
+        shown = next;
         grid.replaceChildren(...shown.map(make_card));
         empty.hidden = shown.length > 0;
         // A search that finds nothing is told apart from a file with no links by the search box
@@ -482,6 +491,11 @@
         if (!names.includes(section)) {
             section = null;
         }
+        // The same sections as the chips show: they stay as they are
+        if (chips_drawn === JSON.stringify(names)) {
+            return;
+        }
+        chips_drawn = JSON.stringify(names);
         tone_by_section.clear();
         for (const [i, name] of names.entries()) {
             tone_by_section.set(name, i % 6);

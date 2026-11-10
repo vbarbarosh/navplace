@@ -39,6 +39,9 @@ function main()
     // The word the page itself writes over the links, for a file with no `% subtitle`
     const section_title = document.querySelector('.section-title');
     const section_title_own = section_title.textContent;
+    // The links drawn now, in their order on the page, and the tile of each
+    let drawn = [];
+    let tiles = [];
 
     navplace({
         input: '#search',
@@ -60,7 +63,16 @@ function main()
             items_by_heading.get(heading).push(item);
         }
         const shown = [...items_by_heading.values()].flat();
-        const tiles = shown.map(function (item) {
+        // The same links as are drawn, ↑ or ↓ moved the mark: the tiles stay as they are, pictures
+        // and all, and only the mark moves
+        if (shown.length && (shown.length === drawn.length) && shown.every((v, i) => v === drawn[i])) {
+            for (const [i, tile] of tiles.entries()) {
+                tile.classList.toggle('np-current', shown[i] === current_item);
+            }
+            return;
+        }
+        drawn = shown;
+        tiles = shown.map(function (item) {
             const templ = document.createElement('template');
             templ.innerHTML = `
                 <a class="tile">

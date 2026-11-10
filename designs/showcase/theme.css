@@ -243,14 +243,13 @@ a {
     border: 1px solid var(--border);
     background: var(--card-bg);
     scroll-margin-top: calc(var(--bar) + 6px);
-    transition: background .12s ease, border-color .12s ease, box-shadow .12s ease, transform .12s ease;
+    transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
 }
 
 .tile:hover {
     border-color: var(--accent);
     background: var(--card-bg-hover);
     box-shadow: var(--shadow-hover);
-    transform: translateY(-1px);
 }
 
 /* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it */

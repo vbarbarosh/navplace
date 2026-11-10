@@ -44,6 +44,8 @@
     let current_index = 0;
 
     const matches = [];
+    // The links whose rows are in the table now, in their order
+    let drawn = [];
 
     main();
 
@@ -84,6 +86,15 @@
     {
         const tbody = document.getElementById('rows');
         const empty = document.getElementById('empty');
+        // The same links as are drawn, ↑ or ↓ moved the mark: the rows stay as they are, pictures
+        // and all, and only the mark moves
+        if (items.length && (items.length === drawn.length) && (tbody.childElementCount === items.length) && items.every((v, i) => v === drawn[i])) {
+            for (const [i, tr] of Array.from(tbody.children).entries()) {
+                tr.classList.toggle('np-current', i === current);
+            }
+            return;
+        }
+        drawn = items.slice();
         tbody.innerHTML = '';
         // The Section column is there only while a link shown has a section
         document.querySelector('.table').classList.toggle('sections', items.some(v => v.namespaces?.length));
