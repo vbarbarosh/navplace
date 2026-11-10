@@ -48,12 +48,23 @@ if test -n "`git -C "$repo" status -s`"; then
     exit 1
 fi
 
-# Increase a version without commiting it and making a tag
-npm version $1 --no-git-tag-version
-
-tag=electron-v$(node -e 'console.log(require("./package.json").version)')
+# The tag of the version to come is looked for before anything is changed: a version increased
+# first and then found taken left a changed package.json behind
+next=$(node -e '
+    const [major, minor, patch] = require("./package.json").version.split(".").map(Number);
+    const kind = process.argv[1];
+    console.log((kind === "major") ? `${major + 1}.0.0` : ((kind === "minor") ? `${major}.${minor + 1}.0` : `${major}.${minor}.${patch + 1}`));
+' "$1")
+tag=electron-v$next
 if git rev-parse "$tag" >/dev/null 2>&1; then
     echo -e "${RED}error: tag $tag already exists${RESET}" >&2
+    exit 1
+fi
+
+# Increase a version without commiting it and making a tag
+npm version $1 --no-git-tag-version
+if test "$(node -e 'console.log(require("./package.json").version)')" != "$next"; then
+    echo -e "${RED}error: the version is not $next${RESET}" >&2
     exit 1
 fi
 
