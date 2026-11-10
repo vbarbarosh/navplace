@@ -360,6 +360,7 @@
         }
 
         .row {
+            position: relative;
             display: grid;
             grid-template-columns: auto auto 1fr auto;
             gap: 10px;
@@ -426,13 +427,30 @@
             gap: 2px;
         }
 
+        /* The row's link: the label is its text, and its ::after lies over the whole row, under the
+           buttons, so the row is one link to the mouse */
         .label {
             font-size: 13px;
             line-height: 1.2;
             color: var(--text);
+            text-decoration: none;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .label::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+        }
+
+        /* Tab on a link rings its row */
+        .label:focus-visible { outline: none; }
+
+        .label:focus-visible::after {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px;
         }
 
         .href {
@@ -444,11 +462,14 @@
             text-overflow: ellipsis;
         }
 
+        /* The buttons stand above the row's link; the room around them stays the link's */
         .actions {
+            position: relative;
             display: flex;
             gap: 6px;
             align-items: center;
             justify-content: flex-end;
+            pointer-events: none;
         }
 
         .btn {
@@ -461,6 +482,7 @@
             font-size: 12px;
             line-height: 1;
             cursor: pointer;
+            pointer-events: auto;
             user-select: none;
             min-width: 34px;
             display: inline-flex;
@@ -546,7 +568,7 @@
                     </div>
                 </div>
 
-                <div class="list" id="list" role="listbox" aria-label="Operational links"></div>
+                <div class="list" id="list" role="region" aria-label="Operational links"></div>
             </div>
         </div>
     </div>
@@ -713,14 +735,14 @@
             const icon_url = text_from_value(item.icon_url);
             const image_url = text_from_value(item.image_url);
 
-            const row = make_elem('div', {class: 'row', role: 'option', tabindex: '-1', 'data-index': String(index), 'data-href': href});
+            const row = make_elem('div', {class: 'row', 'data-index': String(index), 'data-href': href});
             row.appendChild(make_icon(icon_url, ''));
             if (image_url) {
                 row.appendChild(make_thumb(image_url));
             }
 
             const text = make_elem('div', {class: 'text'});
-            text.appendChild(make_elem('div', {class: 'label', text: label}));
+            text.appendChild(make_elem('a', {class: 'label', href, text: label}));
             text.appendChild(make_elem('div', {class: 'href', text: text_truncate_middle(href, 110)}));
             row.appendChild(text);
 
@@ -748,10 +770,10 @@
             row.appendChild(actions);
 
             // A click on the row, or on its Open, opens the link through the runtime: every
-            // selected link, this one in place of the last. The row is not an <a>: it has no
-            // default to prevent or to leave to the browser, so the event stays here
-            row.addEventListener('click', function () {
-                navplace.navigate(item);
+            // selected link, this one in place of the last. The row's link lies over all of it but
+            // the buttons, so Ctrl, Shift and the middle button there are left to the browser
+            row.addEventListener('click', function (event) {
+                navplace.navigate(item, event);
             });
 
             return row;
@@ -844,7 +866,7 @@
                     const row = make_row(item, index);
                     if (item === current_item) {
                         row.classList.add('np-current');
-                        row.setAttribute('aria-selected', 'true');
+                        row.querySelector('a').setAttribute('aria-current', 'true');
                     }
                     rows.appendChild(row);
                     index++;
