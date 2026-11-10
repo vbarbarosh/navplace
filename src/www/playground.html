@@ -1718,6 +1718,16 @@ async function main()
     refresh_tab();
     await designs_loaded;
     refresh_text();
+    // A link here with ?design=<name>, the home page's designs: that design is picked as the
+    // list picks it. The address then loses the name, so a reload keeps what the visitor made of it
+    const design_asked = new URLSearchParams(location.search).get('design');
+    if (design_asked !== null) {
+        history.replaceState(null, '', `${location.pathname}${location.hash}`);
+        if (designs?.includes(design_asked) && (design_select.value !== design_asked)) {
+            design_select.value = design_asked;
+            design_select.dispatchEvent(new Event('change'));
+        }
+    }
 
     function refresh_tab() {
         app.dataset.tab = tab;
