@@ -1069,6 +1069,7 @@ tbody tr:hover { background: var(--hover); }
 
 /* The link ↑ ↓ moved to: Enter opens it */
 tbody tr.np-current { background: var(--selected); outline: none; }
+
 tbody tr.np-current td:first-child { box-shadow: inset 3px 0 0 var(--current-bar); }
 
 tbody tr:focus-within { outline: 2px solid var(--row-outline); outline-offset: -2px; }

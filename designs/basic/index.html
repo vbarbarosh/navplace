@@ -90,15 +90,17 @@ function main()
             click_bookmark: function (item, event) {
                 navplace.navigate(item, event);
             },
+            // The runtime's links, each time they change: after a search and after ↑ ↓
+            refresh_items: function (items, {current = 0} = {}) {
+                this.items.splice(0, this.items.length, ...items);
+                this.current = current;
+                this.empty_note = items.length ? '' : (this.$refs.search.value.trim() ? 'Nothing found' : 'No links yet');
+            },
         },
         mounted: function () {
             navplace({
                 input: this.$refs.search,
-                update: (v, {current = 0} = {}) => {
-                    this.items.splice(0, this.items.length, ...v);
-                    this.current = current;
-                    this.empty_note = v.length ? '' : (this.$refs.search.value.trim() ? 'Nothing found' : 'No links yet');
-                },
+                update: this.refresh_items,
             });
         },
     });

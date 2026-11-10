@@ -828,7 +828,7 @@
                 return a.localeCompare(b);
             });
 
-            const shown = group_keys.flatMap(key => group_by_key[key].items);
+            const shown = group_keys.flatMap(v => group_by_key[v].items);
 
             list.innerHTML = '';
 
