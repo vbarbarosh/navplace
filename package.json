@@ -5,6 +5,10 @@
   "description": "NavPlace is a tool for organizing, navigating, and presenting your links from a single text-based source.",
   "homepage": "https://navplace.com/",
   "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "test": "mocha 'lib/**/*.test.js' 'src/cloudflare/**/*.test.mjs'"
   },
