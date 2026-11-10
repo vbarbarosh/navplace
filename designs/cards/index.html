@@ -452,8 +452,14 @@
             const img = document.createElement('img');
             img.alt = '';
             img.src = item.icon_url;
-            // The letter stays when the icon cannot be loaded
-            img.addEventListener('load', () => box.replaceChildren(img));
+            // An icon the page has loaded before is there at once, with no letter shown in between
+            if (img.complete && (img.naturalWidth > 0)) {
+                box.replaceChildren(img);
+            }
+            else {
+                // The letter stays when the icon cannot be loaded
+                img.addEventListener('load', () => box.replaceChildren(img));
+            }
         }
         return box;
     }

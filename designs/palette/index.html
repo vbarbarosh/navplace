@@ -327,9 +327,16 @@
             input: input,
             meta: {title: '#title'},
             update: function (filtered, {current: index = 0} = {}) {
+                // The same links with another one current (↑ ↓, the mouse): the rows stay, the mark moves
+                const is_same_links = (items.length > 0) && (filtered.length === items.length) && filtered.every((v, i) => v === items[i]);
                 items.splice(0, items.length, ...filtered);
                 current = index;
-                refresh_rows();
+                if (is_same_links) {
+                    refresh_current();
+                }
+                else {
+                    refresh_rows();
+                }
             },
         });
 
@@ -350,6 +357,22 @@
         rows.replaceChildren(...items.map(make_row));
         empty.hidden = items.length > 0;
         count_element.textContent = plural(items.length, '# link', '# links');
+        refresh_opens();
+    }
+
+    // The mark on the current row alone: no row is built again, so no icon is drawn again
+    function refresh_current()
+    {
+        for (let i = 0, end = rows.children.length; i < end; ++i) {
+            const link = rows.children[i].firstElementChild;
+            link.classList.toggle('np-current', i === current);
+            if (i === current) {
+                link.setAttribute('aria-current', 'true');
+            }
+            else {
+                link.removeAttribute('aria-current');
+            }
+        }
         refresh_opens();
     }
 
@@ -403,8 +426,14 @@
             const img = document.createElement('img');
             img.alt = '';
             img.src = item.icon_url;
-            // The letter stays when the icon cannot be loaded
-            img.addEventListener('load', () => box.replaceChildren(img));
+            // An icon the page has loaded before is there at once, with no letter shown in between
+            if (img.complete && (img.naturalWidth > 0)) {
+                box.replaceChildren(img);
+            }
+            else {
+                // The letter stays when the icon cannot be loaded
+                img.addEventListener('load', () => box.replaceChildren(img));
+            }
         }
         return box;
     }
