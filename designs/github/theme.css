@@ -227,6 +227,29 @@ tbody tr:focus-within { outline: 2px solid var(--row-outline); outline-offset: -
     max-width: 1px; /* helps ellipsis in table cells */
 }
 
+/* The section of a link, between its name and its address: only in a table whose links have
+   sections, and not on a narrow screen, where the name and the address need the room */
+.col-section {
+    display: none;
+    width: 22%;
+    color: var(--muted);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 1px;
+}
+
+.table.sections .col-section {
+    display: table-cell;
+}
+
+@media (max-width: 560px) {
+    .table.sections .col-section {
+        display: none;
+    }
+}
+
 /* The row's link: the label is its text, and its ::after lies over the whole row, so the row is
    one link to the mouse while the table keeps its cells */
 .rowlink {

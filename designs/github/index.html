@@ -26,8 +26,9 @@
         <table>
             <thead>
             <tr>
-                <th class="col-icon">Icon</th>
+                <th class="col-icon" aria-label="Icon"></th>
                 <th>Label</th>
+                <th class="col-section">Section</th>
                 <th>Href</th>
             </tr>
             </thead>
@@ -84,7 +85,11 @@
         const tbody = document.getElementById('rows');
         const empty = document.getElementById('empty');
         tbody.innerHTML = '';
+        // The Section column is there only while a link shown has a section
+        document.querySelector('.table').classList.toggle('sections', items.some(v => v.namespaces?.length));
         if (!items.length) {
+            // A search that finds nothing is told apart from a file with no links by the search box
+            empty.textContent = document.getElementById('q').value.trim() ? 'No matches.' : 'No links yet.';
             empty.style.display = 'block';
             return;
         }
@@ -120,12 +125,19 @@
             });
             td_label.appendChild(link);
 
+            const td_section = document.createElement('td');
+            td_section.className = 'col-section';
+            td_section.textContent = (item.namespaces ?? []).join(' / ');
+
+            // The address without its scheme, so its telling part comes first: the whole is in the title
             const td_href = document.createElement('td');
             td_href.className = 'href';
-            td_href.textContent = item.href || '';
+            td_href.title = item.href || '';
+            td_href.textContent = String(item.href || '').replace(/^https?:\/\//, '').replace(/^([^/]+)\/$/, '$1');
 
             tr.appendChild(td_icon);
             tr.appendChild(td_label);
+            tr.appendChild(td_section);
             tr.appendChild(td_href);
 
             tbody.appendChild(tr);
