@@ -36,6 +36,10 @@ main();
 
 function main()
 {
+    // The word the page itself writes over the links, for a file with no `% subtitle`
+    const section_title = document.querySelector('.section-title');
+    const section_title_own = section_title.textContent;
+
     navplace({
         input: '#search',
         meta: {title: '.identity h1', email: '.identity a', subtitle: '.section-title'},
@@ -104,6 +108,12 @@ function main()
             parts.push(tiles[i]);
         }
         grid.replaceChildren(...parts);
+        // The page's own word is not shown over a heading of the file: the heading says what
+        // follows. A subtitle the file wrote stays, and so does the word over links with no
+        // heading; a search that finds nothing leaves it as it was
+        if (shown.length) {
+            section_title.hidden = (section_title.textContent === section_title_own) && !!shown[0].namespaces?.[0];
+        }
         // ↑ ↓ and Enter walk the links in the order they stand on the page
         navplace.order_set?.(shown);
         // No link to show: a search that finds nothing is told apart from a file with no links by the search box

@@ -388,7 +388,7 @@ A complete brief plus this spec is enough for an AI agent to produce a working `
 
 ## Appendix A: Reference design — `showcase` (presentation style)
 
-The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla JS, no framework, no build step. Uses the `meta` mapping, the shared light/dark switch in its topbar, and `navplace.navigate(item, e)` on click. Draws each `# Section` heading once, over its links, with their count, keeping a heading's links together when a search reorders them (`navplace.order_set`); a file with no headings is one plain grid. Its search bar sticks to the top of the view. Use this as the direct template for presentation-style design briefs.
+The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla JS, no framework, no build step. Uses the `meta` mapping, the shared light/dark switch in its topbar, and `navplace.navigate(item, e)` on click. Draws each `# Section` heading once, over its links, with their count, keeping a heading's links together when a search reorders them (`navplace.order_set`); a file with no headings is one plain grid under the page's own word, which is not shown over a heading. Its search bar sticks to the top of the view. Use this as the direct template for presentation-style design briefs.
 
 ### `designs/showcase/index.html`
 
@@ -431,6 +431,10 @@ main();
 
 function main()
 {
+    // The word the page itself writes over the links, for a file with no `% subtitle`
+    const section_title = document.querySelector('.section-title');
+    const section_title_own = section_title.textContent;
+
     navplace({
         input: '#search',
         meta: {title: '.identity h1', email: '.identity a', subtitle: '.section-title'},
@@ -499,6 +503,12 @@ function main()
             parts.push(tiles[i]);
         }
         grid.replaceChildren(...parts);
+        // The page's own word is not shown over a heading of the file: the heading says what
+        // follows. A subtitle the file wrote stays, and so does the word over links with no
+        // heading; a search that finds nothing leaves it as it was
+        if (shown.length) {
+            section_title.hidden = (section_title.textContent === section_title_own) && !!shown[0].namespaces?.[0];
+        }
         // ↑ ↓ and Enter walk the links in the order they stand on the page
         navplace.order_set?.(shown);
         // No link to show: a search that finds nothing is told apart from a file with no links by the search box
