@@ -104,8 +104,11 @@
             box-shadow: 0 0 0 4px rgba(108, 180, 238, 0.2);
         }
 
+        /* The placeholder is never cut: under 350px, where the box cannot hold it at full size, it
+           shrinks with the screen (5.5vw) */
         .search-input::placeholder {
             color: #aaa;
+            font-size: min(1em, 5.5vw);
         }
 
         .results-count {
