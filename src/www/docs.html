@@ -688,9 +688,10 @@
 <p>With several workspaces, Chrome on Wayland can open a link in a window on another workspace. When Google Chrome handles http and https links, the app first focuses a Chrome window on the current workspace (else the most recently raised one), then opens the link. It needs the optional GNOME extension <a href="https://extensions.gnome.org/extension/4724/window-calls/">Window Calls</a>; without it, or outside a Wayland session, links open as Chrome decides. Details: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/wayland-chrome-window.md">docs/wayland-chrome-window.md</a>.</p>
 
 <h3 id="network-gate">What a design can reach</h3>
-<p>The window cancels every request except these: <code>app://favicon/</code>, <code>blob:</code>, <code>chrome://</code>, <code>chrome-devtools://</code>, <code>data:</code>, <code>devtools://</code>, <code>file://</code>, <code>navplace://app/</code>, <code>private://</code>. Remote fonts, scripts and images do not load in the desktop app. A page is refused every permission but writing to the clipboard, and the window never leaves its page: a link that would load in it opens in the browser.</p>
+<p>The window cancels every request except these: <code>app://favicon/</code>, <code>blob:</code>, <code>chrome://</code>, <code>chrome-devtools://</code>, <code>data:</code>, <code>devtools://</code>, <code>file://</code>, <code>navplace://app/</code>, <code>private://</code>, and <code>app://picture/</code>. Remote fonts, scripts and images do not load in the desktop app. A page is refused every permission but writing to the clipboard, and the window never leaves its page: a link that would load in it opens in the browser.</p>
 <ul>
     <li><code>app://favicon/&lt;host&gt;?letter=&lt;L&gt;</code>: the app finds the icon once, as navplace.com's <code>/icon/</code> does (<code>lib/icon_find.js</code>: navplace's own in <code>lib/icons/</code>, then the page's icon links, <code>/apple-touch-icon.png</code>, <code>/favicon.ico</code>, then Google's), and keeps it in its user data folder; for a site with none, a tile of the link's first letter on a colour of that site.</li>
+    <li><code>app://picture/&lt;key&gt;</code>: a picture a <code>% picture</code> line names by a web url, the app's kept copy of it (<a href="#name-images">below</a>). The key is a hash of the url; a page cannot ask for an address of its own.</li>
     <li><code>private://&lt;path&gt;</code>: a file under <code>~/.navplace/</code>, nothing outside it. <code>.svg</code> is sent as <code>image/svg+xml</code>, anything else as <code>image/png</code>.</li>
     <li><code>navplace://app/…</code>: the app's own <code>designs/</code>, <code>lib/</code> and settings page, nothing outside them. A design's <code>/lib/…</code> is the app's copy there.</li>
 </ul>
@@ -778,6 +779,7 @@ Gmail              #mail #padding=1 @img/gm.png  https://mail.google.com/
     <li>Repeatable: every line adds one source, in file order; pulled links land after the local ones.</li>
     <li>The url must return the document as plain text over <code>http://</code> or <code>https://</code>; any other url is skipped.</li>
     <li>A pulled document gives links and sections only. Its own directives are dropped, so it cannot switch the design, set the title, apply <code>% ns:</code> or pull a third document.</li>
+    <li>Its <code>% picture</code> lines stay, and they are its own: <code>@logo</code> in a pulled document is the picture that document names, whatever your file or another pulled one calls <code>logo</code>. An <code>@name</code> it names no picture for shows none: the files under <code>~/.navplace/</code> are for your own links.</li>
     <li>The <code>% ns:</code> of the pulling document filters local and pulled links alike.</li>
     <li>The prefix and the suffix are part of the label, so typing the prefix finds the pulled links.</li>
     <li>The request carries no access token.</li>
@@ -808,7 +810,7 @@ Grafana @board  https://grafana.com/
 % picture kimi: data:image/png;base64,iVBORw0KGgo…
 % picture board: https://example.com/img/board.jpg</code></pre>
 <ul>
-    <li>The desktop app shows <code>data:</code> pictures; it blocks every web url, <code>https://</code> pictures too.</li>
+    <li>The desktop app fetches a picture from the web once and keeps it: the design shows the kept copy, with no network too. It asks over <code>https</code>, a public host only, and keeps a picture of 5 MB at most (PNG, JPEG, GIF, WebP, AVIF, ICO, or an SVG with no script). Anything else leaves the link without its picture; the log says why. A picture that failed is asked again at a later press of the hotkey, a minute apart at least. To fetch a kept one again, change its url.</li>
     <li>The same name twice: the last one wins. A line with no name before the colon, or with a value that is not one of the three kinds of url, is skipped with a warning, and <code>@name</code> stays a file under <code>~/.navplace/</code>.</li>
 </ul>
 
@@ -838,7 +840,7 @@ Gmail #mail #padding=1 @gm.png https://gmail.com/
         <tr><td><code>label</code></td><td>What is left of the line after the url, tags and image are removed.</td></tr>
         <tr><td><code>href</code></td><td>The url.</td></tr>
         <tr><td><code>icon_url</code></td><td><code>app://favicon/&lt;host&gt;?letter=&lt;L&gt;</code> in the desktop app, <code>/icon/&lt;host&gt;</code> on navplace.com (its own icons, for its own pages only), <code>https://icon.horse/icon/&lt;host&gt;</code> elsewhere. A host that is not public (an address, a port, <code>localhost</code>, a private name such as <code>wiki.corp.internal</code>) is never named to another site: the desktop app asks that host itself for its icon, navplace.com answers a tile, and elsewhere it gets a letter tile, a <code>data:</code> url.</td></tr>
-        <tr><td><code>image_url</code></td><td>From <code>@name</code>: the url of <code>% picture name:</code> when the file has one, else <code>private://&lt;name&gt;</code>; <code>null</code> without <code>@name</code>.</td></tr>
+        <tr><td><code>image_url</code></td><td>From <code>@name</code>: the url of <code>% picture name:</code> when the file has one, else <code>private://&lt;name&gt;</code>; <code>null</code> without <code>@name</code>. In the desktop app a web url comes as <code>app://picture/&lt;key&gt;</code>, the app's kept copy.</td></tr>
         <tr><td><code>tags</code></td><td>Every <code>#tag</code> on the line.</td></tr>
         <tr><td><code>meta</code></td><td>Every <code>#key=value</code> on the line.</td></tr>
         <tr><td><code>search1</code></td><td>Label and tags, lower case, Cyrillic transliterated to Latin.</td></tr>
@@ -1015,7 +1017,7 @@ Gmail   https://mail.google.com/
     <li><code>launcher.js</code>: the hotkey side; Node built-ins only.</li>
     <li><code>renderer.js</code>: the preload that gives designs <code>window.ElectronApp</code>.</li>
     <li><code>settings/</code>, <code>settings_preload.js</code>: the settings window's page and its preload.</li>
-    <li><code>helpers/</code>: <code>collection_resolve_includes</code> and <code>include_spec_from_text</code> for <code>% include:</code>, <code>gnome_configure</code>, <code>chrome_window_focus</code>, <code>make_socket_server</code>.</li>
+    <li><code>helpers/</code>: <code>collection_resolve_includes</code> and <code>include_spec_from_text</code> for <code>% include:</code>, <code>make_picture_store</code> and <code>picture_pull</code> for the pictures from the web, <code>gnome_configure</code>, <code>chrome_window_focus</code>, <code>make_socket_server</code>.</li>
 </ul>
 
 <h3 id="architecture-site">The site</h3>

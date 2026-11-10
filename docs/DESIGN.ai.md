@@ -114,7 +114,7 @@ These four per-item fields are populated from different DSL syntax. Don't confla
   Example: `node-helpers #padding=1 https://…` → `meta: { padding: '1' }`.
 - **`item.image_url`** — from inline **`@path`** (an at-sign followed by a relative path) on a link line, **immediately before the URL**. The parser turns it into `private://<path>`, which Electron serves from `~/.navplace/<path>`. The path may contain `/`.
   Example: `Gmail #bb @img/gmail.png https://mail.google.com/` → `image_url: 'private://img/gmail.png'`.
-  When the file names the picture with `% picture <path>: <url>` (an `http://`, `https://` or `data:image/` url, on a line anywhere in the file), `image_url` is that url instead.
+  When the file names the picture with `% picture <path>: <url>` (an `http://`, `https://` or `data:image/` url, on a line anywhere in the file), `image_url` is that url instead; in the desktop app a web url comes as `app://picture/<key>`, the app's kept copy of the picture.
   Default when absent: `null`. Outside Electron (web/embed surfaces), the `private://` protocol won't resolve, so always fall back: `item.image_url ?? item.icon_url` for a link with no picture, and `icon_url` again when the picture fails to load (the `<img>`'s `error` event).
 - **`item.namespaces`** — from a **`# Section`** heading **at the start of a line** that precedes the link.
   Example: `# GitHub` on its own line, then `node-helpers https://…` → `namespaces: ['GitHub']`.
@@ -131,7 +131,7 @@ So `%` is for document-wide directives; `#` and `@` are always per-item or per-s
 ### Images
 
 - `item.image_url` is set when the source line has `@filename` before the URL (e.g. `Atari @atari.png https://atari.com`). It resolves to `private://<filename>` and is served from `~/.navplace/<filename>` (Electron only — the web/embed surfaces won't have these files: `image_url` is still `private://<filename>` there, and does not load).
-- With `% picture atari.png: <url>` in the file, `image_url` is that url on every surface. The desktop app shows a `data:` picture and blocks a web one.
+- With `% picture atari.png: <url>` in the file, `image_url` is that url on the web. In the desktop app a `data:` url comes as it is, and a web url comes as `app://picture/<key>`: the app fetches the picture once and answers with its kept copy. Use `image_url` as it comes, in an `<img>`; one the app could not fetch fails to load like any other.
 - Fall back gracefully: `item.image_url ?? item.icon_url`, and `item.icon_url` when the picture fails to load.
 
 ## Required behavior
@@ -158,8 +158,8 @@ A design **should**:
 The Electron app blocks **all outbound network requests** from the design except for these protocols:
 
 ```
-app://favicon/   blob:   chrome://   chrome-devtools://   data:
-devtools://      file://   navplace://app/   private://
+app://favicon/   app://picture/   blob:   chrome://   chrome-devtools://
+data:   devtools://   file://   navplace://app/   private://
 ```
 
 This means:
@@ -168,7 +168,7 @@ This means:
 - ❌ **No CDN libraries** loaded via `<script src="https://…">` (use the bundled `/lib/vendor/...` paths or vanilla JS).
 - ❌ **No remote images** in your design's chrome (decorative SVGs, background art). Inline them as `data:` URLs or local files.
 - ✅ **Item icons via `item.icon_url`** — these go through the allowed `app://favicon/` protocol.
-- ✅ **Item images via `item.image_url`** — these go through the allowed `private://` protocol, or `data:` for a `% picture`.
+- ✅ **Item images via `item.image_url`** — these go through the allowed `private://` protocol, or `data:` and `app://picture/` for a `% picture`.
 - ✅ **The design's own files and `/lib/…`** — these go through `navplace://app/`.
 
 The app also refuses a page every permission but writing to the clipboard, and the window never leaves the design: a navigation is cancelled, and its address opens outside when it is an `http://` or `https://` one or a plain `mailto:` address. A `file://` link is not opened this way: `navplace.navigate` asks the app for it.

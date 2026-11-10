@@ -8,6 +8,7 @@ const chrome_window_focus = require('./helpers/chrome_window_focus');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
 const collection_drop_includes = require('./helpers/collection_drop_includes');
 const collection_resolve_includes = require('./helpers/collection_resolve_includes');
+const collection_route_pictures = require('./helpers/collection_route_pictures');
 const config = require('./config');
 const config_appimage_file_set = require('./config/config_appimage_file_set');
 const crypto = require('crypto');
@@ -47,6 +48,7 @@ const letter_tile_svg = require('./helpers/letter_tile_svg');
 const log_value_from_text = require('./helpers/log_value_from_text');
 const make = require('@vbarbarosh/type-helpers');
 const make_newest_gate = require('./helpers/make_newest_gate');
+const make_picture_store = require('./helpers/make_picture_store');
 const make_pid_lock = require('./helpers/make_pid_lock');
 const make_socket_server = require('./helpers/make_socket_server');
 const os = require('os');
@@ -163,9 +165,11 @@ async function main()
     electron.ipcMain.handle('api_ping', function () {
         return `pong ${format_date(new Date())}`;
     });
-    // A page gets the links without the addresses they were pulled from (helpers/collection_drop_includes.js)
+    // pictures/: the pictures the links name by a web address, each fetched once and kept
+    const pictures = make_picture_store({dir: fs_path_resolve(electron.app.getPath('userData'), 'pictures'), group_uid: app_uid});
+
     electron.ipcMain.handle('api_items_all', async function () {
-        return collection_drop_includes(parsed_collection);
+        return collection_for_page();
     });
     electron.ipcMain.handle('api_file_open', function (event, href) {
         file_link_open(href);
@@ -250,6 +254,9 @@ async function main()
         });
     });
     electron.protocol.handle('app', async function (request) {
+        if (request.url.startsWith('app://picture/')) {
+            return picture_respond(request);
+        }
         if (!request.url.startsWith('app://favicon/')) {
             return new Response('Not found', {status: 404});
         }
@@ -341,6 +348,7 @@ async function main()
     electron.session.defaultSession.webRequest.onBeforeRequest(function (params, callback) {
         const prefixes = [
             'app://favicon/',
+            'app://picture/',
             'blob:',
             'chrome://',
             'chrome-devtools://',
@@ -551,6 +559,34 @@ async function main()
         await settings_save(settings);
     }
 
+    // What a page is handed: the links without the addresses they were pulled from
+    // (helpers/collection_drop_includes.js), a picture from the web by the address the app
+    // answers with its kept copy (helpers/collection_route_pictures.js)
+    function collection_for_page() {
+        return collection_route_pictures(collection_drop_includes(parsed_collection), pictures.page_url);
+    }
+
+    // app://picture/<key>, with or without ?try=<n>: a web picture of the links, the app's kept
+    // copy of it, fetched now when none is kept yet (helpers/make_picture_store.js). An SVG is
+    // handed over as a picture only: opened as a page of its own, nothing in it would run
+    async function picture_respond(request) {
+        let picture;
+        try {
+            picture = await pictures.read(new URL(request.url).pathname.slice(1));
+        }
+        catch {
+            return new Response('Not found', {status: 404, headers: {'Cache-Control': 'no-store'}});
+        }
+        return new Response(picture.bytes, {
+            headers: {
+                'Content-Type': picture.type,
+                'Content-Security-Policy': 'sandbox',
+                'X-Content-Type-Options': 'nosniff',
+                'Cache-Control': 'max-age=86400',
+            },
+        });
+    }
+
     // The file is read again, so `% design:` is too: a design named since the last reload is loaded
     // before the includes are pulled, the same one again leaves the page as it is. Every summon
     // starts a reload while an older one may still pull its includes: the newest one chooses the
@@ -571,7 +607,7 @@ async function main()
         parsed_collection = resolved;
         file_hrefs = file_hrefs_from_collection(collection);
         if (!win.isDestroyed()) {
-            win.webContents.send('api_items_changed', collection_drop_includes(parsed_collection));
+            win.webContents.send('api_items_changed', collection_for_page());
         }
     }
 
