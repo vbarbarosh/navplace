@@ -111,7 +111,8 @@
             transform: scale(1.05);
         }
 
-        .card img {
+        .card img,
+        .card .letter {
             width: 120px;
             height: 120px;
             border-radius: 50%;
@@ -119,6 +120,14 @@
             object-fit: cover;
             border: 3px solid var(--picture-ring);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* In place of an icon that did not load: the link's first letter in the same round frame */
+        .card .letter {
+            background: var(--search-bg);
+            color: var(--search-fg);
+            font-size: 60px;
+            line-height: 120px;
         }
 
         .card:nth-child(3n+1) {
@@ -149,6 +158,9 @@
 <script>
     const input = document.getElementById('search');
     const container = document.getElementById('results');
+    // Pictures and icons that did not load, by address: a card shows the site's icon in place of
+    // its picture, and the link's first letter in place of the icon
+    const failed_urls = new Set();
 
     main();
 
@@ -169,10 +181,7 @@
             card.addEventListener('click', function (event) {
                 navplace.navigate(item, event);
             });
-            const img = document.createElement('img');
-            img.src = item.image_url || item.icon_url;
-            img.alt = item.label;
-            card.appendChild(img);
+            card.appendChild(make_picture(item));
             const label = document.createElement('span');
             label.textContent = item.label;
             card.appendChild(label);
@@ -185,6 +194,34 @@
             note.textContent = input.value.trim() ? 'Nothing found' : 'No links yet';
             container.appendChild(note);
         }
+    }
+
+    // The round picture of a card: the link's picture, the site's icon when there is none or it
+    // did not load, the link's first letter when the icon did not load either
+    function make_picture(item)
+    {
+        const url = [item.image_url, item.icon_url].find(v => v && !failed_urls.has(v));
+        if (!url) {
+            return make_letter(item);
+        }
+        const out = document.createElement('img');
+        out.src = url;
+        out.alt = item.label;
+        out.addEventListener('error', function () {
+            failed_urls.add(url);
+            out.replaceWith(make_picture(item));
+        });
+        return out;
+    }
+
+    // In place of the picture: the first letter or digit of the link's name, as lib/parse.js
+    // picks it for its own tile
+    function make_letter(item)
+    {
+        const out = document.createElement('span');
+        out.className = 'letter';
+        out.textContent = item.label.match(/[\p{L}\p{N}]/u)?.[0].toUpperCase() ?? '?';
+        return out;
     }
 </script>
 </body>
