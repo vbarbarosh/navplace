@@ -94,17 +94,17 @@ The Playground and the site:
   `basic-for-internal2`, `basic-for-kids`, `basic-for-kids2`,
   `basic-for-portfolio`, `basic-for-recipes`, `first`, `google-chrome`;
   `basic-for-internal3-with-groups` opens its own way
-- [ ] Links are real links: not in `basic-for-internal3-with-groups`,
+- [x] Links are real links: not in `basic-for-internal3-with-groups`,
   `cards`, `github`, `palette`
-- [ ] Says when nothing is found: not in `basic`, `basic-for-kids`,
+- [x] Says when nothing is found: not in `basic`, `basic-for-kids`,
   `first`, `google-chrome`, `showcase`
-- [ ] Readable in both themes: not in `basic-for-kids2`, `palette`; partly
+- [x] Readable in both themes: not in `basic-for-kids2`, `palette`; partly
   in `basic`, `first`, `basic-for-internal2`,
   `basic-for-internal3-with-groups`, `basic-for-recipes`, `cards`
-- [ ] Long names fit a phone: not in `basic`, `basic-for-internal2`,
+- [x] Long names fit a phone: not in `basic`, `basic-for-internal2`,
   `basic-for-kids`, `first`; partly in `basic-for-portfolio`,
   `basic-for-recipes`
-- [ ] No broken picture mark: not in `basic`, `basic-for-internal2`,
+- [x] No broken picture mark: not in `basic`, `basic-for-internal2`,
   `basic-for-kids`, `basic-for-kids2`, `basic-for-recipes`, `first`,
   `github`, `showcase`
 

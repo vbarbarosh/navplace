@@ -10,7 +10,7 @@ Two existing designs are the canonical, battle-tested references. When generatin
 
 - **`designs/showcase/`** — the canonical **presentation-style** reference. Powers https://vbarbarosh.com in production. Vanilla JS, no framework. Uses `meta` mapping to bind `% title:` / `% email:` / `% subtitle:` into the page chrome. Shows the shared light/dark switch (`/lib/theme_switch.js`) in its topbar. Uses `navplace.navigate(item, e)` on click so multi-open works.
 
-- **`designs/github/`** — the canonical **launcher-style** reference. Default fallback in `src/desktop-electron/main.js` when `% design:` is missing or unknown. Vanilla JS, no framework. Search input + dense table of rows (icon / label / href). Marks the current link (`np-current`) that the runtime's Up/Down move; opens via `navplace.navigate(item)` to preserve multi-open. Explicit "No matches." empty state.
+- **`designs/github/`** — the canonical **launcher-style** reference. Default fallback in `src/desktop-electron/main.js` when `% design:` is missing or unknown. Vanilla JS, no framework. Search input + dense table of rows (icon / label / href). Each row holds a real link, the label, that fills the row. Marks the current link (`np-current`) that the runtime's Up/Down move; opens via `navplace.navigate(item, event)` to preserve multi-open. Explicit "No matches." empty state.
 
 Both are single-HTML-file plus a single `theme.css`, with no build step and no external dependencies — match that shape for new designs.
 
