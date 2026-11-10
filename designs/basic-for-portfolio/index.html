@@ -17,6 +17,8 @@
             --soft: #f8f9fa;
             /* Behind icons and pictures: light in both themes, so dark logos stay readable */
             --plate: #f8f9fa;
+            /* On it, the letter of an icon that did not load: dark in both themes */
+            --plate-fg: #2c3e50;
             --shadow: rgba(108, 117, 125, 0.12);
             --np-scrollbar-thumb: #ced4da;
             --np-scrollbar-track: #f8f9fa;
@@ -145,6 +147,16 @@
             border: 1px solid var(--border);
         }
 
+        /* In place of an icon that did not load: the link's first letter on the same plate */
+        .item-icon-letter {
+            display: grid;
+            place-items: center;
+            color: var(--plate-fg);
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+
         .item-content {
             flex: 1;
             min-width: 0;
@@ -191,6 +203,11 @@
             flex-shrink: 0;
             background: var(--plate);
             border: 1px solid var(--border);
+        }
+
+        /* A picture that did not load keeps its place, so nothing in the card moves, and shows nothing */
+        .item-image-failed {
+            visibility: hidden;
         }
 
         .empty-state {
@@ -250,6 +267,10 @@
         // The links as they are drawn, a card each, in the same order
         let shown_items = [];
 
+        // Icons and pictures that did not load, by address: a card is drawn with the link's first
+        // letter in place of such an icon, and with nothing in place of such a picture
+        const failed_urls = new Set();
+
         if (typeof navplace === 'function') {
             navplace({input: search_input, update: refresh_items});
             // A click on a card opens its link through the runtime: every selected link, the
@@ -261,6 +282,24 @@
                     navplace.navigate(item, event);
                 }
             });
+            // An icon or a picture that cannot be loaded never shows as a broken one, and nothing in
+            // its card moves: the link's first letter takes the icon's place, the picture's place
+            // stays empty, now and in every later draw. `error` does not bubble: it is caught on
+            // its way down
+            container.addEventListener('error', function (event) {
+                const card = event.target.closest('.item-card');
+                const item = card ? shown_items[Array.from(container.children).indexOf(card)] : null;
+                if (!item) {
+                    return;
+                }
+                failed_urls.add(event.target.getAttribute('src'));
+                if (event.target.matches('.item-icon')) {
+                    event.target.outerHTML = render_icon_html(item);
+                }
+                else if (event.target.matches('.item-image')) {
+                    event.target.outerHTML = render_image_html(item);
+                }
+            }, true);
         }
 
         // Initial empty state
@@ -280,26 +319,14 @@
             container.innerHTML = items.map((item, i) => render_item_html(item, i === current)).join('');
 
             function render_item_html(item, is_current) {
-                const icon_html = item.icon_url ? `
-                            <img src="${html_escape(item.icon_url)}"
-                                 alt="${html_escape(item.label)} icon"
-                                 class="item-icon"
-                                 onerror="this.style.display='none'">
-                        ` : '';
                 const meta_html = (item.meta && (Object.keys(item.meta).length > 0)) ? `
                                 <div class="item-meta">
                                     ${Object.entries(item.meta).map(render_meta_tag_html).join('')}
                                 </div>
                             ` : '';
-                const image_html = item.image_url ? `
-                            <img src="${html_escape(item.image_url)}"
-                                 alt="${html_escape(item.label)} preview"
-                                 class="item-image"
-                                 onerror="this.style.display='none'">
-                        ` : '';
                 return `
                     <a href="${html_escape(item.href)}" class="item-card ${is_current ? 'np-current' : ''}" target="_blank" rel="noopener">
-                        ${icon_html}
+                        ${render_icon_html(item)}
 
                         <div class="item-content">
                             <div class="item-label">${html_escape(item.label)}</div>
@@ -308,10 +335,42 @@
                             ${meta_html}
                         </div>
 
-                        ${image_html}
+                        ${render_image_html(item)}
                     </a>
                 `;
             }
+        }
+
+        // Before a link's name: the site's icon on its plate, or, when the icon did not load, the
+        // link's first letter (the first letter or digit of its name) on the same plate
+        function render_icon_html(item) {
+            if (!item.icon_url) {
+                return '';
+            }
+            if (failed_urls.has(item.icon_url)) {
+                return `<span class="item-icon item-icon-letter" aria-hidden="true">${html_escape((String(item.label).match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase())}</span>`;
+            }
+            return `
+                            <img src="${html_escape(item.icon_url)}"
+                                 alt="${html_escape(item.label)} icon"
+                                 class="item-icon">
+                        `;
+        }
+
+        // After it: the link's picture. One that cannot load here, a private:// one outside the
+        // desktop app, is not drawn; one that did not load leaves its place empty
+        function render_image_html(item) {
+            if (!item.image_url || (!window.ElectronApp && item.image_url.startsWith('private://'))) {
+                return '';
+            }
+            if (failed_urls.has(item.image_url)) {
+                return '<span class="item-image item-image-failed"></span>';
+            }
+            return `
+                            <img src="${html_escape(item.image_url)}"
+                                 alt="${html_escape(item.label)} preview"
+                                 class="item-image">
+                        `;
         }
 
         // [key, value] of item.meta

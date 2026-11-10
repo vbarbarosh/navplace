@@ -407,6 +407,17 @@
             display: block;
         }
 
+        /* An icon that did not load: the link's first letter in the same tile */
+        .favicon.is-letter {
+            display: grid;
+            place-items: center;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
         .thumb {
             width: var(--thumb);
             height: var(--thumb);
@@ -707,15 +718,17 @@
             return node;
         }
 
-        function make_icon(url, alt) {
+        // `label` is the link's name: its first letter or digit stands in the tile of an icon
+        // that cannot be loaded, ? for a name that has none
+        function make_icon(url, alt, label) {
             const wrap = make_elem('div', {class: 'favicon', 'aria-hidden': 'true'});
             const img = make_elem('img', {src: text_from_value(url), alt: alt || ''});
             img.loading = 'lazy';
             img.decoding = 'async';
             img.referrerPolicy = 'no-referrer';
             img.addEventListener('error', function () {
-                wrap.innerHTML = '';
-                wrap.style.background = 'var(--dim)';
+                wrap.textContent = (label.match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase();
+                wrap.classList.add('is-letter');
             });
             wrap.appendChild(img);
             return wrap;
@@ -742,7 +755,7 @@
             const image_url = text_from_value(item.image_url);
 
             const row = make_elem('div', {class: 'row', 'data-index': String(index), 'data-href': href});
-            row.appendChild(make_icon(icon_url, ''));
+            row.appendChild(make_icon(icon_url, '', label));
             if (image_url) {
                 row.appendChild(make_thumb(image_url));
             }
