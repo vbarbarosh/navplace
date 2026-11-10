@@ -14,10 +14,10 @@
             --border: #e1e5eb;
             --text: #2c3e50;
             --text-soft: #5f6b7a;
-            --text-mute: #8a94a3;
-            --accent: #2575fc;
+            --text-mute: #667182;
+            --accent: #035ff9;
             --accent-soft: rgba(37, 117, 252, 0.1);
-            --banner: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            --banner: linear-gradient(135deg, #6a11cb 0%, #035ff9 100%);
             --shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
             --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.1);
             --np-scrollbar-thumb: #c3cad6;
@@ -31,7 +31,7 @@
             --border: #2a2f39;
             --text: #e7ebf1;
             --text-soft: #a6aebb;
-            --text-mute: #6e7685;
+            --text-mute: #7e8695;
             --accent: #6ea2ff;
             --accent-soft: rgba(110, 162, 255, 0.14);
             --banner: linear-gradient(135deg, #4a0f8f 0%, #1a4fb3 100%);
@@ -142,6 +142,10 @@
             box-shadow: 0 0 0 3px var(--accent-soft);
         }
 
+        .search input::placeholder {
+            color: var(--text-mute);
+        }
+
         .chips {
             display: flex;
             flex-wrap: wrap;
@@ -165,10 +169,12 @@
             color: var(--accent);
         }
 
+        /* The chosen chip's text is the panel's colour: white on the light theme's blue, dark on
+           the dark theme's lighter one */
         .chip.on {
             border-color: var(--accent);
             background: var(--accent);
-            color: #ffffff;
+            color: var(--panel);
         }
 
         .grid {
