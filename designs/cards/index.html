@@ -428,7 +428,10 @@
         head.className = 'head';
         const names_element = document.createElement('div');
         names_element.className = 'names';
-        names_element.append(make_text('div', 'label', item.label), make_text('div', 'domain', domain_of(item.href)));
+        // A name too long for its card is cut with an ellipsis: its full text is in the title
+        const label_element = make_text('div', 'label', item.label);
+        label_element.title = item.label;
+        names_element.append(label_element, make_text('div', 'domain', domain_of(item.href)));
         head.append(make_icon(item), names_element);
         link.append(head, make_text('span', 'section', item.namespaces.join(' · ')));
         link.addEventListener('click', function (event) {
