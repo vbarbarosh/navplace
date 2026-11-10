@@ -207,6 +207,8 @@
 <script src="/lib/navplace.js"></script>
 <script>
     const results_container = document.getElementById('navplace-results');
+    // Pictures that did not load, by address: their rows are drawn without one
+    const failed_urls = new Set();
 
     // The links as they are drawn, a card each, in the same order
     let shown_items = [];
@@ -226,6 +228,18 @@
                     navplace.navigate(item, event);
                 }
             });
+            // A picture or an icon that cannot be loaded never shows as a broken one: the picture
+            // leaves its row, now and in every later draw; the icon keeps its place, so the name
+            // does not move. `error` does not bubble: it is caught on its way down
+            results_container.addEventListener('error', function (event) {
+                if (event.target.matches('.nav-image')) {
+                    failed_urls.add(event.target.getAttribute('src'));
+                    event.target.remove();
+                }
+                else if (event.target.matches('.nav-icon')) {
+                    event.target.style.visibility = 'hidden';
+                }
+            }, true);
         }
         else {
             console.error('NavPlace runtime not detected.');
@@ -245,15 +259,22 @@
         function render_item_html(item, is_current) {
             return `
             <a href="${html_escape(item.href)}" class="nav-item ${is_current ? 'np-current' : ''}" target="_blank" rel="noopener noreferrer">
-                <img src="${html_escape(item.icon_url)}" class="nav-icon" onerror="this.style.display='none'">
+                <img src="${html_escape(item.icon_url)}" class="nav-icon">
                 <div class="nav-content">
                     <span class="nav-label" title="${html_escape(item.label)}">${html_escape(item.label)}</span>
                     <span class="nav-href">${html_escape(item.href)}</span>
                 </div>
-                ${item.image_url ? `<img src="${html_escape(item.image_url)}" class="nav-image">` : ''}
+                ${is_picture_shown(item) ? `<img src="${html_escape(item.image_url)}" class="nav-image">` : ''}
             </a>
         `;
         }
+    }
+
+    // A link's picture is drawn unless it cannot load: a private:// one outside the desktop app,
+    // or one that failed before
+    function is_picture_shown(item)
+    {
+        return !!item.image_url && (!!window.ElectronApp || !item.image_url.startsWith('private://')) && !failed_urls.has(item.image_url);
     }
 
     // The links file is not trusted: every value from it goes into the HTML through this,
