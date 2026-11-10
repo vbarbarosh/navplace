@@ -1129,7 +1129,7 @@
         <div class="tabs" role="tablist" aria-label="Playground mode">
             <button type="button" role="tab" data-tab="basic" aria-selected="true">Basic</button>
             <button type="button" role="tab" data-tab="advanced" aria-selected="false">Advanced</button>
-            <button type="button" role="tab" data-tab="design" aria-selected="false">Design</button>
+            <button type="button" role="tab" data-tab="design" aria-selected="false">Design code</button>
         </div>
         <label>Design <select aria-label="Design"></select></label>
         <button class="btn" type="button" data-action="reset" title="Replace the text with the sample for this design">Reset</button>
@@ -1280,6 +1280,8 @@ async function main()
     let design_request = null;
     let design_timer;
     let text_design = 'basic';
+    // The sample put into the editor; the text is a sample while it is still this
+    let sample_text = null;
     let preview_key = null;
     let links_count = 0;
     // Links % ns leaves out of items
@@ -1367,7 +1369,7 @@ async function main()
     const design_gutter = document.querySelector('.pane-design .gutter');
     const design_load_button = document.querySelector('[data-action="design-load"]');
     const design_undo_button = document.querySelector('[data-action="design-undo"]');
-    // Unedited code of designs the text names while the Design tab holds another's edits
+    // Unedited code of designs the text names while the Design code tab holds another's edits
     const design_by_name = {};
     // Hashes of the texts a rename followed, a keystroke in and its links not yet renamed: an undo or
     // redo that lands on one takes one step more, so one Ctrl+Z takes back the keystroke and the links
@@ -1538,11 +1540,13 @@ async function main()
             return;
         }
         // What was typed while the samples loaded is kept too
-        text_replace(((editor.value === text) && sample) || text_design_set(editor.value, design_name));
+        sample_text = ((editor.value === text) && sample) || null;
+        text_replace(sample_text || text_design_set(editor.value, design_name));
     });
     document.querySelector('[data-action="reset"]').addEventListener('click', async function () {
         const sample = await sample_load(frame_design ?? 'showcase');
         if (typeof sample === 'string') {
+            sample_text = sample;
             text_replace(sample);
         }
     });
@@ -1714,10 +1718,20 @@ async function main()
     refresh_sizes();
     // The first preview waits for the list: a saved draft may name a design that is gone
     const designs_loaded = refresh_designs();
-    editor.value = draft_load() ?? await sample_load('showcase') ?? '';
+    const draft = draft_load();
+    editor.value = draft ?? await sample_load('showcase') ?? '';
+    sample_text = (draft === null) ? editor.value : null;
     refresh_tab();
     await designs_loaded;
     refresh_text();
+    // A draft may be a sample nobody has touched, a design picked and left: it says so too
+    if (draft !== null) {
+        const sample = await sample_load(text_design);
+        if ((typeof sample === 'string') && (editor.value === sample)) {
+            sample_text = sample;
+            refresh_status();
+        }
+    }
     // A link here with ?design=<name>, the home page's designs: that design is picked as the
     // list picks it. The address then loses the name, so a reload keeps what the visitor made of it
     const design_asked = new URLSearchParams(location.search).get('design');
@@ -1906,7 +1920,7 @@ async function main()
     }
 
     // The preview shows the text's design. Its edited code shows only while the text names
-    // that design; the Design tab shows its code whatever the text names. Basic shows a
+    // that design; the Design code tab shows its code whatever the text names. Basic shows a
     // design's own page while its code is untouched; the other tabs draw the code, which
     // lets the errors panel see the page's errors.
     function refresh_preview() {
@@ -1964,17 +1978,19 @@ async function main()
         }
     }
 
-    // Says when the preview is code edited in the Design tab, not the design's own page
+    // Says when the text is still a sample, and when the preview is code edited in the Design code
+    // tab, not the design's own page
     function refresh_status() {
         if (status.dataset.error !== undefined) {
             return;
         }
         const edited = !!design && design_is_edited(design) && ((tab === 'design') || (design.name === text_design));
+        const sample_part = (!!sample_text && (editor.value === sample_text)) ? 'A sample: change a line, the preview follows' : '';
         const links_part = plural(links_count, '# link', '# links');
         const left_out_part = left_out_count ? `${left_out_count} left out by % ns` : '';
         const skipped_part = parse_warnings.length ? plural(parse_warnings.length, '# line skipped, see Warnings', '# lines skipped, see Warnings') : '';
-        const edited_part = edited ? `${design.name}, edited in Design` : '';
-        status.textContent = [draft_note, design_draft_note, links_part, left_out_part, skipped_part, edited_part, editor_note].filter(Boolean).join(' · ');
+        const edited_part = edited ? `${design.name}, edited in Design code` : '';
+        status.textContent = [draft_note, design_draft_note, sample_part, links_part, left_out_part, skipped_part, edited_part, editor_note].filter(Boolean).join(' · ');
         // Cut short when the toolbar is narrow; the whole line on hover
         status.title = status.textContent;
         status.toggleAttribute('data-warn', (parse_warnings.length > 0) || !!draft_note || !!design_draft_note);
@@ -2276,7 +2292,7 @@ async function main()
         return {name, all, files, originals: {...files}, current: names.includes('index.html') ? 'index.html' : names[0]};
     }
 
-    // The Design tab takes a design's files; true once they are in
+    // The Design code tab takes a design's files; true once they are in
     async function design_load(name) {
         let value;
 
