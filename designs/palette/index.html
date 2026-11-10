@@ -327,6 +327,8 @@
     let current = 0;
 
     const input = document.querySelector('input[type=search]');
+    // Where the mouse was last seen over a row, `x,y` on the screen; null before it was seen at all
+    let mouse_at = null;
     const rows = document.querySelector('.rows');
     const empty = document.querySelector('.empty');
     const opens = document.querySelector('.opens');
@@ -423,9 +425,16 @@
         link.addEventListener('click', function (event) {
             item_open(i, event);
         });
-        // The mouse picks a row as ↑ ↓ do: the runtime makes it the current one
-        link.addEventListener('mousemove', function () {
-            navplace.current_set?.(i);
+        // The mouse picks a row as ↑ ↓ do: the runtime makes it the current one. Only a mouse
+        // that moved picks: a window that opens under a resting mouse, or rows that change under
+        // it, bring a mouse move from where it already was, and the first link keeps the mark
+        link.addEventListener('mousemove', function (event) {
+            const at = `${event.screenX},${event.screenY}`;
+            const moved = (mouse_at !== null) && (mouse_at !== at);
+            mouse_at = at;
+            if (moved) {
+                navplace.current_set?.(i);
+            }
         });
         li.append(link);
         return li;
