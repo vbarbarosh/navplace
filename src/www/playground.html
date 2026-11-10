@@ -1293,6 +1293,10 @@ async function main()
     let draft_refusal = '';
     // Another tab has saved a draft since the refusal: a reload would load that one
     let is_draft_elsewhere = false;
+    // The same three of the design's code, which has a draft of its own
+    let design_draft_note = '';
+    let design_draft_refusal = '';
+    let is_design_draft_elsewhere = false;
     // Keys typed since the last save: the text is saved when they rest, or when the page goes
     let is_draft_waiting = false;
     let draft_save_timer;
@@ -1445,7 +1449,7 @@ async function main()
     design_editor.addEventListener('input', function () {
         design.files[design.current] = design_editor.value;
         design_undo = null;
-        design_draft_save(design);
+        design_editor_draft_save();
         refresh_design_pane(false);
         clearTimeout(design_timer);
         design_timer = setTimeout(refresh_preview, 400);
@@ -1507,7 +1511,7 @@ async function main()
     design_undo_button.addEventListener('click', function () {
         design = design_undo;
         design_undo = null;
-        design_draft_save(design);
+        design_editor_draft_save();
         refresh_design_pane(true);
         refresh_preview();
     });
@@ -1689,9 +1693,13 @@ async function main()
         if (event.key === 'navplace.playground') {
             draft_follow();
         }
+        if (event.key === 'navplace.playground.design') {
+            design_draft_follow(true);
+        }
     });
     // Looked at again, the tab checks once more: a change it did not hear of while away shows now
     document.addEventListener('visibilitychange', draft_follow);
+    document.addEventListener('visibilitychange', () => design_draft_follow(false));
     // A reload or a closed tab right after a key: the keys still waiting are saved before the page goes
     window.addEventListener('pagehide', editor_draft_save_waiting);
 
@@ -1840,7 +1848,7 @@ async function main()
             parsed = parse(editor.value);
         }
         catch (error) {
-            status.textContent = [draft_note, `${error.message}. The preview shows the last text that parsed.`].filter(Boolean).join(' · ');
+            status.textContent = [draft_note, design_draft_note, `${error.message}. The preview shows the last text that parsed.`].filter(Boolean).join(' · ');
             status.dataset.error = '';
             parse_error = {where: {file: 'links.txt', line: line_of_parse_error(editor.value)}, what: error.message, count: 1};
             parse_warnings = [];
@@ -1855,7 +1863,7 @@ async function main()
         // A half-typed name would load a missing page: the design shown stays,
         // or basic when none is shown yet
         if (designs && !designs.includes(name)) {
-            status.textContent = [draft_note, `No design named "${name}". The preview shows "${frame_design ?? 'basic'}".`].filter(Boolean).join(' · ');
+            status.textContent = [draft_note, design_draft_note, `No design named "${name}". The preview shows "${frame_design ?? 'basic'}".`].filter(Boolean).join(' · ');
             status.dataset.error = '';
             if (frame_design) {
                 if (frame_ready) {
@@ -1948,10 +1956,10 @@ async function main()
         const left_out_part = left_out_count ? `${left_out_count} left out by % ns` : '';
         const skipped_part = parse_warnings.length ? plural(parse_warnings.length, '# line skipped, see Warnings', '# lines skipped, see Warnings') : '';
         const edited_part = edited ? `${design.name}, edited in Design` : '';
-        status.textContent = [draft_note, links_part, left_out_part, skipped_part, edited_part, editor_note].filter(Boolean).join(' · ');
+        status.textContent = [draft_note, design_draft_note, links_part, left_out_part, skipped_part, edited_part, editor_note].filter(Boolean).join(' · ');
         // Cut short when the toolbar is narrow; the whole line on hover
         status.title = status.textContent;
-        status.toggleAttribute('data-warn', (parse_warnings.length > 0) || !!draft_note);
+        status.toggleAttribute('data-warn', (parse_warnings.length > 0) || !!draft_note || !!design_draft_note);
     }
 
     function refresh_errors() {
@@ -2019,7 +2027,7 @@ async function main()
             button.toggleAttribute('data-edited', design.files[file] !== design.originals[file]);
             button.addEventListener('click', function () {
                 design.current = file;
-                design_draft_save(design);
+                design_editor_draft_save();
                 refresh_design_pane(true);
             });
             return button;
@@ -2267,7 +2275,7 @@ async function main()
             return false;
         }
         design = value;
-        design_draft_save(design);
+        design_editor_draft_save();
         refresh_design_pane(true);
         refresh_preview();
         return true;
@@ -2285,7 +2293,7 @@ async function main()
         }
         else if (design && (where.file in design.files)) {
             design.current = where.file;
-            design_draft_save(design);
+            design_editor_draft_save();
             if (tab !== 'design') {
                 tab = 'design';
                 tab_save(tab);
@@ -2758,6 +2766,53 @@ async function main()
         clearTimeout(text_refresh_timer);
         refresh_text();
         refresh_cursor_line();
+    }
+
+    // The design's code goes to the browser's storage as the links do. Refused, the status line
+    // says so, and why, until a later save works again
+    function design_editor_draft_save() {
+        const error = design_draft_save(design);
+        design_draft_refusal = error ? format_draft_error(error) : '';
+        is_design_draft_elsewhere = is_design_draft_elsewhere && !!error;
+        refresh_design_draft_note();
+    }
+
+    function refresh_design_draft_note() {
+        const elsewhere_part = is_design_draft_elsewhere ? ' and loads the code another tab has saved' : '';
+        const note = design_draft_refusal ? `design code no longer saved: ${design_draft_refusal}; a reload loses the edits made since${elsewhere_part}` : '';
+        if (note !== design_draft_note) {
+            design_draft_note = note;
+            refresh_status();
+        }
+    }
+
+    // The code another tab saved takes this tab's, and the status line says so until the next save
+    // of it here; code another tab put back as the design's own is loaded from the site again. A tab
+    // whose own code could not be saved keeps it, no other place has it, and says what a reload
+    // would load now. `is_heard`: the browser told of another tab's save; without it a draft that
+    // differs from a refused one may be this tab's own older one
+    async function design_draft_follow(is_heard) {
+        const value = design_draft_load();
+        if (JSON.stringify(value) === JSON.stringify(design_is_edited(design) ? design : null)) {
+            return;
+        }
+        if (design_draft_refusal) {
+            is_design_draft_elsewhere = is_design_draft_elsewhere || is_heard;
+            refresh_design_draft_note();
+            return;
+        }
+        design_undo = null;
+        if (value) {
+            design = value;
+            refresh_design_pane(true);
+            clearTimeout(design_timer);
+            refresh_preview();
+        }
+        else if (!(await design_load(text_design))) {
+            return;
+        }
+        design_draft_note = 'the design code was changed in another tab: this is its code now';
+        refresh_status();
     }
 
     function editor_note_show(text) {
@@ -3549,7 +3604,8 @@ function design_draft_load()
     }
 }
 
-// Only edited code is kept; an untouched design comes from the site again
+// Only edited code is kept; an untouched design comes from the site again. null when the browser
+// kept it, else the error it refused it with
 function design_draft_save(design)
 {
     try {
@@ -3559,8 +3615,10 @@ function design_draft_save(design)
         else {
             localStorage.removeItem('navplace.playground.design');
         }
+        return null;
     }
-    catch {
+    catch (error) {
+        return error;
     }
 }
 
