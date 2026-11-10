@@ -83,6 +83,12 @@ body {
     gap: 12px;
 }
 
+/* The keyboard is in the search box: it wears the ring of the current tile */
+.search:focus-within {
+    outline: 2px solid var(--current-ring);
+    outline-offset: -1px;
+}
+
 .search svg {
     width: 20px;
     height: 20px;
