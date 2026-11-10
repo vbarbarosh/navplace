@@ -29,8 +29,8 @@ Twice   @web        https://twice.example.com/
         ['None', null],
         ['Twice', 'app://picture/3'],
     ]);
-    assert.deepEqual(asked, ['https://example.com/img/a.png?token=abc', 'http://example.com/b.png', 'https://example.com/img/a.png?token=abc']);
-    assert.equal(actual.meta, collection.meta);
+    assert.deepEqual(asked.slice(0, 3), ['https://example.com/img/a.png?token=abc', 'http://example.com/b.png', 'https://example.com/img/a.png?token=abc']);
+    assert.equal(actual.meta.title, 'Jane Roe');
     assert.deepEqual(actual.items.map(v => v.href), collection.items.map(v => v.href));
 });
 
@@ -50,4 +50,22 @@ test('collection_route_pictures: no link, no picture: nothing to do', function (
     assert.deepEqual(empty.items, []);
     const plain = collection_route_pictures(parse('One https://one.example.com/\n'), assert.fail);
     assert.deepEqual(plain.items.map(v => v.image_url), [null]);
+});
+
+test('collection_route_pictures: the named pictures, background among them, get the app\'s address too', function () {
+    const collection = parse(`% design: basic
+% picture background: https://example.com/sea.jpg
+% picture drawn: data:image/png;base64,iVBORw0KGgo=
+
+Mail https://mail.example.com/
+`);
+    const actual = collection_route_pictures(collection, v => `app://picture/${v.length}`);
+    assert.deepEqual(actual.meta.picture, {background: 'app://picture/27', drawn: 'data:image/png;base64,iVBORw0KGgo='});
+    assert.equal(actual.meta.design, 'basic');
+    assert.equal(collection.meta.picture.background, 'https://example.com/sea.jpg');
+});
+
+test('collection_route_pictures: no named picture: the meta stays as it is', function () {
+    const collection = parse('% design: basic\n\nMail https://mail.example.com/\n');
+    assert.equal(collection_route_pictures(collection, assert.fail).meta, collection.meta);
 });

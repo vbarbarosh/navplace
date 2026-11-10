@@ -301,6 +301,23 @@ Mine    @logo   https://mine.example.com/
     assert.deepEqual(actual.meta.picture, {logo: 'https://mine.example.com/logo.png'});
 });
 
+test('a pulled document\'s background is its own links\' picture, never the page\'s', async function () {
+    await using team = await make_text_server(`% picture background: https://team.example.com/sea.jpg
+
+Team    @background   https://team.example.com/
+`);
+    const mine = parse(`% include: ${team.url}
+
+Mine    https://mine.example.com/
+`);
+    const actual = await collection_resolve_includes(mine, GROUP_UID);
+    assert.deepEqual(actual.items.map(v => [v.label, v.image_url]), [
+        ['Mine', null],
+        ['Team', 'https://team.example.com/sea.jpg'],
+    ]);
+    assert.equal(actual.meta.picture, undefined);
+});
+
 test('an @name a pulled document names no picture for is no picture', async function () {
     await using server = await make_text_server(`% picture board: https://team.example.com/board.png
 
