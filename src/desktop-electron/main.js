@@ -54,6 +54,7 @@ const pid_from_lock_target = require('./helpers/pid_from_lock_target');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
 const settings_from_raw = require('./helpers/settings_from_raw');
 const start_failure_text = require('./helpers/start_failure_text');
+const text_design_set = require('./helpers/text_design_set');
 const url_from_path = require('url').pathToFileURL;
 
 // This instance quits for a start that takes its place (`second-instance` in main): whatever it
@@ -1050,14 +1051,6 @@ async function design_of_collection(collection)
 function design_url(design)
 {
     return `navplace://app/designs/${encodeURIComponent(design)}/index.html`;
-}
-
-// The text with `% design: <design>` in place of the line it had, or as a first line
-function text_design_set(text, design)
-{
-    const line = `% design: ${design}`;
-    const re = /^[ \t]*%[ \t]*design[ \t]*:.*$/m;
-    return re.test(text) ? text.replace(re, line) : `${line}\n${text}`;
 }
 
 // GNOME's <Ctrl><Shift><Alt>N as people write it, Ctrl+Shift+Alt+N
