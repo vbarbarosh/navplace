@@ -1382,6 +1382,14 @@ function main()
     document.querySelector('.theme-switch').addEventListener('click', function () {
         theme_save((document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark');
     });
+    // A visitor who chose the page's theme and never a design's finds the designs in the page's
+    try {
+        if (localStorage.getItem('navplace.theme') && !localStorage.getItem('navplace.design.theme')) {
+            localStorage.setItem('navplace.design.theme', document.documentElement.dataset.theme);
+        }
+    }
+    catch {
+    }
 
     // Download gives the file itself: the AppImage of the latest release, asked of GitHub at the
     // click. No answer in time, or no such file there: the link goes where it says, the release's page
@@ -1647,11 +1655,14 @@ async function appimage_href_load()
     }
 }
 
+// The designs shown on the page turn with it: each hears that its saved theme changed
+// (lib/theme_switch.js) and takes the new one
 function theme_save(theme)
 {
     document.documentElement.dataset.theme = theme;
     try {
         localStorage.setItem('navplace.theme', theme);
+        localStorage.setItem('navplace.design.theme', theme);
     }
     catch {
     }
