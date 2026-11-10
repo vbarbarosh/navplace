@@ -1027,6 +1027,7 @@ Gmail   https://mail.google.com/
 <h3 id="architecture-site">The site</h3>
 <ul>
     <li><code>bin/build</code> puts the site together in <code>build/www/</code>: <code>src/www/</code>, <code>lib/</code> without the tests, the CLI and <code>is_public_domain.js</code>, <code>designs/</code>, and <code>designs/index.json</code>, the Playground's list of designs with the files of each. It ends with <code>bin/self-check</code>: every built script must parse, and every file a page names must be there.</li>
+    <li>The picture a chat shows for a link, <code>cover-1200x630.jpg</code>, is the home page photographed: <code>bin/cover</code> takes it again from the live site.</li>
 </ul>
 
 <!-- ============================================================ -->
@@ -1039,6 +1040,9 @@ bin/test
 
 # the static site, into build/www/, then its self-check
 bin/build
+
+# the picture of a shared link, taken again from the live home page
+bin/cover
 
 # the desktop app from source
 src/desktop-electron/bin/run      # run it

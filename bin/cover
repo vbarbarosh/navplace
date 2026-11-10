@@ -1,0 +1,168 @@
+#!/usr/bin/env node
+
+// The picture a chat or a search engine shows for a link to the site: src/www/cover-1200x630.jpg,
+// the pages' og:image. It is the home page itself, photographed: its logo, its headline and the
+// app's window. Run it after the home page's look has changed and is live:
+//
+//     bin/cover [url]
+//
+// - `url` is the home page to photograph; https://navplace.com/ when left out. The live site, as
+//   only there the designs take their icons from the site's own service.
+// - Chrome does it, driven over its DevTools port: `google-chrome` on PATH, or the program named
+//   in CHROME. CHROME_ARGS adds arguments, `--no-sandbox` in a container.
+// - The page is shown still, as to a visitor who asked for less motion, and without what is not
+//   the picture's: the top bar's links, the buttons, the keys under the window. The window's
+//   title loses the app's version, so a release does not make the picture old.
+
+const child_process = require('child_process');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+const COVER_FILE = path.resolve(__dirname, '../src/www/cover-1200x630.jpg');
+const WIDTH = 1200;
+const HEIGHT = 630;
+
+// The home page as the picture has it
+const COVER_STYLE = `
+    html { scrollbar-width: none; }
+    .topbar { position: static !important; border: 0 !important; background: transparent !important; }
+    .topbar nav, .topbar .ends, .hero .eyebrow, .cta, .cta-note, .opened, .desk-keys, .browser { display: none !important; }
+    .topbar-row { height: 84px !important; }
+    .brand { gap: 14px !important; font-size: 30px !important; }
+    .brand .mark { width: 46px !important; height: 46px !important; border-radius: 13px !important; }
+    .brand .mark svg { width: 30px !important; height: 30px !important; }
+    .hero { padding-top: 0 !important; }
+    .hero h1 { margin-top: 6px !important; font-size: 66px !important; }
+    .hero .lead { max-width: 760px !important; margin-top: 16px !important; font-size: 21px !important; }
+    .desk { margin-top: 34px !important; padding: 30px 44px 0 !important; border-radius: 22px 22px 0 0 !important; }
+`;
+
+main().catch(function (error) {
+    console.error(`bin/cover failed: ${error.message}`);
+    process.exit(1);
+});
+
+async function main()
+{
+    const url = process.argv[2] ?? 'https://navplace.com/';
+    const profile_dir = fs.mkdtempSync(path.join(os.tmpdir(), 'navplace-cover-'));
+    const chrome = child_process.spawn(process.env.CHROME ?? 'google-chrome', [
+        '--headless=new',
+        '--remote-debugging-port=0',
+        `--user-data-dir=${profile_dir}`,
+        '--hide-scrollbars',
+        '--force-prefers-reduced-motion',
+        `--window-size=${WIDTH},${HEIGHT}`,
+        ...(process.env.CHROME_ARGS ?? '').split(' ').filter(Boolean),
+        'about:blank',
+    ], {stdio: ['ignore', 'ignore', 'pipe']});
+    try {
+        const browser = await devtools_connect(await devtools_url_read(chrome));
+        const {targetId} = await browser.send('Target.createTarget', {url: 'about:blank'});
+        const {sessionId} = await browser.send('Target.attachToTarget', {targetId, flatten: true});
+        const page = {send: (method, params) => browser.send(method, params, sessionId)};
+        await page.send('Page.enable');
+        await page.send('Emulation.setDeviceMetricsOverride', {width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: false});
+        const loaded = browser.event_wait('Page.loadEventFired', sessionId);
+        await page.send('Page.navigate', {url});
+        await loaded;
+        const shown = await page.send('Runtime.evaluate', {expression: `(${page_prepare})(${JSON.stringify(COVER_STYLE)})`, awaitPromise: true, returnByValue: true});
+        if (shown.exceptionDetails || (shown.result.value !== true)) {
+            throw new Error(`${url} is not the home page: ${shown.exceptionDetails?.exception?.description ?? 'no app window in it'}`);
+        }
+        const shot = await page.send('Page.captureScreenshot', {format: 'jpeg', quality: 88, clip: {x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1}});
+        fs.writeFileSync(COVER_FILE, Buffer.from(shot.data, 'base64'));
+        console.log(`${path.relative(process.cwd(), COVER_FILE)}: ${WIDTH}×${HEIGHT}, ${Math.round(fs.statSync(COVER_FILE).size/1024)} KB, from ${url}`);
+        browser.close();
+    }
+    finally {
+        chrome.kill();
+        fs.rmSync(profile_dir, {recursive: true, force: true, maxRetries: 5});
+    }
+}
+
+// Runs in the page: the cover's style goes in, the window's title loses the version, and the
+// app's window is waited for with its links in it. True once the page is as the picture has it
+async function page_prepare(style)
+{
+    const title = document.querySelector('.window-title');
+    const frame = document.querySelector('.window-view iframe');
+    if (!title || !frame) {
+        return false;
+    }
+    document.head.append(Object.assign(document.createElement('style'), {textContent: style}));
+    title.textContent = title.textContent.replace(/ — v[\d.]+$/, '');
+    for (let i = 0; i < 100; ++i) {
+        const icons = Array.from(frame.contentDocument?.querySelectorAll('tbody img') ?? []);
+        if (icons.length && icons.every(v => v.complete)) {
+            // The page lays itself out again under the new style
+            await new Promise(v => setTimeout(v, 500));
+            return true;
+        }
+        await new Promise(v => setTimeout(v, 100));
+    }
+    return false;
+}
+
+// Chrome says where its DevTools listen in a line of its stderr
+function devtools_url_read(chrome)
+{
+    return new Promise(function (resolve, reject) {
+        let text = '';
+        chrome.stderr.on('data', function (chunk) {
+            text += chunk;
+            const found = /DevTools listening on (ws:\/\/\S+)/.exec(text);
+            if (found) {
+                resolve(found[1]);
+            }
+        });
+        chrome.on('error', e => reject(new Error(`Chrome did not start: ${e.message}`)));
+        chrome.on('exit', v => reject(new Error(`Chrome ended before it listened, code ${v}: ${text.trim().split('\n').pop()}`)));
+        setTimeout(() => reject(new Error('Chrome did not say where its DevTools listen within 20 s')), 20000);
+    });
+}
+
+// A DevTools connection: {send(method, params, session_id), event_wait(method, session_id), close()}
+function devtools_connect(url)
+{
+    return new Promise(function (resolve, reject) {
+        const socket = new WebSocket(url);
+        const pending = new Map();
+        const waiting = [];
+        let next_id = 1;
+        socket.addEventListener('error', () => reject(new Error(`no DevTools connection at ${url}`)));
+        socket.addEventListener('message', function (event) {
+            const message = JSON.parse(event.data);
+            if (message.id) {
+                const {resolve: done, reject: fail} = pending.get(message.id);
+                pending.delete(message.id);
+                if (message.error) {
+                    fail(new Error(message.error.message));
+                    return;
+                }
+                done(message.result);
+                return;
+            }
+            for (const wait of waiting.filter(v => (v.method === message.method) && (v.session_id === message.sessionId))) {
+                waiting.splice(waiting.indexOf(wait), 1);
+                wait.resolve(message.params);
+            }
+        });
+        socket.addEventListener('open', function () {
+            resolve({
+                send: function (method, params = {}, session_id = undefined) {
+                    return new Promise(function (done, fail) {
+                        const id = next_id++;
+                        pending.set(id, {resolve: done, reject: fail});
+                        socket.send(JSON.stringify({id, method, params, sessionId: session_id}));
+                    });
+                },
+                event_wait: function (method, session_id) {
+                    return new Promise(v => waiting.push({method, session_id, resolve: v}));
+                },
+                close: () => socket.close(),
+            });
+        });
+    });
+}
