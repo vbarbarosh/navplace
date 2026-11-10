@@ -748,7 +748,8 @@
             }
 
             const text = make_elem('div', {class: 'text'});
-            text.appendChild(make_elem('a', {class: 'label', href, text: label}));
+            // A name too long for its row is cut with an ellipsis: its full text is in the title
+            text.appendChild(make_elem('a', {class: 'label', href, title: label, text: label}));
             text.appendChild(make_elem('div', {class: 'href', text: text_truncate_middle(href, 110)}));
             row.appendChild(text);
 
