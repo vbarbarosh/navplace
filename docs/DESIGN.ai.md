@@ -410,7 +410,7 @@ The canonical presentation-style design. Powers https://vbarbarosh.com. Vanilla 
     </div>
 
     <div class="search">
-        <input id="search" type="search" placeholder="Search" autocomplete="off" />
+        <input id="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search" />
     </div>
 
     <h2 class="section-title">Showcase</h2>
