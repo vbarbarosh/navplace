@@ -481,6 +481,112 @@
             white-space: nowrap;
         }
 
+        /* The browser a link opened in, drawn where the app's window was while it is away */
+        .browser {
+            transition: opacity 220ms ease, transform 220ms ease;
+            position: absolute;
+            top: clamp(14px, 4vw, 44px);
+            bottom: calc(clamp(14px, 4vw, 44px) + 46px);
+            left: 50%;
+            display: flex;
+            flex-direction: column;
+            width: min(880px, calc(100% - 2*clamp(14px, 4vw, 44px)));
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--panel);
+            box-shadow: var(--window-shadow);
+            opacity: 0;
+            transform: translateX(-50%) scale(0.97);
+            pointer-events: none;
+            text-align: left;
+        }
+
+        .window.away + .browser {
+            opacity: 1;
+            transform: translateX(-50%);
+        }
+
+        .browser-tabs {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 40px;
+            padding: 0 12px;
+            background: var(--window-bar);
+        }
+
+        .browser-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            height: 32px;
+            padding: 0 14px;
+            border-radius: 9px 9px 0 0;
+            color: var(--text-soft);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .browser-tab.current {
+            background: var(--panel);
+            color: var(--text);
+        }
+
+        .browser-tab img {
+            flex: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        .browser-tab span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .browser-address {
+            margin: 10px 12px;
+            padding: 7px 14px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: var(--code-bg);
+            color: var(--text);
+            font-size: 14px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .browser-page {
+            display: grid;
+            align-content: start;
+            gap: 14px;
+            padding: 16px 26px;
+        }
+
+        .browser-page i {
+            height: 14px;
+            border-radius: 7px;
+            background: var(--code-bg);
+        }
+
+        .browser-page i:nth-child(1) {
+            width: 38%;
+            height: 22px;
+        }
+
+        .browser-page i:nth-child(2) {
+            width: 82%;
+        }
+
+        .browser-page i:nth-child(3) {
+            width: 74%;
+        }
+
+        .browser-page i:nth-child(4) {
+            width: 55%;
+        }
+
         .try {
             margin: 14px 0 0;
             color: var(--text-soft);
@@ -682,6 +788,82 @@
             color: var(--danger);
         }
 
+        /* The designs, each one live in a small frame: nothing in it takes a click or the focus */
+        .looks {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin: 32px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .looks li {
+            transition: transform 150ms ease, box-shadow 150ms ease;
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            background: var(--panel);
+        }
+
+        .looks li:hover {
+            box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .look-view {
+            position: relative;
+            aspect-ratio: 16/10;
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+            background: var(--code-bg);
+        }
+
+        .look-view iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 0;
+            transform-origin: 0 0;
+        }
+
+        .looks a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 11px 14px;
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        /* The whole card is the link */
+        .looks a::after {
+            position: absolute;
+            inset: 0;
+            content: "";
+        }
+
+        .looks code {
+            overflow: hidden;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 400;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .looks a span {
+            flex: none;
+        }
+
+        .looks-more {
+            margin: 20px 0 0;
+        }
+
         .install {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -725,10 +907,20 @@
             align-self: flex-start;
         }
 
+        .install p.or {
+            color: var(--text-mute);
+            font-size: 13px;
+        }
+
+        .install .gear {
+            width: 15px;
+            height: 15px;
+            vertical-align: -2px;
+        }
+
         .web {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: center;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: 24px;
             margin-top: 28px;
             padding: 24px;
@@ -747,9 +939,47 @@
             font-size: 13px;
         }
 
-        .web-links {
+        .web-code,
+        .web-made {
             display: flex;
             flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .web-code pre {
+            flex: 1;
+        }
+
+        .web-label {
+            color: var(--text-mute);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .web-view {
+            position: relative;
+            flex: 1;
+            min-height: 250px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .web-view iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 0;
+            transform-origin: 0 0;
+        }
+
+        .web-links {
+            display: flex;
+            flex-wrap: wrap;
+            grid-column: 1 / -1;
             gap: 10px;
         }
 
@@ -789,6 +1019,8 @@
             }
 
             .window,
+            .browser,
+            .looks li,
             .opened,
             .keys kbd {
                 transition: none;
@@ -798,7 +1030,16 @@
         @media (max-width: 860px) {
             .steps,
             .install {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .looks {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .looks a span {
+                display: none;
             }
 
             .split {
@@ -808,11 +1049,6 @@
 
             .web {
                 grid-template-columns: minmax(0, 1fr);
-            }
-
-            .web-links {
-                flex-direction: row;
-                flex-wrap: wrap;
             }
         }
 
@@ -844,6 +1080,19 @@
             .desk-keys {
                 font-size: 13px;
             }
+
+            /* A command wider than the phone goes on to the next line, whole to read */
+            .install pre {
+                overflow-wrap: anywhere;
+                white-space: pre-wrap;
+            }
+        }
+
+        /* The narrowest phones: the bar has room for one link */
+        @media (max-width: 350px) {
+            .topbar nav .mid {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -858,7 +1107,7 @@
         <nav aria-label="Main navigation">
             <a class="wide" href="#how">How it works</a>
             <a href="docs.html">Docs</a>
-            <a class="wide" href="playground.html">Playground</a>
+            <a class="mid" href="playground.html">Playground</a>
         </nav>
         <div class="ends">
             <a class="icon-link" href="https://github.com/vbarbarosh/navplace" title="NavPlace on GitHub" aria-label="NavPlace on GitHub">
@@ -877,15 +1126,16 @@
     <section class="hero" aria-labelledby="title">
         <p class="eyebrow">Desktop app for Linux</p>
         <h1 id="title">Every link, a keystroke away.</h1>
-        <p class="lead">Press <span class="keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd><kbd>N</kbd></span>, type a few letters, hit <kbd>Enter</kbd>. NavPlace opens the link in your browser and steps aside until you need it again.</p>
+        <p class="lead">A launcher for the sites you open every day. Press <span class="keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd><kbd>N</kbd></span>, type a few letters, hit <kbd>Enter</kbd>: the site is open.</p>
         <div class="cta">
-            <a class="btn btn-primary" href="https://github.com/vbarbarosh/navplace/releases/latest">
+            <a class="btn btn-primary" href="https://github.com/vbarbarosh/navplace/releases/latest" data-download>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
                 Download for Linux
             </a>
             <a class="btn" href="#how">How it works</a>
         </div>
-        <p class="cta-note">Linux AppImage · free and open source</p>
+        <!-- The released version goes before the words; bin/build writes it in place of the mark -->
+        <p class="cta-note"><!-- app version, a dot after -->one AppImage file, about 130 MB · free and open source</p>
 
         <div class="desk">
             <div class="window" aria-label="The NavPlace app window, live">
@@ -898,6 +1148,11 @@
                 <div class="window-view">
                     <iframe title="NavPlace, the github design" tabindex="-1"></iframe>
                 </div>
+            </div>
+            <div class="browser" aria-hidden="true">
+                <div class="browser-tabs"></div>
+                <div class="browser-address"></div>
+                <div class="browser-page"><i></i><i></i><i></i><i></i></div>
             </div>
             <div class="desk-keys" aria-hidden="true">
                 <span class="keys">
@@ -918,7 +1173,7 @@
 
     <section class="section" id="how" aria-labelledby="how-title">
         <div class="section-head">
-            <h2 id="how-title">Three keys, and you are there</h2>
+            <h2 id="how-title">Three moves, and you are there</h2>
             <p>No tabs to hunt for, no bookmarks bar to dig through. The same few moves, dozens of times a day.</p>
         </div>
         <ol class="steps">
@@ -972,6 +1227,40 @@ Electron         https://www.electronjs.org/docs/latest/</pre>
         </div>
     </section>
 
+    <section class="section" id="looks" aria-labelledby="looks-title">
+        <div class="section-head">
+            <h2 id="looks-title">One line changes the look</h2>
+            <p>Thirteen designs come with NavPlace, from a bare command palette to a wall of picture tiles. Or write your own.</p>
+        </div>
+        <ul class="looks">
+            <li>
+                <div class="look-view" inert><iframe title="The basic design" tabindex="-1" data-design="basic"></iframe></div>
+                <a href="playground.html?design=basic"><code>% design: basic</code><span>Try it →</span></a>
+            </li>
+            <li>
+                <div class="look-view" inert><iframe title="The cards design" tabindex="-1" data-design="cards"></iframe></div>
+                <a href="playground.html?design=cards"><code>% design: cards</code><span>Try it →</span></a>
+            </li>
+            <li>
+                <div class="look-view" inert><iframe title="The palette design" tabindex="-1" data-design="palette"></iframe></div>
+                <a href="playground.html?design=palette"><code>% design: palette</code><span>Try it →</span></a>
+            </li>
+            <li>
+                <div class="look-view" inert><iframe title="The google-chrome design" tabindex="-1" data-design="google-chrome"></iframe></div>
+                <a href="playground.html?design=google-chrome"><code>% design: google-chrome</code><span>Try it →</span></a>
+            </li>
+            <li>
+                <div class="look-view" inert><iframe title="The basic-for-kids design" tabindex="-1" data-design="basic-for-kids"></iframe></div>
+                <a href="playground.html?design=basic-for-kids"><code>% design: basic-for-kids</code><span>Try it →</span></a>
+            </li>
+            <li>
+                <div class="look-view" inert><iframe title="The showcase design" tabindex="-1" data-design="showcase"></iframe></div>
+                <a href="playground.html?design=showcase"><code>% design: showcase</code><span>Try it →</span></a>
+            </li>
+        </ul>
+        <p class="looks-more"><a class="btn" href="playground.html">See all 13 in the Playground</a></p>
+    </section>
+
     <section class="section" id="download" aria-labelledby="download-title">
         <div class="section-head">
             <h2 id="download-title">Set up in a minute</h2>
@@ -981,7 +1270,7 @@ Electron         https://www.electronjs.org/docs/latest/</pre>
             <li>
                 <h3>1. Download</h3>
                 <p>The latest release, a single AppImage file.</p>
-                <a class="btn btn-primary" href="https://github.com/vbarbarosh/navplace/releases/latest">Download for Linux</a>
+                <a class="btn btn-primary" href="https://github.com/vbarbarosh/navplace/releases/latest" data-download>Download for Linux</a>
             </li>
             <li>
                 <h3>2. Run</h3>
@@ -991,7 +1280,8 @@ Electron         https://www.electronjs.org/docs/latest/</pre>
             </li>
             <li>
                 <h3>3. Add the hotkey</h3>
-                <p>Once, on GNOME: registers <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd><kbd>N</kbd>. Needs <code>node</code> on your PATH.</p>
+                <p>Once, on GNOME, in the app: the gear <svg class="gear" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>, then <strong>GNOME setup</strong>, <strong>Set up</strong>. It registers <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd><kbd>N</kbd>. Needs <code>node</code> on your PATH.</p>
+                <p class="or">Or from a terminal:</p>
 <pre data-lang="shell">./NavPlace-*.AppImage --configure-gnome</pre>
             </li>
         </ol>
@@ -1003,10 +1293,20 @@ Electron         https://www.electronjs.org/docs/latest/</pre>
             <p>Every NavPlace design also works as a web page or a widget: one script tag on any page.</p>
         </div>
         <div class="web">
+            <div class="web-code">
+                <div class="web-label">You paste</div>
 <pre data-lang="embed">&lt;script src="https://navplace.com/lib/embed.js" data-links="
-% design: showcase
-GitHub   https://github.com/
+% design: basic
+GitHub    https://github.com/
+Gmail     https://mail.google.com/
+Calendar  https://calendar.google.com/
+YouTube   https://www.youtube.com/
 "&gt;&lt;/script&gt;</pre>
+            </div>
+            <div class="web-made">
+                <div class="web-label">You get</div>
+                <div class="web-view" inert><iframe title="The widget this code makes" tabindex="-1"></iframe></div>
+            </div>
             <div class="web-links">
                 <a class="btn" href="playground.html">Try the designs</a>
                 <a class="btn" href="docs.html">Read the docs</a>
@@ -1059,10 +1359,18 @@ function main()
     const win = document.querySelector('.window');
     const view = document.querySelector('.window-view');
     const iframe = view.querySelector('iframe');
+    const browser_tabs = document.querySelector('.browser-tabs');
+    const browser_address = document.querySelector('.browser-address');
     const opened = document.querySelector('.opened');
     const opened_text = opened.querySelector('span');
     const typed_key = document.querySelector('[data-key="typed"]');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // The links of the demo as the app has them, each with its icon
+    const demo_items = parse(DEFAULT_README).items;
+    // The other designs on the page, {place, frame, design, text}: `text` is what the design is given
+    // once it is ready, or a promise of it
+    const shown_designs = [];
 
     let ready = false;
     let playing = !reduced;
@@ -1075,14 +1383,59 @@ function main()
         theme_save((document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark');
     });
 
+    // Download gives the file itself: the AppImage of the latest release, asked of GitHub at the
+    // click. No answer in time, or no such file there: the link goes where it says, the release's page
+    for (const link of document.querySelectorAll('a[data-download]')) {
+        link.addEventListener('click', async function (event) {
+            if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+                return;
+            }
+            event.preventDefault();
+            location.href = await appimage_href_load() ?? link.href;
+        });
+    }
+
     new ResizeObserver(window_fit).observe(view);
     window_fit();
 
-    window.addEventListener('message', function (event) {
-        if ((event.source !== iframe.contentWindow) || (event.data?.type !== 'navplace:ready')) {
+    // "One line changes the look": each design with its own sample, at the app's size
+    for (const place of document.querySelectorAll('.look-view')) {
+        const frame = place.querySelector('iframe');
+        new ResizeObserver(() => frame_fit(place, frame, 960, 600)).observe(place);
+        shown_designs.push({place, frame, design: frame.dataset.design, text: null});
+    }
+    // The widget the embed's code makes: the links are read from that code, so the two never differ
+    for (const place of document.querySelectorAll('.web-view')) {
+        const frame = place.querySelector('iframe');
+        const text = /data-links="([^"]*)"/.exec(document.querySelector('pre[data-lang=embed]').textContent)[1];
+        new ResizeObserver(() => frame_fit(place, frame, Math.round(place.clientWidth/0.65))).observe(place);
+        shown_designs.push({place, frame, design: /^%\s*design:\s*(\S+)/m.exec(text)[1], text});
+    }
+    // Each starts as the visitor comes near it, so the page opens as fast as with the demo alone
+    const starting = new IntersectionObserver(function (entries) {
+        for (const entry of entries.filter(v => v.isIntersecting)) {
+            starting.unobserve(entry.target);
+            design_start(shown_designs.find(v => v.place === entry.target));
+        }
+    }, {rootMargin: '600px'});
+    for (const shown of shown_designs) {
+        starting.observe(shown.place);
+    }
+
+    window.addEventListener('message', async function (event) {
+        if (event.data?.type !== 'navplace:ready') {
             return;
         }
-        iframe.contentWindow.postMessage({type: 'navplace:items-text', text: DEFAULT_README}, location.origin);
+        if (event.source === iframe.contentWindow) {
+            iframe.contentWindow.postMessage({type: 'navplace:items-text', text: DEFAULT_README}, location.origin);
+            return;
+        }
+        // A sample that did not load: the design shows the few links it starts with
+        const shown = shown_designs.find(v => v.frame.contentWindow === event.source);
+        const text = await shown?.text;
+        if (typeof text === 'string') {
+            shown.frame.contentWindow.postMessage({type: 'navplace:items-text', text}, location.origin);
+        }
     });
     iframe.addEventListener('load', function () {
         const doc = iframe.contentDocument;
@@ -1130,15 +1483,48 @@ function main()
     });
 
     function window_fit() {
-        const width = view.clientWidth;
-        // The app's window is 1200×1000 at zoom 1.25: 960 CSS pixels wide
-        const inner_width = (width < 600) ? 640 : 960;
-        const inner_height = (width < 600) ? 560 : 520;
-        const scale = width/inner_width;
-        iframe.style.width = `${inner_width}px`;
-        iframe.style.height = `${inner_height}px`;
-        iframe.style.transform = `scale(${scale})`;
+        // The app's window is 1200×1000 at zoom 1.25: 960 CSS pixels wide. On a phone a narrower
+        // one, so its text stays large enough to read
+        const inner_width = (view.clientWidth < 600) ? 430 : 960;
+        const inner_height = (view.clientWidth < 600) ? 470 : 520;
+        const scale = frame_fit(view, iframe, inner_width, inner_height);
         view.style.height = `${Math.round(inner_height*scale)}px`;
+    }
+
+    // A design is drawn at the size given and scaled to the width of its place; with no height
+    // given it fills the place
+    function frame_fit(place, frame, inner_width, inner_height) {
+        const scale = place.clientWidth/inner_width;
+        frame.style.width = `${inner_width}px`;
+        frame.style.height = `${inner_height ?? Math.round(place.clientHeight/scale)}px`;
+        frame.style.transform = `scale(${scale})`;
+        return scale;
+    }
+
+    function design_start(shown) {
+        // Its own sample, unless its links are given
+        shown.text ??= sample_load(shown.design);
+        // A design takes the focus as it starts, and the keys with it: it goes back to where it
+        // was, the page or the search of the demo the visitor is typing in
+        const holder = (document.activeElement === iframe) ? search_input_find() : document.activeElement;
+        shown.frame.addEventListener('load', function () {
+            if (document.activeElement === shown.frame) {
+                shown.frame.blur();
+                holder?.focus({preventScroll: true});
+            }
+        });
+        shown.frame.src = `designs/${shown.design}/index.html`;
+    }
+
+    // A design's own sample; null when it did not load
+    async function sample_load(design_name) {
+        try {
+            const response = await fetch(`designs/${design_name}/links.txt`);
+            return response.ok ? await response.text() : null;
+        }
+        catch {
+            return null;
+        }
     }
 
     function search_input_find() {
@@ -1169,6 +1555,26 @@ function main()
         opened_timer = setTimeout(() => opened.classList.remove('shown'), 2200);
     }
 
+    // The browser as the links left it: a tab for each, the last one in front
+    function browser_show(hrefs) {
+        browser_tabs.replaceChildren(...hrefs.map(function (href) {
+            const tab = document.createElement('span');
+            const name = document.createElement('span');
+            const icon_url = demo_items.find(v => v.href === href)?.icon_url;
+            tab.className = (href === hrefs.at(-1)) ? 'browser-tab current' : 'browser-tab';
+            name.textContent = new URL(href).host;
+            if (icon_url) {
+                const icon = document.createElement('img');
+                icon.alt = '';
+                icon.src = icon_url;
+                tab.append(icon);
+            }
+            tab.append(name);
+            return tab;
+        }));
+        browser_address.textContent = hrefs.at(-1);
+    }
+
     function refresh_desk_keys(keys) {
         for (const kbd of document.querySelectorAll('.desk-keys kbd')) {
             kbd.classList.toggle('down', keys.includes(kbd.dataset.key));
@@ -1195,6 +1601,8 @@ function main()
             }
             refresh_desk_keys(['Enter']);
             opened_show(top_hrefs_from_query(query));
+            // What the visitor finds when the window has gone
+            browser_show(top_hrefs_from_query(query));
             await sleep(450);
             if (!playing) {
                 return;
@@ -1224,6 +1632,19 @@ function main()
 function sleep(ms)
 {
     return new Promise(v => setTimeout(v, ms));
+}
+
+// The address of the AppImage in the latest release; null when GitHub did not say
+async function appimage_href_load()
+{
+    try {
+        const response = await fetch('https://api.github.com/repos/vbarbarosh/navplace/releases/latest', {signal: AbortSignal.timeout(3000)});
+        const release = await response.json();
+        return release.assets.find(v => v.name.endsWith('.AppImage'))?.browser_download_url ?? null;
+    }
+    catch {
+        return null;
+    }
 }
 
 function theme_save(theme)
