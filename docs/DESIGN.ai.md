@@ -134,6 +134,10 @@ So `%` is for document-wide directives; `#` and `@` are always per-item or per-s
 - With `% picture atari.png: <url>` in the file, `image_url` is that url on the web. In the desktop app a `data:` url comes as it is, and a web url comes as `app://picture/<key>`: the app fetches the picture once and answers with its kept copy. Use `image_url` as it comes, in an `<img>`; one the app could not fetch fails to load like any other.
 - Fall back gracefully: `item.image_url ?? item.icon_url`, and `item.icon_url` when the picture fails to load.
 
+### The picture behind the links
+
+- With `% picture background: <url>` in the user's own file, the runtime sets `--picture-background: url("<url>")` on `<html>` (in the desktop app `app://picture/<key>`, the kept copy), and takes it away when the line goes or the picture does not load. Use it with your own picture as the fallback: `background: var(--picture-background, url("photo.jpg"));`. A design with no picture behind its links can leave it alone.
+
 ## Required behavior
 
 A design **must**:

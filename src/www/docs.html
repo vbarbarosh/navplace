@@ -811,6 +811,7 @@ Grafana @board  https://grafana.com/
 % picture board: https://example.com/img/board.jpg</code></pre>
 <ul>
     <li>The desktop app fetches a picture from the web once and keeps it: the design shows the kept copy, with no network too. It asks over <code>https</code>, a public host only, and keeps a picture of 5 MB at most (PNG, JPEG, GIF, WebP, AVIF, ICO, or an SVG with no script). Anything else leaves the link without its picture; the log says why. A picture that failed is asked again at a later press of the hotkey, a minute apart at least. To fetch a kept one again, change its url.</li>
+    <li><code>% picture background:</code> is the picture behind the links. The designs with a photo of their own, <code>basic</code> and <code>first</code>, show yours in its place, and keep their own when yours does not load; the others have no picture behind their links and stay as they are. A link written <code>@background</code> gets the same picture on its tile. In a file pulled by <code>% include:</code>, it is a picture for that file's own <code>@background</code> links only.</li>
     <li>The same name twice: the last one wins. A line with no name before the colon, or with a value that is not one of the three kinds of url, is skipped with a warning, and <code>@name</code> stays a file under <code>~/.navplace/</code>.</li>
 </ul>
 
