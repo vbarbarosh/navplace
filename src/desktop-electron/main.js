@@ -177,15 +177,9 @@ async function main()
         const file = fs_path_resolve(electron.app.getPath('userData'), `favicons-v3/${sanitize_filename(domain)}.json`);
         // The site has no icon anywhere: kept a day, so a summon does not ask again
         const missing_file = `${file}.missing`;
-        const tile = new Response(letter_tile_svg(url.searchParams.get('letter'), domain), {
-            headers: {
-                'Content-Type': 'image/svg+xml',
-                'Cache-Control': 'max-age=3600',
-            },
-        });
         await fs_mkdirp(fs_path_dirname(file));
         if (await file_is_younger(missing_file, 24*60*60*1000)) {
-            return tile;
+            return make_tile_response();
         }
         // {type, base64}: the site's own icon (lib/icon_find.js, as on navplace.com), or null
         let icon;
@@ -207,7 +201,7 @@ async function main()
             });
         }
         catch {
-            return tile;
+            return make_tile_response();
         }
         return new Response(Buffer.from(icon.base64, 'base64'), {
             headers: {
@@ -215,6 +209,16 @@ async function main()
                 'Cache-Control': 'max-age=86400',
             },
         });
+
+        // The link's letter on a tile: what a site with no icon gets
+        function make_tile_response() {
+            return new Response(letter_tile_svg(url.searchParams.get('letter'), domain), {
+                headers: {
+                    'Content-Type': 'image/svg+xml',
+                    'Cache-Control': 'max-age=3600',
+                },
+            });
+        }
     });
 
     // navplace://app/designs/…, navplace://app/lib/… and navplace://app/settings/…, from the app's own folders
