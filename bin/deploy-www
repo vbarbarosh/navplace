@@ -22,6 +22,6 @@ cd $scriptdir/..
 # Cloudflare's account and token come from the environment:
 # CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN
 bin/build
-npx --yes wrangler@4.151.3 deploy --config src/cloudflare/wrangler.jsonc
+npx --yes wrangler@4.159.0 deploy --config src/cloudflare/wrangler.jsonc
 
 EXIT_MESSAGE="${GREEN}bin/deploy-www succeeded${RESET}"
