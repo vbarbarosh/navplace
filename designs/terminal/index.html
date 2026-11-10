@@ -1,0 +1,121 @@
+<!doctype html>
+<!-- A command line: a prompt to type at, the links as a listing, a section as a folder -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Terminal | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
+    <link href="theme.css" rel="stylesheet">
+</head>
+<body>
+<div class="screen">
+
+    <label class="prompt">
+        <span class="where">~/links</span>
+        <span class="sign">$</span>
+        <span class="verb">open</span>
+        <input id="search" type="search" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="Search">
+    </label>
+    <div id="count" class="count"></div>
+
+    <div id="rows" class="rows"></div>
+    <p id="empty" class="empty" hidden></p>
+
+    <div class="bar">
+        <span id="total"></span>
+        <span class="keys">↑↓ move &nbsp; ⏎ open &nbsp; esc clear</span>
+        <span data-theme-switch></span>
+    </div>
+</div>
+
+<script src="/lib/navplace.js"></script>
+<script>
+main();
+
+function main()
+{
+    const input = document.getElementById('search');
+    const rows = document.getElementById('rows');
+    const empty = document.getElementById('empty');
+    const count = document.getElementById('count');
+    const total = document.getElementById('total');
+    // The links drawn now, in their order on the page, and the row of each
+    let drawn = [];
+    let drawn_rows = [];
+    // How many links the file has: what is shown while nothing is typed
+    let links_count = 0;
+
+    navplace({
+        input: input,
+        meta: {title: '.where'},
+        update: (v, {item = null} = {}) => refresh_rows(v, item),
+    });
+
+    // Esc empties the prompt
+    document.addEventListener('keydown', function (event) {
+        if ((event.key === 'Escape') && !event.isComposing) {
+            event.preventDefault();
+            input.value = '';
+            input.dispatchEvent(new Event('input', {bubbles: true}));
+        }
+    });
+
+    // `current_item`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
+    function refresh_rows(items, current_item) {
+        // The same links as are drawn, ↑ or ↓ moved the mark: the rows stay and only the mark moves
+        if (items.length && (items.length === drawn.length) && items.every((v, i) => v === drawn[i])) {
+            for (const [i, row] of drawn_rows.entries()) {
+                row.classList.toggle('np-current', items[i] === current_item);
+            }
+            return;
+        }
+        const typed = input.value.trim();
+        if (!typed) {
+            links_count = items.length;
+        }
+        drawn = items.slice();
+        drawn_rows = items.map(v => make_row(v, v === current_item));
+        rows.replaceChildren(...drawn_rows);
+        // What the command line says under the prompt, and at the bottom of the screen
+        count.textContent = typed ? `${items.length} of ${links_count} match` : '';
+        total.textContent = `-- ${links_count} ${(links_count === 1) ? 'link' : 'links'} --`;
+        // No link to show: a search that finds nothing is told apart from a file with no links by the prompt
+        empty.hidden = (items.length > 0);
+        empty.textContent = typed ? `open: no link matches "${typed}"` : 'open: no links yet';
+    }
+
+    // The links file is not trusted: its text enters as text or a set attribute, never as HTML
+    function make_row(item, is_current) {
+        const row = document.createElement('a');
+        row.className = is_current ? 'row np-current' : 'row';
+        row.href = item.href;
+        // A section of the file stands as a folder before the name; a link with none is in ./
+        row.append(
+            make_text('dir', item.namespaces.length ? `${item.namespaces.join('/')}/` : './'),
+            make_text('name', item.label),
+            make_text('at', address_from_href(item.href)),
+        );
+        // A name too long for its row is cut with an ellipsis: its full text is in the title
+        row.title = item.label;
+        row.addEventListener('click', function (event) {
+            navplace.navigate(item, event);
+        });
+        return row;
+    }
+
+    function make_text(name, text) {
+        const out = document.createElement('span');
+        out.className = name;
+        out.textContent = text;
+        return out;
+    }
+
+    // The address without its scheme and its last slash, so its telling part comes first
+    function address_from_href(href) {
+        return String(href).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+    }
+}
+</script>
+</body>
+</html>

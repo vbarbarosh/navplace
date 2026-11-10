@@ -1,0 +1,18 @@
+% design: terminal
+% title: ~/links
+
+# code
+GitHub          https://github.com/
+GitLab          https://gitlab.com/
+Codeberg        https://codeberg.org/
+
+# docs
+MDN Web Docs    https://developer.mozilla.org/
+Node.js         https://nodejs.org/docs/latest/api/
+DevDocs         https://devdocs.io/
+Git book        https://git-scm.com/book
+
+# run
+Grafana         https://grafana.com/
+Sentry          https://sentry.io/
+Docker Hub      https://hub.docker.com/

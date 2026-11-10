@@ -1,0 +1,225 @@
+/* A terminal: one fixed-width type, a prompt on top, a status line at the bottom. Green on black
+   in the dark theme, ink on paper in the light one. */
+
+/* -------- COLOURS: light on :root, dark on :root[data-theme="dark"] (/lib/theme_switch.js) -------- */
+:root {
+    color-scheme: light;
+    --bg: #f3f5ee;
+    --fg: #1f3d23;
+    --bright: #0c1a0e;
+    --dim: #5d7461;
+    --dir: #0b5cad;
+    --line: #c3cdbf;
+    --mark-bg: #1f6f2b;
+    --mark-fg: #ffffff;
+    --lines: none;
+    /* The prompt sticks to the top of the view and the status line to its bottom: ↑ and ↓ stop a
+       row clear of both */
+    --top: 78px;
+    --bottom: 44px;
+    --np-scrollbar-thumb: #a9b6a5;
+    --np-scrollbar-track: var(--bg);
+    --np-switch-bg: var(--bg);
+    --np-switch-fg: var(--dim);
+    --np-switch-border: var(--line);
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0a0f0a;
+    --fg: #7ee787;
+    --bright: #e6ffe9;
+    --dim: #4f9159;
+    --dir: #79c0ff;
+    --line: #2c5a33;
+    --mark-bg: #7ee787;
+    --mark-fg: #0a0f0a;
+    --lines: repeating-linear-gradient(rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+    --np-scrollbar-thumb: #2c5a33;
+}
+
+/* -------- SCREEN -------- */
+* { box-sizing: border-box; }
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    background: var(--bg);
+    background-image: var(--lines);
+    color: var(--fg);
+    font: 17px/1.7 ui-monospace, "JetBrains Mono", "Cascadia Code", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    max-width: 980px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0 22px;
+}
+
+/* -------- PROMPT: where, the sign, the command, and what is typed; it stays at the top -------- */
+.prompt {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: baseline;
+    gap: 1ch;
+    padding: 18px 0 0;
+    background: var(--bg);
+    white-space: nowrap;
+}
+
+.where {
+    overflow: hidden;
+    max-width: 40%;
+    color: var(--dim);
+    text-overflow: ellipsis;
+}
+
+.sign {
+    color: var(--bright);
+}
+
+.prompt input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    color: var(--bright);
+    caret-color: var(--fg);
+    font: inherit;
+}
+
+/* The cross a search box draws to empty itself has no place at a prompt: Esc does it */
+.prompt input::-webkit-search-cancel-button {
+    display: none;
+}
+
+.count {
+    position: sticky;
+    top: 47px;
+    z-index: 2;
+    min-height: 1.7em;
+    margin-bottom: 8px;
+    background: var(--bg);
+    color: var(--dim);
+}
+
+/* -------- ROWS: the folder, the name, the address -------- */
+.row {
+    display: grid;
+    grid-template-columns: minmax(8ch, 14ch) minmax(12ch, 26ch) minmax(0, 1fr);
+    gap: 2ch;
+    padding: 0 1ch;
+    color: var(--fg);
+    text-decoration: none;
+    scroll-margin: var(--top) 0 var(--bottom);
+}
+
+.row span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dir {
+    color: var(--dir);
+}
+
+.name {
+    color: var(--bright);
+}
+
+.at {
+    color: var(--dim);
+}
+
+.row:hover .name {
+    text-decoration: underline;
+}
+
+/* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it: its row turned inside out, and no
+   ring around it */
+.row.np-current {
+    outline: none;
+    background: var(--mark-bg);
+}
+
+.row.np-current span {
+    color: var(--mark-fg);
+}
+
+/* -------- NOTHING TO SHOW -------- */
+.empty {
+    margin: 0;
+    padding: 0 1ch;
+    color: var(--dim);
+}
+
+/* Room between the last row and the status line */
+.rows,
+.empty {
+    margin-bottom: 14px;
+}
+
+/* -------- STATUS LINE: it stays at the bottom of the view -------- */
+.bar {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 2ch;
+    margin-top: auto;
+    padding: 7px 0 9px;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--dim);
+    font-size: 14px;
+}
+
+.bar .keys {
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.np-theme-switch {
+    width: 26px;
+    height: 26px;
+    border-radius: 0;
+}
+
+.np-theme-switch svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* -------- A PHONE: the folder and the name; the address has no room -------- */
+@media (max-width: 560px) {
+    body {
+        font-size: 15px;
+    }
+
+    .screen {
+        padding: 0 12px;
+    }
+
+    .row {
+        grid-template-columns: minmax(6ch, 10ch) minmax(0, 1fr);
+        gap: 1.5ch;
+    }
+
+    .at,
+    .bar .keys {
+        display: none;
+    }
+}
