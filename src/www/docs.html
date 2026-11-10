@@ -820,17 +820,22 @@ Grafana  @board  https://grafana.com/
 
 <!-- ============================================================ -->
 <h2 id="designs">Designs</h2>
-<p>A design is the look of your links, and one line picks it: <code>% design: cards</code>. Seven come with NavPlace. A click opens one in the Playground.</p>
+<p>A design is the look of your links, and one line picks it: <code>% design: cards</code>. Twelve come with NavPlace. A click opens one in the Playground.</p>
 <ul class="design-grid">
     <li><div class="design-view" inert><iframe title="The github design" tabindex="-1" data-design="github"></iframe></div><a href="playground.html?design=github"><code>github</code></a></li>
     <li><div class="design-view" inert><iframe title="The palette design" tabindex="-1" data-design="palette"></iframe></div><a href="playground.html?design=palette"><code>palette</code></a></li>
     <li><div class="design-view" inert><iframe title="The classic design" tabindex="-1" data-design="classic"></iframe></div><a href="playground.html?design=classic"><code>classic</code></a></li>
     <li><div class="design-view" inert><iframe title="The google-chrome design" tabindex="-1" data-design="google-chrome"></iframe></div><a href="playground.html?design=google-chrome"><code>google-chrome</code></a></li>
+    <li><div class="design-view" inert><iframe title="The terminal design" tabindex="-1" data-design="terminal"></iframe></div><a href="playground.html?design=terminal"><code>terminal</code></a></li>
+    <li><div class="design-view" inert><iframe title="The board design" tabindex="-1" data-design="board"></iframe></div><a href="playground.html?design=board"><code>board</code></a></li>
     <li><div class="design-view" inert><iframe title="The showcase design" tabindex="-1" data-design="showcase"></iframe></div><a href="playground.html?design=showcase"><code>showcase</code></a></li>
     <li><div class="design-view" inert><iframe title="The cards design" tabindex="-1" data-design="cards"></iframe></div><a href="playground.html?design=cards"><code>cards</code></a></li>
     <li><div class="design-view" inert><iframe title="The kids design" tabindex="-1" data-design="kids"></iframe></div><a href="playground.html?design=kids"><code>kids</code></a></li>
+    <li><div class="design-view" inert><iframe title="The recipes design" tabindex="-1" data-design="recipes"></iframe></div><a href="playground.html?design=recipes"><code>recipes</code></a></li>
+    <li><div class="design-view" inert><iframe title="The newspaper design" tabindex="-1" data-design="newspaper"></iframe></div><a href="playground.html?design=newspaper"><code>newspaper</code></a></li>
+    <li><div class="design-view" inert><iframe title="The bookshelf design" tabindex="-1" data-design="bookshelf"></iframe></div><a href="playground.html?design=bookshelf"><code>bookshelf</code></a></li>
 </ul>
-<p>The first four are launchers: a search box and a dense list, at their best in the desktop app. The other three are pages, with the content first. With no <code>% design:</code> line, the desktop app shows <code>github</code> and a widget on a page <code>classic</code>.</p>
+<p>The first six are launchers: a search box and a dense list, at their best in the desktop app. The other six are pages, with the content first. With no <code>% design:</code> line, the desktop app shows <code>github</code> and a widget on a page <code>classic</code>.</p>
 
 <h3 id="writing-a-design">Writing your own</h3>
 <p>A design is a folder with one <code>index.html</code>. It loads NavPlace's script, says where its search box is, and draws the links it is given:</p>

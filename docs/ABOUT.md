@@ -98,9 +98,9 @@ A **design** is a swappable visual theme applied to a collection. The same links
 
 Designs that ship in this repo, grouped by intent:
 
-- **Launchers** — `github`, `palette`, `classic`, `google-chrome`.
+- **Launchers** — `github`, `palette`, `classic`, `google-chrome`, `terminal`, `board`.
 - **Showcases / portfolios** — `showcase`, `cards`.
-- **Themed pages** — `kids`.
+- **Themed pages** — `kids`, `recipes`, `newspaper`, `bookshelf`.
 
 Each design is a folder under `designs/<name>/` with its own `index.html`; the parser hands it a list of items and the design decides how to draw them.
 
@@ -150,6 +150,11 @@ A design is an HTML folder under `designs/<name>/` that consumes the parsed item
 - `showcase` — a personal page: name header, email link, grid of items under the headings of the links file. (This is what `vbarbarosh.com` uses.)
 - `cards` — index cards with square corners, a colour for each section.
 - `kids` — big bright stickers under a sky, for children's sites.
+- `recipes` — a recipe box: a card with a picture for each link, tabs for the sections.
+- `newspaper` — a front page: the title as the masthead, a column for each section.
+- `bookshelf` — a book's spine for each link, a shelf for each section.
+- `terminal` — a command line: a prompt, the links as a listing, a section as a folder.
+- `board` — a departures board: a row for each link, its section as the gate.
 
 **Can I embed NavPlace on my own site?**
 Yes. One `<script src="…/embed.js" data-links="…">` tag in any HTML page. The script creates an iframe pointing at the chosen design and pipes the `data-links` text into it via `postMessage`. The iframe sizes itself to its container — the example above pins it to the viewport with `position: fixed; inset: 0`.

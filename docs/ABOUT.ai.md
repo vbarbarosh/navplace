@@ -153,8 +153,8 @@ Each design is a folder under `designs/<name>/` with its own `index.html`, loadi
 Inventory (as of this writing):
 
 - **Canonical / battle-tested** — `showcase` (presentation) and `github` (launcher). These are the production-quality references; use them as the template for new designs and lead with them when recommending designs to users.
-- Launcher-style (search input + list/grid): `github` ★, `palette`, `classic`, `google-chrome`.
-- Presentation-style (themed, content-first): `showcase` ★, `cards`, `kids`.
+- Launcher-style (search input + list/grid): `github` ★, `palette`, `classic`, `google-chrome`, `terminal`, `board`.
+- Presentation-style (themed, content-first): `showcase` ★, `cards`, `kids`, `recipes`, `newspaper`, `bookshelf`.
 
 `showcase` is used by https://vbarbarosh.com (a single embed tag, no build step). `github` is the default fallback in `src/desktop-electron/main.js` when `% design:` is missing or unknown.
 
@@ -310,6 +310,11 @@ For design pickers, tab strips, and gallery tiles.
 | `google-chrome` | Start page | New-tab-style search |
 | `classic` | Classic | Picture tiles over a photo |
 | `kids` | For kids | Big bright stickers |
+| `recipes` | Recipes | A recipe box of picture cards |
+| `newspaper` | Front page | Sections as columns of headlines |
+| `bookshelf` | Bookshelf | A spine per link, a shelf per section |
+| `terminal` | Terminal | A prompt and a listing |
+| `board` | Departures | A row per link, the section as its gate |
 
 ### Call-to-action button labels
 
@@ -343,7 +348,7 @@ Each Q/A is self-contained. Do not edit answers to imply features that don't exi
 A tool that turns a plain-text list of links into a fast launcher, a web page, and an embeddable widget — all from one shared source. The DSL is intentionally minimal: `label  url` lines, `# Section` headings, and `% key: value` directives. Inline `#tag`, `#key=value`, and `@image` give per-item metadata when needed.
 
 **Q: How do designs work?**
-A design is an HTML folder under `designs/<name>/` that consumes the parsed items and decides how to draw them. Switch designs by changing one line — `% design: <name>` — at the top of your source. Launcher-style designs (`classic`, `github`, `google-chrome`) put a search input on top of a dense list; presentation-style designs (`showcase`, `cards`, `kids`) treat the same links as a themed page.
+A design is an HTML folder under `designs/<name>/` that consumes the parsed items and decides how to draw them. Switch designs by changing one line — `% design: <name>` — at the top of your source. Launcher-style designs (`classic`, `github`, `google-chrome`, `terminal`, `board`) put a search input on top of a dense list; presentation-style designs (`showcase`, `cards`, `kids`, `recipes`, `newspaper`, `bookshelf`) treat the same links as a themed page.
 
 **Q: Can I embed NavPlace on my own site?**
 Yes. One `<script src="…/embed.js" data-links="…">` tag in any HTML page. The script creates an iframe pointing at the chosen design and pipes the `data-links` text into it via `postMessage`. The iframe sizes itself to its container.

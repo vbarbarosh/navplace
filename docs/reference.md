@@ -329,8 +329,8 @@ A design is a folder under `designs/` with its own `index.html`; the parser give
 
 | Kind | Designs |
 |---|---|
-| Launchers: a search box on top, a dense list below; best in the desktop app | `github` (the desktop default), `palette` (a command palette for the hotkey), `classic` (the embed default: the very first page, from a CodePen, with its own links), `google-chrome` |
-| Presentation: themed pages, content first | `showcase`, `cards` (sections as categories), `kids` (big stickers for children's sites) |
+| Launchers: a search box on top, a dense list below; best in the desktop app | `github` (the desktop default), `palette` (a command palette for the hotkey), `classic` (the embed default: the very first page, from a CodePen, with its own links), `google-chrome`, `terminal` (a command line), `board` (a departures board) |
+| Presentation: themed pages, content first | `showcase`, `cards` (sections as categories), `kids` (big stickers for children's sites), `recipes` (picture cards), `newspaper` (a front page), `bookshelf` (books on shelves) |
 
 ### Writing a design
 

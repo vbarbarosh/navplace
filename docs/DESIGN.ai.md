@@ -277,10 +277,10 @@ When designing, decide which family the brief belongs to. Each has a different r
 
 - **Launcher style** — search-first, dense list/table, keyboard-driven. Best for the desktop app. Optimize for typing speed and information density.
   - **Canonical reference: `designs/github/`.** Imitate this for launcher briefs.
-  - Other examples: `palette` (a command palette), `google-chrome` (the look of Chrome's New Tab page, the file's `% title` as its wordmark), and the less polished `classic`.
+  - Other examples: `palette` (a command palette), `google-chrome` (the look of Chrome's New Tab page, the file's `% title` as its wordmark), `terminal` (a prompt and a listing, a section as a folder), `board` (a departures board), and the less polished `classic`.
 - **Presentation style** — themed page with personality, items as a styled grid or wall, search is secondary. Best for hosted pages and embeds. Optimize for visual identity.
   - **Canonical reference: `designs/showcase/`.** Imitate this for presentation briefs.
-  - Other examples: `cards` (index cards with square corners, a colour for each section), `kids` (big stickers for children's sites).
+  - Other examples: `cards` (index cards with square corners, a colour for each section), `kids` (big stickers for children's sites), `recipes` (picture cards, tabs for the sections), `newspaper` (a column for each section), `bookshelf` (a shelf for each section).
 
 ## Common patterns
 
