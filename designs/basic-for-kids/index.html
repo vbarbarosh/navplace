@@ -67,8 +67,11 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
+        /* The placeholder is never cut: on a narrow screen it shrinks as the box does. 4.4vw keeps
+           its 25 characters inside the box, 80% of the page wide, down to 320px */
         #search::placeholder {
             color: var(--placeholder);
+            font-size: min(1em, 4.4vw);
         }
 
         #results {
@@ -91,6 +94,8 @@
             color: var(--text);
             font-size: 24px;
             text-align: center;
+            /* A long name stays in its card: a word with no spaces breaks where the line ends */
+            overflow-wrap: anywhere;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
             transition: transform 0.2s ease;
         }
