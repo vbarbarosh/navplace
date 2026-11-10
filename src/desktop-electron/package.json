@@ -23,12 +23,21 @@
       "output": "build"
     },
     "files": [
-      "**/*"
+      "**/*",
+      "!bin",
+      "!afterPack.js",
+      "!**/*.test.js"
     ],
     "extraFiles": [
       {
         "from": "../../lib",
-        "to": "lib"
+        "to": "lib",
+        "filter": [
+          "**/*",
+          "!**/*.test.js",
+          "!parse.cli.js",
+          "!vendor/jsquash-avif-2"
+        ]
       },
       {
         "from": "../../designs",
