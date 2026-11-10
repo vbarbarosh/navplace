@@ -445,7 +445,9 @@
     {
         const box = document.createElement('span');
         box.className = 'icon';
-        box.textContent = (item.label || '?').trim().charAt(0).toUpperCase();
+        // The first letter or digit of the name, ? for a name with none: a name may open with an
+        // emoji or a mark, and half an emoji is no character
+        box.textContent = (String(item.label).match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase();
         if (item.icon_url) {
             const img = document.createElement('img');
             img.alt = '';
