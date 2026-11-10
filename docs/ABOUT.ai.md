@@ -132,7 +132,7 @@ Other desktop environments are not wired by `--configure-gnome`; the socket mech
 
 ## The site
 
-navplace.com is a Cloudflare Worker (`src/cloudflare/worker.js`) serving `build/www/`, which `bin/build` puts together: the pages in `src/www/`, `lib/` and `designs/`. The Worker also answers `/icon/<host>`; anything else is a 404. There is no server, no database and no account: to keep links in one place, a collection in the desktop app pulls them from any url with `% include: <url>`.
+navplace.com is a Cloudflare Worker (`src/cloudflare/worker.js`) serving `build/www/`, which `bin/build` puts together: the pages in `src/www/`, `lib/` and `designs/`. The Worker also answers `/icon/<host>`; anything else is a 404. The docs page, `src/www/docs.html`, is a short guide for people; every rule and edge case in full is `docs/reference.md`, where a new detail goes. There is no server, no database and no account: to keep links in one place, a collection in the desktop app pulls them from any url with `% include: <url>`.
 
 ## Embed widget
 
@@ -179,8 +179,8 @@ src/cloudflare/        the Worker on navplace.com: build/www and /icon/
 designs/               one folder per design, each with index.html
 src/www/               the site: index, docs, playground
 demos/                 standalone HTML demos of four designs
-bin/                   shell scripts (configure, build, self-check, deploy-www, test)
-docs/                  the product brief, the design guide, the desktop app
+bin/                   scripts (configure, build, self-check, deploy-www, test, cover)
+docs/                  the product brief, the design guide, the desktop app, the full reference
 notes/                 working notes: design prompts, similar projects, findings
 img/                   the cover and the GNOME install's icon
 package.json           name: "navplace"; the desktop app has its own in src/desktop-electron/
