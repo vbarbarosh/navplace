@@ -9,7 +9,7 @@
     "test": "mocha 'lib/**/*.test.js' 'src/cloudflare/**/*.test.mjs'"
   },
   "dependencies": {
-    "@vbarbarosh/node-helpers": "^3.79.1"
+    "@vbarbarosh/node-helpers": "^3.79.2"
   },
   "devDependencies": {
     "mocha": "^12.0.3"
