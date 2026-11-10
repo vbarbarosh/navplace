@@ -458,6 +458,8 @@
         shown = section ? matches.filter(v => v.namespaces.includes(section)) : matches.slice();
         grid.replaceChildren(...shown.map(make_card));
         empty.hidden = shown.length > 0;
+        // A search that finds nothing is told apart from a file with no links by the search box
+        empty.textContent = input.value.trim() ? 'No matches' : 'No links yet';
         // ↑ ↓ and Enter walk the cards of the section picked, not the hidden ones
         navplace.order_set?.(shown);
     }

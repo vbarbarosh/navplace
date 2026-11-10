@@ -370,6 +370,8 @@
     {
         rows.replaceChildren(...items.map(make_row));
         empty.hidden = items.length > 0;
+        // A search that finds nothing is told apart from a file with no links by the search box
+        empty.textContent = input.value.trim() ? 'No matches' : 'No links yet';
         count_element.textContent = plural(items.length, '# link', '# links');
         refresh_opens();
     }
