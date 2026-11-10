@@ -82,9 +82,9 @@ async function formats_make({id, blob, url, quality, side_max, url_max})
 
 function canvas_from_bitmap(bitmap, scale)
 {
-    const canvas = new OffscreenCanvas(Math.max(1, Math.round(bitmap.width*scale)), Math.max(1, Math.round(bitmap.height*scale)));
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return canvas;
+    const out = new OffscreenCanvas(Math.max(1, Math.round(bitmap.width*scale)), Math.max(1, Math.round(bitmap.height*scale)));
+    out.getContext('2d').drawImage(bitmap, 0, 0, out.width, out.height);
+    return out;
 }
 
 function canvas_is_transparent(canvas)
@@ -112,11 +112,11 @@ async function blob_from_canvas(canvas, format, quality)
     const image_data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
     // libavif's cqLevel: 0 is the best, 63 the worst
     const options = {cqLevel: Math.round(63*(1 - quality)), cqAlphaLevel: -1, denoiseLevel: 0, tileColsLog2: 0, tileRowsLog2: 0, speed: 6, subsample: 1, chromaDeltaQ: false, sharpness: 0, tune: 0};
-    const out = module.encode(image_data.data, image_data.width, image_data.height, options);
-    if (!out) {
+    const bytes = module.encode(image_data.data, image_data.width, image_data.height, options);
+    if (!bytes) {
         throw new Error('AVIF could not be made');
     }
-    return new Blob([out], {type: 'image/avif'});
+    return new Blob([bytes], {type: 'image/avif'});
 }
 
 function avif_module_load()

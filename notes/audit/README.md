@@ -121,7 +121,7 @@ text, and a click that keeps the page.
   what it does
 - [x] The site's tests never run in CI, and nothing runs on a pull request
 - [x] `bin/self-check` passes a build with a broken parser
-- [ ] The rules linter finds 15 faults outside the filter copy
+- [x] The rules linter finds 15 faults outside the filter copy
 - [x] Leftovers: a helper nothing requires, two dependencies nothing
   uses, ignore lines for folders nothing writes
 - [ ] No test for the runtime, the embed, the search filter
