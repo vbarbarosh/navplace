@@ -48,6 +48,7 @@ function main()
             </span>
             <span class="bookmark-label">{{ item.label }}</span>
         </a>
+        <div v-if="empty_note" class="empty-note">{{ empty_note }}</div>
     </div>
 </div>
 </div>
@@ -59,6 +60,8 @@ function main()
                 current: 0,
                 // Pictures that did not load: their links show the site's icon instead
                 failed: {},
+                // The line in place of the bookmarks when there are none; nothing until the links come
+                empty_note: '',
             };
         },
         methods: {
@@ -83,6 +86,7 @@ function main()
                 update: (v, {current = 0} = {}) => {
                     this.items.splice(0, this.items.length, ...v);
                     this.current = current;
+                    this.empty_note = v.length ? '' : (this.$refs.search.value.trim() ? 'Nothing found' : 'No links yet');
                 },
             });
         },

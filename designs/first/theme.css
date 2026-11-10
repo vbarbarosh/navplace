@@ -126,3 +126,16 @@ a {
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px); /* for Safari */
 }
+
+/* In place of the bookmarks when there are none: one line in the label's look, across the columns */
+.empty-note {
+    grid-column: 1 / -1;
+    justify-self: center;
+    color: white;
+    text-align: center;
+    font-size: 14px;
+    padding: 5px 14px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px); /* for Safari */
+}
