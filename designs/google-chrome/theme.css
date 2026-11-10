@@ -1,36 +1,38 @@
+/* The sizes and colours are those of Chrome's own New Tab page, measured in Chrome 157: the wordmark
+   272 by 92, the search box 746 by 48, a shortcut 112 by 112 with a round 48 icon plate. */
+
 /* -------- COLOURS: light on :root, dark on :root[data-theme="dark"] (/lib/theme_switch.js) -------- */
 :root {
     --bg: #ffffff;
     --fg: #202124;
-    --label: #3c4043;
+    --label: #000000;
+    /* The wordmark in four colours, a band for each sixth of it */
+    --logo: linear-gradient(90deg, #4285f4 0 17%, #ea4335 17% 34%, #fbbc05 34% 50%, #4285f4 50% 67%, #34a853 67% 84%, #ea4335 84% 100%);
     --search-bg: #ffffff;
-    --search-fg: #202124;
-    --search-border: #dfe1e5;
-    --search-shadow: 0 1px 6px rgba(32, 33, 36, 0.18);
-    --tile-bg: #f1f3f4;
-    --tile-bg-hover: #e8eaed;
-    --current-ring: #1a73e8;
+    --search-fg: #000000;
+    --search-shadow: 0 2px 6px rgba(60, 64, 67, 0.16), 0 0 0 1px rgba(60, 64, 67, 0.08);
+    --icon-bg: #edf2fa;
+    --tile-hover: rgba(32, 33, 36, 0.1);
+    --current-ring: #0b57d0;
     --np-scrollbar-thumb: rgba(60, 64, 67, 0.35);
     --np-scrollbar-track: var(--bg);
 
-    /* The search box sticks this far from the top of the view and is this tall: ↑ stops a tile
-       below it, the 3px ring of the current tile included */
-    --search-top: 48px;
-    --search-height: 56px;
+    /* The search box sticks this far from the top of the view and is this tall: ↑ stops a
+       shortcut below it */
+    --search-top: 16px;
+    --search-height: 48px;
 }
 
 :root[data-theme="dark"] {
-    --bg: #3f3f3f;
-    --fg: #eaeaea;
-    --label: #e0e0e0;
-    --search-bg: #ffffff;
-    --search-fg: #202124;
-    --search-border: transparent;
-    --search-shadow: none;
-    --tile-bg: #4a4a4a;
-    --tile-bg-hover: #5a5a5a;
-    --current-ring: #8ab4f8;
-    --np-scrollbar-thumb: rgba(234, 234, 234, 0.3);
+    --bg: #3c3c3c;
+    --fg: #e8eaed;
+    --label: #e8eaed;
+    --logo: linear-gradient(#ffffff, #ffffff);
+    --search-shadow: 0 2px 6px rgba(60, 64, 67, 0.16);
+    --icon-bg: #282828;
+    --tile-hover: rgba(255, 255, 255, 0.1);
+    --current-ring: #a8c7fa;
+    --np-scrollbar-thumb: rgba(232, 234, 237, 0.3);
 }
 
 /* -------- RESET -------- */
@@ -41,7 +43,7 @@ body {
     margin: 0;
     padding: 0;
     height: 100%;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+    font-family: Roboto, "Noto Sans", system-ui, -apple-system, "Segoe UI", Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* -------- BACKGROUND -------- */
@@ -56,13 +58,32 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 0 16px 32px;
+}
+
+/* -------- WORDMARK -------- */
+/* Its colours are painted through the letters: four in light, white in dark, as Chrome's own.
+   A low window gives it less room above; a long title gets smaller letters and may wrap */
+.logo {
+    margin: clamp(20px, 14.5vh, 132px) 0 38px;
+    max-width: 100%;
+    min-height: 92px;
+    background: var(--logo);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: clamp(40px, 12vw, 76px);
+    font-weight: 500;
+    line-height: 92px;
+    letter-spacing: -0.03em;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 /* -------- SEARCH -------- */
 .search-wrap {
     position: sticky;
     top: var(--search-top);
-    margin-top: var(--search-top);
     width: 100%;
     display: flex;
     justify-content: center;
@@ -70,20 +91,19 @@ body {
 }
 
 .search {
-    width: 720px;
-    max-width: calc(100% - 32px);
+    width: 746px;
+    max-width: 100%;
     height: var(--search-height);
     background: var(--search-bg);
-    border: 1px solid var(--search-border);
     box-shadow: var(--search-shadow);
-    border-radius: 28px;
+    border-radius: 24px;
     display: flex;
     align-items: center;
     padding: 0 16px;
     gap: 12px;
 }
 
-/* The keyboard is in the search box: it wears the ring of the current tile */
+/* The keyboard is in the search box: it wears the ring of the current shortcut */
 .search:focus-within {
     outline: 2px solid var(--current-ring);
     outline-offset: -1px;
@@ -101,6 +121,8 @@ body {
     background: transparent;
     color: var(--search-fg);
     flex: 1;
+    min-width: 0;
+    font: inherit;
     font-size: 16px;
 }
 
@@ -110,64 +132,73 @@ body {
 }
 
 /* -------- SHORTCUTS -------- */
+/* Five in a row, the last row in the middle, as Chrome lays out its ten; more than ten links
+   get the whole width of the search box, six in a row */
 .shortcuts {
-    margin-top: 56px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-    gap: 24px;
-    width: 920px;
-    max-width: calc(100% - 64px);
-    justify-items: center;
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 560px;
+    max-width: 100%;
+}
+
+.shortcuts.many {
+    width: 672px;
 }
 
 .tile {
-    width: 96px;
-    text-align: center;
-    cursor: pointer;
-    position: relative;
+    width: 112px;
+    height: 112px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-decoration: none;
-    scroll-margin-top: calc(var(--search-top) + var(--search-height) + 3px);
+    scroll-margin-top: calc(var(--search-top) + var(--search-height) + 8px);
 }
 
 .tile:hover {
-    text-decoration: underline;
-    text-decoration-color: var(--label);
+    background: var(--tile-hover);
 }
 
-.tile-inner {
-    width: 64px;
-    height: 64px;
-    /*border-radius: 50%;*/
-    background: var(--tile-bg);
+.tile-icon {
+    position: relative;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    margin-top: 16px;
+    border-radius: 50%;
+    background: var(--icon-bg);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 8px auto;
-    transition: background 0.15s ease;
+    overflow: hidden;
 }
 
-.tile-inner img {
+.tile-icon img {
     display: block;
-    max-width: 100%;
-    max-height: 100%;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
 }
 
-.tile:hover .tile-inner {
-    background: var(--tile-bg-hover);
+/* A link's own picture fills the plate */
+.tile-icon img.picture {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-/* An icon that cannot be loaded leaves the link's first letter in its tile, out of the flow: the
-   underline of a tile under the mouse stays off it */
-.tile-inner[data-letter] { position: relative; }
-
-.tile-inner[data-letter]::after {
+/* An icon that cannot be loaded leaves the link's first letter on its plate */
+.tile-icon[data-letter]::after {
     content: attr(data-letter);
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 500;
     color: var(--label);
 }
@@ -175,16 +206,17 @@ body {
 /* The link ↑ ↓ moved to: Enter opens it */
 .tile.np-current {
     outline: none;
-}
-
-.tile.np-current .tile-inner {
-    background: var(--tile-bg-hover);
-    box-shadow: 0 0 0 3px var(--current-ring);
+    background: var(--tile-hover);
+    box-shadow: inset 0 0 0 2px var(--current-ring);
 }
 
 .tile-label {
     display: block;
+    max-width: 100%;
+    margin-top: 6px;
+    padding: 8px;
     font-size: 13px;
+    line-height: 16px;
     color: var(--label);
     white-space: nowrap;
     overflow: hidden;
@@ -193,43 +225,8 @@ body {
 
 /* -------- NOTHING TO SHOW -------- */
 .empty {
-    padding: 0 16px;
+    margin-top: 24px;
     font-size: 13px;
     color: var(--label);
     text-align: center;
-}
-
-/* -------- ICONS -------- */
-.icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 14px;
-    color: #000;
-}
-
-.icon.pink { background: #ff4fd8; }
-
-.icon.green { background: #9ae14f; }
-
-.icon.blue { background: #4fa3ff; }
-
-.icon.orange { background: #ff9f4f; }
-
-.icon.gray { background: #bdbdbd; }
-
-/* -------- ADD -------- */
-.add .tile-inner {
-    background: #1e88e5;
-    color: #fff;
-    font-size: 28px;
-    font-weight: 300;
-}
-
-.add:hover .tile-inner {
-    background: #2a96f3;
 }
