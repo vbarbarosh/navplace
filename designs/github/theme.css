@@ -157,6 +157,7 @@ tbody tr:first-child td { border-top: none; }
    (42px), the hint (8px above it and a line of 12px text, as tall as the font makes it: taken as
    18px), the padding under it (12px) and the border */
 tbody tr {
+    position: relative;
     cursor: pointer;
     scroll-margin-top: calc(10px + 42px + 8px + 18px + 12px + 1px);
 }
@@ -207,10 +208,25 @@ tbody tr:focus-within { outline: 2px solid var(--row-outline); outline-offset: -
     max-width: 1px; /* helps ellipsis in table cells */
 }
 
+/* The row's link: the label is its text, and its ::after lies over the whole row, so the row is
+   one link to the mouse while the table keeps its cells */
 .rowlink {
     color: inherit;
     text-decoration: none;
-    display: contents; /* make link cover row cells while keeping table layout */
+}
+
+.rowlink::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+/* Tab on a link rings its row */
+.rowlink:focus-visible { outline: none; }
+
+.rowlink:focus-visible::after {
+    outline: 2px solid var(--current-bar);
+    outline-offset: -2px;
 }
 
 .empty {

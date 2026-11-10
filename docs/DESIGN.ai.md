@@ -790,7 +790,6 @@ The canonical launcher-style design. Default fallback in `src/desktop-electron/m
         for (const [i, item] of items.entries()) {
             const tr = document.createElement('tr');
             tr.setAttribute('data-index', String(i));
-            tr.tabIndex = -1;
             if (i === current) {
                 tr.classList.add('np-current');
             }
@@ -801,7 +800,16 @@ The canonical launcher-style design. Default fallback in `src/desktop-electron/m
 
             const td_label = document.createElement('td');
             td_label.className = 'label';
-            td_label.textContent = item.label || '';
+            // The row's link: the label is its text and it lies over the whole row (.rowlink in
+            // theme.css), so a click, a middle click or a menu anywhere on the row is the link's
+            const link = document.createElement('a');
+            link.className = 'rowlink';
+            link.href = item.href;
+            link.textContent = item.label || '';
+            link.addEventListener('click', function (event) {
+                item_open(item, event);
+            });
+            td_label.appendChild(link);
 
             const td_href = document.createElement('td');
             td_href.className = 'href';
@@ -811,17 +819,15 @@ The canonical launcher-style design. Default fallback in `src/desktop-electron/m
             tr.appendChild(td_label);
             tr.appendChild(td_href);
 
-            tr.addEventListener('click', function () {
-                item_open(item);
-            });
-
             tbody.appendChild(tr);
         }
     }
 
-    function item_open(item)
+    // Through the runtime: every selected link, this one in place of the last. Ctrl, Shift and the
+    // middle button on the link are left to the browser
+    function item_open(item, event)
     {
-        navplace.navigate(item);
+        navplace.navigate(item, event);
     }
 
     function refresh()
@@ -995,6 +1001,7 @@ tbody tr:first-child td { border-top: none; }
    (42px), the hint (8px above it and a line of 12px text, as tall as the font makes it: taken as
    18px), the padding under it (12px) and the border */
 tbody tr {
+    position: relative;
     cursor: pointer;
     scroll-margin-top: calc(10px + 42px + 8px + 18px + 12px + 1px);
 }
@@ -1045,10 +1052,25 @@ tbody tr:focus-within { outline: 2px solid var(--row-outline); outline-offset: -
     max-width: 1px; /* helps ellipsis in table cells */
 }
 
+/* The row's link: the label is its text, and its ::after lies over the whole row, so the row is
+   one link to the mouse while the table keeps its cells */
 .rowlink {
     color: inherit;
     text-decoration: none;
-    display: contents; /* make link cover row cells while keeping table layout */
+}
+
+.rowlink::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+/* Tab on a link rings its row */
+.rowlink:focus-visible { outline: none; }
+
+.rowlink:focus-visible::after {
+    outline: 2px solid var(--current-bar);
+    outline-offset: -2px;
 }
 
 .empty {
