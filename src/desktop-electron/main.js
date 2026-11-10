@@ -39,12 +39,14 @@ const instance_from_raw = require('./helpers/instance_from_raw');
 const is_app_process = require('./helpers/is_app_process');
 const is_appimage_move_offered = require('./helpers/is_appimage_move_offered');
 const is_instance_takeover = require('./helpers/is_instance_takeover');
+const is_pid_running = require('./helpers/is_pid_running');
 const is_program_file = require('./helpers/is_program_file');
 const is_url_external = require('./helpers/is_url_external');
 const letter_tile_svg = require('./helpers/letter_tile_svg');
 const log_value_from_text = require('./helpers/log_value_from_text');
 const make = require('@vbarbarosh/type-helpers');
 const make_newest_gate = require('./helpers/make_newest_gate');
+const make_pid_lock = require('./helpers/make_pid_lock');
 const make_socket_server = require('./helpers/make_socket_server');
 const os = require('os');
 const parse = require('../../lib/parse');
@@ -89,6 +91,9 @@ const TAKEOVER_QUIT_MS = 2000;
 const TAKEOVER_TERM_MS = 5000;
 const TAKEOVER_LOCK_TRIES = 20;
 
+// How long a start waits for its turn to ask for the lock (lock_request) before it asks anyway
+const LOCK_TURN_MS = 3000;
+
 cli(main, start_failure_report);
 
 async function main()
@@ -122,10 +127,13 @@ async function main()
     // start takes its place; a running one of this very file and version shows its window, and
     // this start ends
     const instance = {pid: process.pid, appimage_file: config.appimage_file, version: electron.app.getVersion()};
-    if (!electron.app.requestSingleInstanceLock(instance)) {
+    if (!await lock_request(instance)) {
         if (!await lock_take_over(instance, app_uid)) {
-            electron.app.quit();
-            process.exit(0);
+            // The start ends here, in so many words: `exit` may take a moment to end the process, and
+            // nothing more of the start may run in that moment. It would write itself down as the
+            // running instance and open the hotkey's socket in place of the one that runs
+            electron.app.exit(0);
+            return;
         }
     }
     await instance_write(instance, app_uid);
@@ -604,6 +612,22 @@ async function main()
     }
 }
 
+// Electron's single-instance lock asked for, by one start at a time. Two starts that asked in the
+// same instant were both told the lock was theirs: the second then failed at the hotkey's socket,
+// "could not start", and stayed as a second NavPlace. So a start asks while it holds a lock file
+// of the app's own (helpers/make_pid_lock.js), and one that comes in the same instant asks after
+// it, and hears that the lock is taken. A turn that does not come in time is not waited for
+async function lock_request(instance)
+{
+    try {
+        await fs_mkdirp(config.user_data_dir);
+    }
+    catch {
+    }
+    await using _ = await make_pid_lock({file: config.lock_turn_file, wait_ms: LOCK_TURN_MS});
+    return electron.app.requestSingleInstanceLock(instance);
+}
+
 // Another instance holds the lock; whether this start has it when this returns. A running one of
 // this very file and version has shown its window by now, and this start ends as it always did.
 // One of another AppImage file or version gives way: the user started this one on purpose
@@ -614,7 +638,7 @@ async function lock_take_over(instance, group_uid)
     // looked, a running one that gave way at once. The lock is free, unless another start was
     // faster and holds it now
     if (holder.target === null) {
-        if (electron.app.requestSingleInstanceLock(instance)) {
+        if (await lock_request(instance)) {
             console.log(`[${group_uid}][lock_found_free]`);
             return true;
         }
@@ -714,7 +738,7 @@ async function lock_holder_end(holder, group_uid)
 async function lock_wait(instance)
 {
     for (let i = 0; i < TAKEOVER_LOCK_TRIES; ++i) {
-        if (electron.app.requestSingleInstanceLock(instance)) {
+        if (await lock_request(instance)) {
             return true;
         }
         await Promise.delay(TAKEOVER_POLL_MS);
@@ -733,18 +757,6 @@ async function pid_wait_end(pid, ms)
         await Promise.delay(TAKEOVER_POLL_MS);
     }
     return true;
-}
-
-// A process of another user cannot be asked (EPERM), and is there
-function is_pid_running(pid)
-{
-    try {
-        process.kill(pid, 0);
-        return true;
-    }
-    catch (error) {
-        return error.code === 'EPERM';
-    }
 }
 
 // Who runs, kept for the next start to read (lock_holder_read). Never the failure of this start:

@@ -17,6 +17,7 @@ function make_config(settings)
         launcher_file: {type: 'null'},
         settings_file: {type: 'null'},
         instance_file: {type: 'null'},
+        lock_turn_file: {type: 'null'},
         setup_file: {type: 'null'},
         settings_page_dir: {type: 'null'},
         autostart_file: {type: 'null'},
@@ -31,6 +32,8 @@ function make_config(settings)
     out.settings_file = fs_path_resolve(out.user_data_dir, 'settings.json');
     // Who runs now, {pid, appimage_file, version}: the next start reads it to know whose place it takes
     out.instance_file = fs_path_resolve(out.user_data_dir, 'instance.json');
+    // Held by a start for the moment it asks Electron for the single-instance lock: starts take turns
+    out.lock_turn_file = fs_path_resolve(out.user_data_dir, 'start.lock');
     // Which version did the GNOME setup last, and for which AppImage file: {version, appimage_file}
     out.setup_file = fs_path_resolve(out.user_data_dir, 'setup.json');
     out.settings_page_dir = fs_path_resolve(__dirname, '../settings');
