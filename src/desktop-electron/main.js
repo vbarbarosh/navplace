@@ -517,9 +517,13 @@ async function main()
     async function settings_patch(patch) {
         const next = settings_from_raw({...settings, ...patch});
         if (('hotkey' in patch) && (next.hotkey !== patch.hotkey)) {
-            throw new Error('Ctrl, Alt or Super with a letter or a digit');
+            throw new Error('Ctrl, Alt or Super with a letter, a digit or an F key');
         }
         if (next.hotkey !== settings.hotkey) {
+            // No launcher, no shortcut to change: GNOME would get keys that run nothing
+            if (!await fs_exists(config.launcher_file)) {
+                throw new Error('The hotkey needs the GNOME setup first');
+            }
             await gnome_hotkey_set(config.launcher_file, next.hotkey);
         }
         if ('autostart' in patch) {

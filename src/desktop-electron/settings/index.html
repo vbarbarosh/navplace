@@ -701,8 +701,8 @@ async function main()
             return;
         }
         const key = event.code.startsWith('Key') ? event.code.slice(3) : (event.code.startsWith('Digit') ? event.code.slice(5) : event.key);
-        if (!/^[A-Za-z0-9]+$/.test(key) || !(event.ctrlKey || event.altKey || event.metaKey)) {
-            note_show('hotkey', 'Ctrl, Alt or Super with a letter or a digit', true);
+        if (!/^([A-Za-z0-9]|F[1-9]|F1[0-2])$/.test(key) || !(event.ctrlKey || event.altKey || event.metaKey)) {
+            note_show('hotkey', 'Ctrl, Alt or Super with a letter, a digit or an F key', true);
             return;
         }
         const hotkey = `${event.ctrlKey ? '<Ctrl>' : ''}${event.shiftKey ? '<Shift>' : ''}${event.altKey ? '<Alt>' : ''}${event.metaKey ? '<Super>' : ''}${key}`;
