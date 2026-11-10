@@ -41,7 +41,8 @@ function main()
                         <span v-bind:data-letter="letter_from_item(item)" class="tile-inner">
                             <img v-if="item.icon_url" v-on:error="error_icon(item)" v-on:load="load_icon(item)" v-bind:src="item.icon_url" alt="" />
                         </span>
-                        <span class="tile-label">{{ item.label }}</span>
+                        <!-- A name too long for its tile is cut with an ellipsis: its full text is in the title -->
+                        <span v-bind:title="item.label" class="tile-label">{{ item.label }}</span>
                     </a>
 
                 </div>
