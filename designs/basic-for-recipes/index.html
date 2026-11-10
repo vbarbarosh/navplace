@@ -172,6 +172,21 @@
             margin-top: 4px;
         }
 
+        /* In place of an icon that did not load: the link's first letter in the same small square */
+        .favicon-letter {
+            background: var(--soft-beige);
+            color: var(--dark-warm);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        /* An inline block: the underline of the card, a link, does not reach the letter */
+        .favicon-letter span {
+            display: inline-block;
+        }
+
         /* A long name wraps inside its card, a word with no spaces too */
         .recipe-title {
             font-size: 20px;
@@ -296,6 +311,10 @@
         // The links as they are drawn, a card each, in the same order
         let shown_items = [];
 
+        // Pictures and icons that did not load, by address: a card is drawn without its picture,
+        // and with the link's first letter in place of its icon
+        const failed_urls = new Set();
+
         // Initialize with empty state
         refresh_items([]);
 
@@ -310,6 +329,23 @@
                     navplace.navigate(item, event);
                 }
             });
+            // A picture or an icon that cannot be loaded never shows as a broken one: the picture
+            // leaves its card, the letter takes the icon's place, now and in every later draw.
+            // `error` does not bubble: it is caught on its way down
+            items_container.addEventListener('error', function (event) {
+                const card = event.target.closest('.recipe-card');
+                const item = card ? shown_items[Array.from(items_container.children).indexOf(card)] : null;
+                if (!item) {
+                    return;
+                }
+                failed_urls.add(event.target.getAttribute('src'));
+                if (event.target.matches('.recipe-image')) {
+                    event.target.closest('.image-container').remove();
+                }
+                else if (event.target.matches('.favicon')) {
+                    event.target.outerHTML = render_icon_html(item);
+                }
+            }, true);
         }
 
         // Fallback for development/demo
@@ -329,9 +365,10 @@
                 return;
             }
 
-            // A link's picture loads only in the desktop app (private://); elsewhere the card has none
+            // A link's picture loads only in the desktop app (private://); elsewhere the card has none,
+            // as it has none for a picture that failed before
             function has_image(item) {
-                return !!item.image_url && (!!window.ElectronApp || !item.image_url.startsWith('private://'));
+                return !!item.image_url && (!!window.ElectronApp || !item.image_url.startsWith('private://')) && !failed_urls.has(item.image_url);
             }
 
             items_container.innerHTML = items.map((item, i) => render_item_html(item, i === current)).join('');
@@ -342,7 +379,7 @@
                         ${has_image(item) ? `<div class="image-container"><img src="${html_escape(item.image_url)}" alt="${html_escape(item.label)}" class="recipe-image"></div>` : ''}
                         <div class="recipe-content">
                             <div class="recipe-header">
-                                ${item.icon_url ? `<img src="${html_escape(item.icon_url)}" alt="" class="favicon">` : ''}
+                                ${render_icon_html(item)}
                                 <div>
                                     <h3 class="recipe-title">${html_escape(item.label)}</h3>
                                     ${item.meta?.domain ? `<div class="recipe-meta">${html_escape(item.meta.domain)}</div>` : ''}
@@ -354,6 +391,19 @@
                     </a>
                 `;
             }
+        }
+
+        // The small picture before a recipe's name: the site's icon, or the link's first letter
+        // (the first letter or digit of its name, as lib/parse.js picks it for its own tile) when
+        // the icon did not load
+        function render_icon_html(item) {
+            if (!item.icon_url) {
+                return '';
+            }
+            if (failed_urls.has(item.icon_url)) {
+                return `<span class="favicon favicon-letter"><span>${html_escape(item.label.match(/[\p{L}\p{N}]/u)?.[0].toUpperCase() ?? '?')}</span></span>`;
+            }
+            return `<img src="${html_escape(item.icon_url)}" alt="" class="favicon">`;
         }
 
         // The links file is not trusted: every value from it goes into the HTML through this,
