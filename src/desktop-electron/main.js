@@ -6,6 +6,7 @@ const autostart_set = require('./helpers/autostart_set');
 const child_process = require('child_process');
 const chrome_window_focus = require('./helpers/chrome_window_focus');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
+const collection_drop_includes = require('./helpers/collection_drop_includes');
 const collection_resolve_includes = require('./helpers/collection_resolve_includes');
 const config = require('./config');
 const config_appimage_file_set = require('./config/config_appimage_file_set');
@@ -161,8 +162,9 @@ async function main()
     electron.ipcMain.handle('api_ping', function () {
         return `pong ${format_date(new Date())}`;
     });
+    // A page gets the links without the addresses they were pulled from (helpers/collection_drop_includes.js)
     electron.ipcMain.handle('api_items_all', async function () {
-        return parsed_collection;
+        return collection_drop_includes(parsed_collection);
     });
     electron.ipcMain.handle('api_file_open', function (event, href) {
         file_link_open(href);
@@ -568,7 +570,7 @@ async function main()
         parsed_collection = resolved;
         file_hrefs = file_hrefs_from_collection(collection);
         if (!win.isDestroyed()) {
-            win.webContents.send('api_items_changed', parsed_collection);
+            win.webContents.send('api_items_changed', collection_drop_includes(parsed_collection));
         }
     }
 
