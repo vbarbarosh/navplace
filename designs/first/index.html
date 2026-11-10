@@ -44,7 +44,8 @@ function main()
                 <img v-else v-on:error="picture_mark_failed(item)" v-bind:src="item.image_url" class="flex-fluid fit-cover" />
             </template>
             <span v-else style="padding-bottom: 28px;" class="flex-fluid flex-row-center">
-                <img v-bind:src="item.icon_url" style="width: 48px; height: 48px;" class="fit-contain" />
+                <img v-if="is_icon_shown(item)" v-on:error="icon_mark_failed(item)" v-bind:src="item.icon_url" style="width: 48px; height: 48px;" class="fit-contain" />
+                <span v-else class="bookmark-letter">{{ letter_from_item(item) }}</span>
             </span>
             <span v-bind:title="item.label" class="bookmark-label">{{ item.label }}</span>
         </a>
@@ -58,7 +59,8 @@ function main()
                 items: [],
                 // The link ↑ ↓ moved to, which Enter opens: navplace.js keeps it
                 current: 0,
-                // Pictures that did not load: their links show the site's icon instead
+                // Pictures and icons that did not load, by address: a link shows the site's icon in
+                // place of its picture, and its first letter in place of the icon
                 failed: {},
                 // The line in place of the bookmarks when there are none; nothing until the links come
                 empty_note: '',
@@ -74,6 +76,16 @@ function main()
             },
             picture_mark_failed: function (item) {
                 this.failed[item.image_url] = true;
+            },
+            is_icon_shown: function (item) {
+                return !this.failed[item.icon_url];
+            },
+            icon_mark_failed: function (item) {
+                this.failed[item.icon_url] = true;
+            },
+            // The first letter or digit of the link's name, as lib/parse.js picks it for its own tile
+            letter_from_item: function (item) {
+                return item.label.match(/[\p{L}\p{N}]/u)?.[0].toUpperCase() ?? '?';
             },
             // A click opens through the runtime: every selected link, this one in place of the last
             click_bookmark: function (item, event) {

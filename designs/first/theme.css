@@ -136,6 +136,18 @@ a {
     -webkit-line-clamp: 5;
 }
 
+/* In place of an icon that did not load: the link's first letter, in the icon's square and the
+   label's colours */
+.bookmark-letter {
+    width: 48px;
+    height: 48px;
+    color: white;
+    text-align: center;
+    font-size: 28px;
+    line-height: 48px;
+    background: rgba(0,0,0,0.5);
+}
+
 /* In place of the bookmarks when there are none: one line in the label's look, across the columns */
 .empty-note {
     grid-column: 1 / -1;
