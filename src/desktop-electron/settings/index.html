@@ -423,6 +423,10 @@
         <span class="row-value"><select data-setting="design" aria-label="Design"></select><span class="row-note">writes <code>% design:</code> in the links file</span></span>
     </li>
     <li>
+        <span class="row-label">GNOME setup</span>
+        <span class="row-value"><span data-gnome-state></span><button class="btn" type="button" data-action="gnome-setup"></button><span class="row-note" data-note="gnome"></span></span>
+    </li>
+    <li>
         <span class="row-label">Hotkey</span>
         <span class="row-value"><button class="btn hotkey mono" type="button" data-action="hotkey" title="Click, then press the new keys; Esc keeps the old ones"></button><span class="row-note" data-note="hotkey"></span></span>
     </li>
@@ -457,6 +461,7 @@ async function main()
     const errors = document.querySelector('.errors');
     const links_state = document.querySelector('.links-state');
     const hotkey_button = document.querySelector('[data-action="hotkey"]');
+    const gnome_button = document.querySelector('[data-action="gnome-setup"]');
     const notes = {};
     for (const element of document.querySelectorAll('[data-note]')) {
         notes[element.dataset.note] = element;
@@ -509,6 +514,7 @@ async function main()
         }
     });
     document.querySelector('[data-action="updates-check"]').addEventListener('click', updates_check);
+    gnome_button.addEventListener('click', gnome_setup);
     hotkey_button.addEventListener('click', function () {
         hotkey_listening = true;
         hotkey_button.toggleAttribute('data-listening', true);
@@ -636,8 +642,38 @@ async function main()
         hotkey_button.textContent = hotkey_label(state.settings.hotkey);
         hotkey_button.disabled = !state.hotkey_possible;
         if (!state.hotkey_possible) {
-            note_show('hotkey', 'run the AppImage with --configure-gnome first');
+            note_show('hotkey', 'needs the GNOME setup');
         }
+        // The setup as it is now: on another desktop than GNOME nothing is offered, and the button
+        // says why when the app is not the AppImage the setup would start
+        document.querySelector('[data-gnome-state]').textContent = gnome_state_text(state.gnome);
+        gnome_button.hidden = !state.gnome.is_gnome;
+        gnome_button.textContent = state.gnome.is_set_up ? 'Set up again' : 'Set up';
+        gnome_button.disabled = !state.gnome.is_possible;
+        if (state.gnome.is_gnome && !state.gnome.is_possible) {
+            note_show('gnome', 'the setup needs the AppImage');
+        }
+    }
+
+    // The hotkey, the launcher it runs and the start at login, set up as `--configure-gnome` does;
+    // the rows then show what is there now
+    async function gnome_setup() {
+        gnome_button.disabled = true;
+        note_show('gnome', 'setting up…');
+        try {
+            state = await api.gnome_setup();
+            note_show('gnome', 'done', false, true);
+        }
+        catch (error) {
+            note_show('gnome', error_message(error), true);
+            state = await api.state();
+        }
+        // The launcher is there now, after a setup that failed halfway too: the hotkey field no
+        // longer says it waits for it
+        if (state.hotkey_possible) {
+            note_show('hotkey', '');
+        }
+        rows_render();
     }
 
     async function setting_set(patch, note) {
@@ -718,6 +754,21 @@ async function main()
 function hotkey_label(hotkey)
 {
     return hotkey.replace(/<(\w+)>/g, '$1+');
+}
+
+// The GNOME setup in plain words, from what is on disk and in dconf now (helpers/gnome_setup_read.js)
+function gnome_state_text(gnome)
+{
+    if (!gnome.is_gnome) {
+        return 'The hotkey setup is for GNOME.';
+    }
+    if (!gnome.is_set_up) {
+        return 'Not set up: no hotkey opens NavPlace yet.';
+    }
+    if (gnome.is_autostart) {
+        return `Set up: ${hotkey_label(gnome.hotkey)} opens NavPlace, and it starts at login.`;
+    }
+    return `Set up: ${hotkey_label(gnome.hotkey)} opens NavPlace; it does not start at login.`;
 }
 
 // Electron wraps an error thrown in the main process: `Error invoking remote method 'x': Error: why`

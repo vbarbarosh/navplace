@@ -31,6 +31,8 @@ const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const gnome_configure = require('./helpers/gnome_configure');
 const gnome_hotkey_set = require('./helpers/gnome_hotkey_set');
 const gnome_setup_carry = require('./helpers/gnome_setup_carry');
+const gnome_setup_failure_text = require('./helpers/gnome_setup_failure_text');
+const gnome_setup_read = require('./helpers/gnome_setup_read');
 const icon_find = require('../../lib/icon_find');
 const icon_library_file = require('../../lib/icon_library_file');
 const instance_from_raw = require('./helpers/instance_from_raw');
@@ -386,6 +388,18 @@ async function main()
         await settings_patch(patch);
         return settings_state();
     }));
+    // The same setup as `--configure-gnome`, from the settings window: the page then draws what is
+    // set up now, the hotkey and the start at login with it
+    electron.ipcMain.handle('settings_gnome_setup', settings_only(async function () {
+        try {
+            await gnome_configure({hotkey: settings.hotkey, version: electron.app.getVersion()});
+        }
+        catch (error) {
+            console.error(`[${app_uid}][settings_gnome_setup_failed] reason=${JSON.stringify(error.message)}`);
+            throw new Error(gnome_setup_failure_text(error));
+        }
+        return settings_state();
+    }));
     electron.ipcMain.handle('settings_updates_check', settings_only(updates_check));
     // Back to the links: the settings window closes and the app's window comes up
     electron.ipcMain.handle('settings_back', settings_only(async function () {
@@ -461,6 +475,7 @@ async function main()
             zooms: settings_from_raw.ZOOMS,
             autostart: {on: await fs_exists(config.autostart_file), possible: !!config.appimage_file},
             hotkey_possible: await fs_exists(config.launcher_file),
+            gnome: await gnome_setup_read(),
             version: electron.app.getVersion(),
         };
     }

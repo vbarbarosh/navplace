@@ -647,13 +647,13 @@
     <li>The window is 1200 × 1000, centred. It starts always on top and zoomed to 125%; the settings change both. Its title is the design's title and the app's version.</li>
     <li>It hides when it loses focus, unless the settings say otherwise, and stays running, so the hotkey brings it back at once. Closing it quits the app.</li>
     <li>Links open in your default browser. Besides <code>http://</code> and <code>https://</code> ones the app opens a plain <code>mailto:</code> address, in the mail program, and a <code>file://</code> link of your own file; any other kind of address is skipped.</li>
-    <li>The gear beside the design's theme switch opens the settings: the links file in an editor, the design, the hotkey, start at login, zoom, always on top, hiding on lost focus, and a check for updates.</li>
+    <li>The gear beside the design's theme switch opens the settings: the links file in an editor, the design, the GNOME setup, the hotkey, start at login, zoom, always on top, hiding on lost focus, and a check for updates.</li>
     <li>A start that fails says why in an error box.</li>
 </ul>
 
 <h3 id="hotkey">Global hotkey on GNOME</h3>
 <pre><code data-lang="shell">./NavPlace-*.AppImage --configure-gnome</code></pre>
-<p>Run it once, from the AppImage itself (it needs the <code>APPIMAGE</code> variable the AppImage runtime sets) with <code>node</code> on <code>PATH</code>. It:</p>
+<p>Run it once, from the AppImage itself (it needs the <code>APPIMAGE</code> variable the AppImage runtime sets) with <code>node</code> on <code>PATH</code>. The settings window runs the same setup from its <strong>GNOME setup</strong> row, which also says what is set up now: the keys that open NavPlace and whether it starts at login. It:</p>
 <ol>
     <li>copies the launcher to <code>${XDG_CONFIG_HOME:-~/.config}/navplace/launcher.js</code>;</li>
     <li>binds <strong>Ctrl+Shift+Alt+N</strong> to it through <code>dconf</code>: the command is <code>node</code>'s absolute path and the launcher;</li>

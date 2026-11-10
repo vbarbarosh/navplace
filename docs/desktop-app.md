@@ -25,8 +25,8 @@ One NavPlace runs at a time: a second start of the same AppImage shows the
 running window, and a start of another AppImage file or of another version
 takes the running one's place, so a downloaded update only has to be run.
 The gear beside a design's theme switch opens the settings: the links file in
-an editor, the design, the hotkey, start at login, zoom, on top of other
-windows, hiding when the window loses focus, and a check for updates.
+an editor, the design, the GNOME setup, the hotkey, start at login, zoom, on top
+of other windows, hiding when the window loses focus, and a check for updates.
 
 ## The GNOME hotkey
 
@@ -39,6 +39,12 @@ The Electron AppImage supports a one-time GNOME setup flag:
 Run this from the built AppImage, not from `npm start`. The setup requires the
 AppImage runtime's `APPIMAGE` environment variable so it can write the cold-start
 desktop entry back to the exact AppImage path.
+
+The settings window runs the same setup: its **GNOME setup** row says what is
+set up now, the keys that open NavPlace and whether it starts at login, read
+from the disk and from `dconf` each time, and its button sets it up, or sets it
+up again. On a desktop that is not GNOME the row offers nothing, and from
+`npm start` its button is off: the setup needs the AppImage.
 
 The setup registers **Ctrl+Shift+Alt+N** through `dconf`, extracts the
 dependency-free launcher to `${XDG_CONFIG_HOME:-~/.config}/navplace/launcher.js`,
