@@ -3,8 +3,8 @@
 // {id, value, label, state: 'working' | 'done' | 'failed', url, width, height, note}; then {id, state: 'end'}.
 // The size that counts is the data url's length, the characters links.txt takes.
 
-// AVIF, when the browser draws none itself: Squoosh's libavif (@jsquash/avif 1.3.0), loaded on first use
-const AVIF_ENCODER_URL = '/lib/vendor/jsquash-avif-1/avif_enc.js';
+// AVIF, when the browser draws none itself: Squoosh's libavif (@jsquash/avif 2.1.1), loaded on first use
+const AVIF_ENCODER_URL = '/lib/vendor/jsquash-avif-2/avif_enc.js';
 const FORMATS = [
     {value: 'webp', label: 'WebP', type: 'image/webp'},
     {value: 'avif', label: 'AVIF', type: 'image/avif'},
@@ -110,9 +110,9 @@ async function blob_from_canvas(canvas, format, quality)
     }
     const module = await avif_module_load();
     const image_data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-    // libavif's cqLevel: 0 is the best, 63 the worst
-    const options = {cqLevel: Math.round(63*(1 - quality)), cqAlphaLevel: -1, denoiseLevel: 0, tileColsLog2: 0, tileRowsLog2: 0, speed: 6, subsample: 1, chromaDeltaQ: false, sharpness: 0, tune: 0};
-    const bytes = module.encode(image_data.data, image_data.width, image_data.height, options);
+    // libavif's quality: 100 is the best, 0 the worst
+    const options = {quality: Math.round(100*quality), qualityAlpha: -1, denoiseLevel: 0, tileColsLog2: 0, tileRowsLog2: 0, speed: 6, subsample: 1, chromaDeltaQ: false, sharpness: 0, tune: 0, enableSharpYUV: false, bitDepth: 8};
+    const bytes = module.encode(new Uint8Array(image_data.data.buffer), image_data.width, image_data.height, options);
     if (!bytes) {
         throw new Error('AVIF could not be made');
     }
