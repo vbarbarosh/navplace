@@ -661,7 +661,7 @@
     <li>writes <code>${XDG_CONFIG_HOME:-~/.config}/autostart/navplace.desktop</code>, which starts the AppImage at login with <code>--background</code>: its window stays hidden until the hotkey;</li>
     <li>prints the launcher path, the AppImage path, the <code>node</code> it found and the login entry.</li>
 </ol>
-<p>Both entries hold the AppImage's path in quotes. When an AppImage at another path starts, a newer one after an update, it points both at itself. The settings window changes the keys and switches the start at login off and on.</p>
+<p>Both entries hold the AppImage's path in quotes. When an AppImage at another path starts, a newer one after an update, it points both at itself. Started from another folder than the version it replaces, a download run where it landed, it first asks whether to move there: <strong>Move it there</strong> puts the file beside the old one, under its own name and never over a file that is there; <strong>Leave it here</strong> keeps it where it is. Either way the old file stays, the entries follow the new one, and the next start asks nothing. Nothing is asked at a start with <code>--background</code>, or when that folder cannot be written to. The settings window changes the keys and switches the start at login off and on.</p>
 <p>Only GNOME is wired up. The launcher is plain Node, so any hotkey tool can run it, but its cold start calls <code>gtk-launch navplace</code>, which needs that desktop entry. A build from source has its own script for the AppImage in <code>src/desktop-electron/build/</code>: <code>src/desktop-electron/bin/configure-gnome</code>.</p>
 
 <h3 id="instant-launch">Instant launch</h3>

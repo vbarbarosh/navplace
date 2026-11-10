@@ -1,12 +1,16 @@
 const Promise = require('bluebird');
 const appimage_entries_repoint = require('./helpers/appimage_entries_repoint');
+const appimage_move = require('./helpers/appimage_move');
+const appimage_target_from_entry = require('./helpers/appimage_target_from_entry');
 const autostart_set = require('./helpers/autostart_set');
 const child_process = require('child_process');
 const chrome_window_focus = require('./helpers/chrome_window_focus');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
 const collection_resolve_includes = require('./helpers/collection_resolve_includes');
 const config = require('./config');
+const config_appimage_file_set = require('./config/config_appimage_file_set');
 const crypto = require('crypto');
+const desktop_exec_args_from_entry = require('./helpers/desktop_exec_args_from_entry');
 const electron = require('electron');
 const env_from_text = require('./helpers/env_from_text');
 const file_from_href = require('./helpers/file_from_href');
@@ -16,6 +20,7 @@ const format_date = require('@vbarbarosh/node-helpers/src/format_date');
 const fs = require('fs');
 const fs_exists = require('@vbarbarosh/node-helpers/src/fs_exists');
 const fs_mkdirp = require('@vbarbarosh/node-helpers/src/fs_mkdirp');
+const fs_path_basename = require('@vbarbarosh/node-helpers/src/fs_path_basename');
 const fs_path_dirname = require('@vbarbarosh/node-helpers/src/fs_path_dirname');
 const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_read = require('@vbarbarosh/node-helpers/src/fs_read');
@@ -29,6 +34,7 @@ const icon_find = require('../../lib/icon_find');
 const icon_library_file = require('../../lib/icon_library_file');
 const instance_from_raw = require('./helpers/instance_from_raw');
 const is_app_process = require('./helpers/is_app_process');
+const is_appimage_move_offered = require('./helpers/is_appimage_move_offered');
 const is_instance_takeover = require('./helpers/is_instance_takeover');
 const is_program_file = require('./helpers/is_program_file');
 const is_url_external = require('./helpers/is_url_external');
@@ -62,6 +68,15 @@ Electron         https://www.electronjs.org/docs/latest/
 `;
 
 const START_FAILURE_TITLE = 'NavPlace could not start';
+
+// Why a move of the AppImage did not happen, in plain words; any other reason in the system's own
+const MOVE_REASON_BY_CODE = {
+    EEXIST: 'A file with its name is already there',
+    EACCES: 'Permission denied',
+    EPERM: 'Permission denied',
+    ENOSPC: 'The disk is full',
+    EROFS: 'The disk is read-only',
+};
 
 // A takeover (lock_take_over): how often the running instance is looked at, how long one that
 // knows the takeover has to quit by itself, how long one told to end has to end, and how many
@@ -112,7 +127,10 @@ async function main()
     }
     await instance_write(instance, app_uid);
 
+    // The order matters: the question reads where the previous version is from the .desktop entry,
+    // which entries_repoint then points at this file, where it was left or where it was moved
     if (config.appimage_file) {
+        await appimage_move_offer(instance, app_uid);
         entries_repoint(app_uid);
     }
 
@@ -722,6 +740,112 @@ async function instance_write(instance, group_uid)
     }
     catch (error) {
         console.error(`[${group_uid}][instance_write_failed] reason=${JSON.stringify(error.message)}`);
+    }
+}
+
+// A new version is run where it was downloaded, while the one it replaces has its place in
+// another folder: the user is asked once whether this one moves there. That place is the folder
+// of the program the .desktop entry starts, the entry --configure-gnome wrote for the previous
+// version; whatever the answer, entries_repoint then points the entry at this file, so the next
+// start asks nothing. Nothing is asked at a start in the background, with no such entry, or when
+// that folder cannot be written to (helpers/is_appimage_move_offered.js). The old file is never
+// touched. After a move `instance` and the config name the new place
+async function appimage_move_offer(instance, group_uid)
+{
+    let is_same_dir = false;
+    let is_dir_writable = false;
+
+    const appimage_file = config.appimage_file;
+    const appimage_dir = fs_path_dirname(appimage_file);
+    const entry_file = await entry_program_read();
+    if (!entry_file) {
+        return;
+    }
+    const entry_dir = fs_path_dirname(entry_file);
+    // Two paths may name one folder, through a link: the folders themselves are compared
+    try {
+        const dir = await fs.promises.realpath(entry_dir);
+        is_same_dir = (dir === await fs.promises.realpath(appimage_dir));
+        await fs.promises.access(dir, fs.constants.W_OK | fs.constants.X_OK);
+        is_dir_writable = true;
+    }
+    catch {
+    }
+    if (!is_appimage_move_offered({appimage_file, entry_file, is_same_dir, is_dir_writable, is_background: process.argv.includes('--background')})) {
+        return;
+    }
+
+    const target_file = appimage_target_from_entry(appimage_file, entry_file);
+    // The old file may be gone by now, deleted by hand: its folder is still the place
+    const verb = (await fs_exists(entry_file)) ? 'is' : 'was';
+    await electron.app.whenReady();
+    // Asked before the button is drawn: a name that is taken there is said, not offered
+    if (await file_is_there(target_file)) {
+        console.log(`[${group_uid}][appimage_move_name_taken] target=${log_value_from_text(target_file)}`);
+        await electron.dialog.showMessageBox({
+            type: 'info',
+            title: 'NavPlace',
+            message: `This version of NavPlace stays in ${appimage_dir}.`,
+            detail: `The version it replaces ${verb} in ${entry_dir}, where a file named ${fs_path_basename(target_file)} already exists. Nothing was moved.`,
+            buttons: ['OK'],
+        });
+        return;
+    }
+    const answer = await electron.dialog.showMessageBox({
+        type: 'question',
+        title: 'NavPlace',
+        message: `This version of NavPlace was started from ${appimage_dir}.`,
+        detail: `The version it replaces ${verb} in ${entry_dir}. This one can move there too; the old file is not deleted.`,
+        buttons: ['Move it there', 'Leave it here'],
+        defaultId: 0,
+        cancelId: 1,
+        noLink: true,
+    });
+    if (answer.response !== 0) {
+        console.log(`[${group_uid}][appimage_left] appimage=${log_value_from_text(appimage_file)}`);
+        return;
+    }
+    try {
+        await appimage_move(appimage_file, target_file);
+    }
+    catch (error) {
+        console.error(`[${group_uid}][appimage_move_failed] target=${log_value_from_text(target_file)} reason=${JSON.stringify(error.message)}`);
+        await electron.dialog.showMessageBox({
+            type: 'warning',
+            title: 'NavPlace',
+            message: `NavPlace could not be moved to ${entry_dir}.`,
+            detail: `${MOVE_REASON_BY_CODE[error.code] ?? error.message}. It stays in ${appimage_dir}.`,
+            buttons: ['OK'],
+        });
+        return;
+    }
+    config_appimage_file_set(target_file);
+    instance.appimage_file = target_file;
+    await instance_write(instance, group_uid);
+    console.log(`[${group_uid}][appimage_moved] from=${log_value_from_text(appimage_file)} to=${log_value_from_text(target_file)}`);
+}
+
+// The program the .desktop entry starts, the AppImage --configure-gnome wrote there; null when
+// there is no entry, or it starts nothing
+async function entry_program_read()
+{
+    try {
+        return desktop_exec_args_from_entry(await fs_read_utf8(config.desktop_file))[0] ?? null;
+    }
+    catch {
+        return null;
+    }
+}
+
+// A name is taken by whatever bears it, a link that leads nowhere too
+async function file_is_there(file)
+{
+    try {
+        await fs.promises.lstat(file);
+        return true;
+    }
+    catch {
+        return false;
     }
 }
 

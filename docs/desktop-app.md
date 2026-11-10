@@ -50,8 +50,14 @@ The setup also writes a login entry, `~/.config/autostart/navplace.desktop`. It
 starts the AppImage with `--background` at login: the window stays hidden until
 the hotkey, so the first press is not a cold start. Both entries hold the
 AppImage's path in quotes. When an AppImage at another path starts, a newer one
-after an update, it points both entries at itself. The settings window changes
-the hotkey and switches the start at login off and on.
+after an update, it points both entries at itself. Started from another folder
+than the version it replaces, a download run where it landed, it first asks
+whether to move there: **Move it there** puts the file beside the old one, under
+its own name and never over a file that is there; **Leave it here** keeps it
+where it is. Either way the old file stays, the entries follow the new one, and
+the next start asks nothing. Nothing is asked at a start with `--background`, or
+when that folder cannot be written to. The settings window changes the hotkey
+and switches the start at login off and on.
 
 `node` must be on the `PATH` of the terminal where the setup runs. The setup
 resolves its absolute path there and writes it into the hotkey's command, so the
