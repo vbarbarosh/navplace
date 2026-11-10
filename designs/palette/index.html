@@ -377,7 +377,10 @@
         if (i === current) {
             link.setAttribute('aria-current', 'true');
         }
-        link.append(make_icon(item), make_text('label', item.label), make_text('domain', domain_of(item.href)));
+        // A name too long for its row is cut with an ellipsis: its full text is in the title
+        const label_element = make_text('label', item.label);
+        label_element.title = item.label;
+        link.append(make_icon(item), label_element, make_text('domain', domain_of(item.href)));
         link.addEventListener('click', function (event) {
             item_open(i, event);
         });
