@@ -11,6 +11,7 @@ const fs_read = require('@vbarbarosh/node-helpers/src/fs_read');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const gnome_hotkey_set = require('./gnome_hotkey_set');
 const node_bin_find = require('./node_bin_find');
+const setup_stamp_write = require('./setup_stamp_write');
 
 // Install the GNOME hotkey for the AppImage build, invoked as
 // `NavPlace.AppImage --configure-gnome`; and start the app at login, hidden, so the
@@ -21,8 +22,11 @@ const node_bin_find = require('./node_bin_find');
 // So we extract the (dependency-free) launcher next to the socket and bind the
 // hotkey to it; the .desktop's Exec points back at the AppImage for cold start.
 //
+// `version`, the app's own, goes into the stamp with the AppImage's path: a later start of
+// another version or file reads there that the setup is to be carried over (gnome_setup_carry).
+//
 // Returns {launcher_file, appimage_file, node_bin, autostart_file}; the caller reports success.
-async function gnome_configure({hotkey})
+async function gnome_configure({hotkey, version})
 {
     const appimage_file = config.appimage_file;
     if (!appimage_file) {
@@ -69,6 +73,9 @@ async function gnome_configure({hotkey})
 
     // 4. at login: the AppImage with --background, its window hidden until the hotkey
     await autostart_set(true, {appimage_file, icon});
+
+    // 5. the stamp: which version set this up, and for which file
+    await setup_stamp_write({version, appimage_file});
 
     return {launcher_file, appimage_file, node_bin, autostart_file};
 }

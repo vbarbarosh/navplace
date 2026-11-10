@@ -30,6 +30,7 @@ const fs_readlink = require('@vbarbarosh/node-helpers/src/fs_readlink');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const gnome_configure = require('./helpers/gnome_configure');
 const gnome_hotkey_set = require('./helpers/gnome_hotkey_set');
+const gnome_setup_carry = require('./helpers/gnome_setup_carry');
 const icon_find = require('../../lib/icon_find');
 const icon_library_file = require('../../lib/icon_library_file');
 const instance_from_raw = require('./helpers/instance_from_raw');
@@ -101,7 +102,7 @@ async function main()
     let settings = await settings_load();
 
     if (process.argv.includes('--configure-gnome')) {
-        const info = await gnome_configure({hotkey: settings.hotkey});
+        const info = await gnome_configure({hotkey: settings.hotkey, version: electron.app.getVersion()});
         console.log(`✓ ${hotkey_label(settings.hotkey)} successfully registered — NavPlace will summon instantly.`);
         console.log(`  launcher:   ${info.launcher_file}`);
         console.log(`  cold start: ${info.appimage_file}`);
@@ -132,6 +133,7 @@ async function main()
     if (config.appimage_file) {
         await appimage_move_offer(instance, app_uid);
         entries_repoint(app_uid);
+        setup_carry(app_uid);
     }
 
     await electron.app.whenReady();
@@ -862,6 +864,27 @@ async function entries_repoint(group_uid)
     }
     catch (error) {
         console.error(`[${group_uid}][entries_repoint_failed] reason=${JSON.stringify(error.message)}`);
+    }
+}
+
+// The rest of what --configure-gnome set up for the AppImage of before, the launcher copy and
+// the hotkey's command, set up again for this one (helpers/gnome_setup_carry.js): once per new
+// version or file, with no question. Never awaited by the start, and never its failure: a piece
+// that could not be done is one line here, and tried again at the next start
+async function setup_carry(group_uid)
+{
+    try {
+        const carried = await gnome_setup_carry({version: electron.app.getVersion()});
+        if (!carried) {
+            return;
+        }
+        for (const failure of carried.failures) {
+            console.error(`[${group_uid}][setup_carry_piece_failed] piece=${failure.piece} reason=${JSON.stringify(failure.reason)}`);
+        }
+        console.log(`[${group_uid}][setup_carried] launcher=${carried.launcher} hotkey=${carried.hotkey} stamped=${!carried.failures.length}`);
+    }
+    catch (error) {
+        console.error(`[${group_uid}][setup_carry_failed] reason=${JSON.stringify(error.message)}`);
     }
 }
 

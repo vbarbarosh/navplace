@@ -59,6 +59,17 @@ the next start asks nothing. Nothing is asked at a start with `--background`, or
 when that folder cannot be written to. The settings window changes the hotkey
 and switches the start at login off and on.
 
+The rest of the setup follows a new version by itself, once, at its first start:
+the launcher copy is written again when it is not the new version's, and a
+hotkey command from a setup of 1.4.2 or older, the launcher alone, becomes
+`node`'s absolute path and the launcher. Your keys stay as they are, a shortcut
+you removed is not made again, and a login entry you switched off stays off. The
+setup notes its version and the AppImage's path in
+`${XDG_CONFIG_HOME:-~/.config}/navplace/setup.json`, which is how a start knows
+there is something to carry over. A piece that cannot be done, `node` missing
+from the app's `PATH` for one, is a line in the log and is tried again at the
+next start.
+
 `node` must be on the `PATH` of the terminal where the setup runs. The setup
 resolves its absolute path there and writes it into the hotkey's command, so the
 hotkey does not depend on the `PATH` of the session, where a node installed by
