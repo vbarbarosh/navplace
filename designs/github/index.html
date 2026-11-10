@@ -100,6 +100,10 @@
             const td_icon = document.createElement('td');
             td_icon.className = 'col-icon';
             td_icon.innerHTML = `<span class="icon"><img alt="" src="${html_escape(item.icon_url || '')}"></span>`;
+            // An icon that cannot be loaded: the link's first letter stands in its tile (.icon[data-letter] in theme.css)
+            td_icon.querySelector('img').addEventListener('error', function (event) {
+                event.target.parentElement.dataset.letter = letter_from_label(item.label);
+            });
 
             const td_label = document.createElement('td');
             td_label.className = 'label';
@@ -124,6 +128,12 @@
 
             tbody.appendChild(tr);
         }
+    }
+
+    // The first letter or digit of a link's name, in capitals; ? for a name that has none
+    function letter_from_label(label)
+    {
+        return (String(label).match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase();
     }
 
     // Through the runtime: every selected link, this one in place of the last. Ctrl, Shift and the

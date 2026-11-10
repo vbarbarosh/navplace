@@ -810,6 +810,10 @@ The canonical launcher-style design. Default fallback in `src/desktop-electron/m
             const td_icon = document.createElement('td');
             td_icon.className = 'col-icon';
             td_icon.innerHTML = `<span class="icon"><img alt="" src="${html_escape(item.icon_url || '')}"></span>`;
+            // An icon that cannot be loaded: the link's first letter stands in its tile (.icon[data-letter] in theme.css)
+            td_icon.querySelector('img').addEventListener('error', function (event) {
+                event.target.parentElement.dataset.letter = letter_from_label(item.label);
+            });
 
             const td_label = document.createElement('td');
             td_label.className = 'label';
@@ -834,6 +838,12 @@ The canonical launcher-style design. Default fallback in `src/desktop-electron/m
 
             tbody.appendChild(tr);
         }
+    }
+
+    // The first letter or digit of a link's name, in capitals; ? for a name that has none
+    function letter_from_label(label)
+    {
+        return (String(label).match(/[\p{L}\p{N}]/u)?.[0] ?? '?').toUpperCase();
     }
 
     // Through the runtime: every selected link, this one in place of the last. Ctrl, Shift and the
@@ -1046,6 +1056,24 @@ tbody tr:focus-within { outline: 2px solid var(--row-outline); outline-offset: -
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+/* An icon that cannot be loaded leaves the link's first letter in its tile: the picture keeps its
+   room, unseen, and the letter lies over it, so nothing moves */
+.icon[data-letter] { position: relative; }
+
+.icon[data-letter] img { visibility: hidden; }
+
+.icon[data-letter]::after {
+    content: attr(data-letter);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .label {

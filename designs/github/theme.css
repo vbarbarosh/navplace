@@ -191,6 +191,24 @@ tbody tr:focus-within { outline: 2px solid var(--row-outline); outline-offset: -
     display: block;
 }
 
+/* An icon that cannot be loaded leaves the link's first letter in its tile: the picture keeps its
+   room, unseen, and the letter lies over it, so nothing moves */
+.icon[data-letter] { position: relative; }
+
+.icon[data-letter] img { visibility: hidden; }
+
+.icon[data-letter]::after {
+    content: attr(data-letter);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
 .label {
     font-weight: 600;
     white-space: nowrap;
