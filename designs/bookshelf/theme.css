@@ -1,0 +1,250 @@
+/* A bookshelf: every link a book standing on a shelf, its name down the spine. A shelf holds a
+   row of books 210px tall and a board under it; a long section fills shelf after shelf. */
+
+/* -------- COLOURS: light on :root, dark on :root[data-theme="dark"] (/lib/theme_switch.js) -------- */
+:root {
+    color-scheme: light;
+    --wall: #efe6d6;
+    --ink: #2b1d14;
+    --soft: #6e5a43;
+    --board: #9a6b43;
+    --board-shade: #6f4a2c;
+    --plate-bg: #c9a45c;
+    --plate-fg: #2b1d14;
+    --ring: #2b1d14;
+    --cloth-0: #7b2d26;
+    --cloth-1: #23485e;
+    --cloth-2: #3f5c2e;
+    --cloth-3: #c9a45c;
+    --cloth-4: #4a2f5c;
+    --cloth-5: #d8cdb8;
+    /* The header sticks to the top of the view and is this tall: ↑ stops a book below it */
+    --bar: 78px;
+    --np-scrollbar-thumb: #b9a583;
+    --np-scrollbar-track: var(--wall);
+    --np-switch-bg: var(--wall);
+    --np-switch-fg: var(--soft);
+    --np-switch-border: var(--soft);
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --wall: #1c1512;
+    --ink: #f1e6d3;
+    --soft: #b9a88c;
+    --board: #5a3d27;
+    --board-shade: #2b1d14;
+    --ring: #f1e6d3;
+    --np-scrollbar-thumb: #5a3d27;
+}
+
+/* -------- PAGE -------- */
+* { box-sizing: border-box; }
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    background: var(--wall);
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+}
+
+.page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 28px 56px;
+}
+
+/* -------- HEADER: the title, the search box and the theme switch; it stays at the top -------- */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 20px;
+    margin: 0 -28px 10px;
+    padding: 18px 28px 12px;
+    background: var(--wall);
+}
+
+h1 {
+    margin: 0;
+    min-width: 0;
+    font-size: clamp(24px, 4vw, 32px);
+    font-style: italic;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.tools {
+    display: flex;
+    flex: 1 1 220px;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.tools input {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 260px;
+    height: 34px;
+    padding: 0 2px;
+    border: none;
+    border-bottom: 1.5px solid var(--soft);
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    font: 16px Georgia, "Times New Roman", serif;
+}
+
+.tools input::placeholder {
+    color: var(--soft);
+    font-style: italic;
+    opacity: 1;
+}
+
+.tools input:focus {
+    border-bottom-color: var(--ink);
+}
+
+.np-theme-switch {
+    width: 30px;
+    height: 30px;
+}
+
+/* -------- A SHELF: books in rows, a board under each row. A row is 210px of books, 14px of
+   board, 2px of its shade and 20px of air: the boards are painted behind the rows at that step -------- */
+.plate {
+    display: inline-block;
+    margin: 14px 0 12px;
+    padding: 3px 10px;
+    background: var(--plate-bg);
+    color: var(--plate-fg);
+    font: 700 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    scroll-margin-top: var(--bar);
+}
+
+.shelf {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: flex-end;
+    gap: 36px 5px;
+    padding: 0 14px 36px;
+    background: repeating-linear-gradient(to bottom, transparent 0 210px, var(--board) 210px 224px, var(--board-shade) 224px 226px, transparent 226px 246px);
+}
+
+/* -------- A BOOK: every one takes 210px of its row, its own height standing on the board -------- */
+.book {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 52px;
+    height: 190px;
+    margin-top: 20px;
+    padding: 10px 0 8px;
+    border-right: 3px solid rgba(255, 255, 255, 0.1);
+    border-left: 3px solid rgba(0, 0, 0, 0.25);
+    text-decoration: none;
+    scroll-margin-top: calc(var(--bar) + 12px);
+}
+
+.tall-0 { height: 190px; margin-top: 20px; }
+
+.tall-1 { height: 172px; margin-top: 38px; }
+
+.tall-2 { height: 204px; margin-top: 6px; }
+
+.tall-3 { height: 158px; margin-top: 52px; }
+
+.wide-0 { width: 50px; }
+
+.wide-1 { width: 62px; }
+
+.wide-2 { width: 44px; }
+
+.cloth-0 { background: var(--cloth-0); color: #f6dcc0; }
+
+.cloth-1 { background: var(--cloth-1); color: #dbeaf2; }
+
+.cloth-2 { background: var(--cloth-2); color: #e4efcf; }
+
+.cloth-3 { background: var(--cloth-3); color: #2b1d14; }
+
+.cloth-4 { background: var(--cloth-4); color: #eadcf5; }
+
+.cloth-5 { background: var(--cloth-5); color: #2b1d14; }
+
+/* The name runs down the spine, read with the head tilted to the right */
+.name {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    writing-mode: vertical-rl;
+}
+
+.mark {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    padding: 2px;
+    background: rgba(255, 255, 255, 0.85);
+    object-fit: contain;
+}
+
+.book:hover {
+    filter: brightness(1.12);
+}
+
+/* The link ↑ and ↓ chose (lib/navplace.js); Enter opens it: a ring around its book, which stays
+   where it stands */
+.book.np-current {
+    outline: 4px solid var(--ring);
+    outline-offset: 2px;
+}
+
+/* -------- NOTHING TO SHOW -------- */
+.empty {
+    margin: 26px 0 0;
+    color: var(--soft);
+    font-size: 20px;
+    font-style: italic;
+}
+
+/* -------- A PHONE -------- */
+@media (max-width: 480px) {
+    .page {
+        padding: 0 16px 40px;
+    }
+
+    header {
+        margin: 0 -16px 8px;
+        padding: 14px 16px 10px;
+    }
+
+    .tools input {
+        max-width: none;
+    }
+
+    .shelf {
+        padding: 0 8px 36px;
+    }
+}

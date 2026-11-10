@@ -1,0 +1,20 @@
+% design: bookshelf
+% title: The Reading Room
+
+# Reference
+MDN Web Docs       https://developer.mozilla.org/
+Wikipedia          https://en.wikipedia.org/
+Wiktionary         https://en.wiktionary.org/
+DevDocs            https://devdocs.io/
+Stack Overflow     https://stackoverflow.com/
+Can I use          https://caniuse.com/
+Regex101           https://regex101.com/
+Explain shell      https://explainshell.com/
+
+# Books
+Project Gutenberg  https://www.gutenberg.org/
+Open Library       https://openlibrary.org/
+Standard Ebooks    https://standardebooks.org/
+Goodreads          https://www.goodreads.com/
+Internet Archive   https://archive.org/
+LibriVox           https://librivox.org/

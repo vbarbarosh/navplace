@@ -1,0 +1,131 @@
+<!doctype html>
+<!-- A bookshelf: a book's spine for each link, a shelf for each section of the file -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bookshelf | NavPlace</title>
+    <script src="/lib/theme_switch.js"></script>
+    <link href="theme.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+
+    <header>
+        <h1>The Reading Room</h1>
+        <div class="tools">
+            <input id="search" type="search" placeholder="Find a book…" autocomplete="off" spellcheck="false" aria-label="Search">
+            <span data-theme-switch></span>
+        </div>
+    </header>
+
+    <div id="shelves"></div>
+    <p id="empty" class="empty" hidden></p>
+</div>
+
+<script src="/lib/navplace.js"></script>
+<script>
+main();
+
+function main()
+{
+    const input = document.getElementById('search');
+    const shelves = document.getElementById('shelves');
+    const empty = document.getElementById('empty');
+    // The links drawn now, in their order on the page, and the book of each
+    let drawn = [];
+    let books = [];
+    // The number each link got when it was first drawn, one after another: the colour, the height
+    // and the width of its book come from it, so a book looks the same wherever a search puts it
+    const number_by_item = new Map();
+
+    navplace({
+        input: input,
+        meta: {title: 'h1'},
+        update: (v, {item = null} = {}) => refresh_shelves(v, item),
+    });
+
+    // `current_item`: the link ↑ and ↓ chose (lib/navplace.js), the one Enter opens
+    function refresh_shelves(items, current_item) {
+        // A shelf for each section of the file, in the order their first link came; the links
+        // with no section share a shelf with no plate
+        const items_by_heading = new Map();
+        for (const item of items) {
+            const heading = item.namespaces?.[0] ?? null;
+            if (!items_by_heading.has(heading)) {
+                items_by_heading.set(heading, []);
+            }
+            items_by_heading.get(heading).push(item);
+        }
+        const shown = [...items_by_heading.values()].flat();
+        // The same links as are drawn, ↑ or ↓ moved the mark: the books stay where they stand and
+        // only the mark moves
+        if (shown.length && (shown.length === drawn.length) && shown.every((v, i) => v === drawn[i])) {
+            for (const [i, book] of books.entries()) {
+                book.classList.toggle('np-current', shown[i] === current_item);
+            }
+            return;
+        }
+        drawn = shown;
+        books = [];
+        const parts = [];
+        for (const [heading, group] of items_by_heading) {
+            if (heading) {
+                const plate = document.createElement('h2');
+                plate.className = 'plate';
+                plate.textContent = heading;
+                parts.push(plate);
+            }
+            const shelf = document.createElement('div');
+            shelf.className = 'shelf';
+            for (const item of group) {
+                const book = make_book(item, item === current_item);
+                books.push(book);
+                shelf.append(book);
+            }
+            parts.push(shelf);
+        }
+        shelves.replaceChildren(...parts);
+        // No link to show: a search that finds nothing is told apart from a file with no links by the search box
+        empty.hidden = (shown.length > 0);
+        empty.textContent = input.value.trim() ? 'Nothing found' : 'No links yet';
+        // ↑ ↓ and Enter walk the books along each shelf, then on to the next
+        navplace.order_set?.(shown);
+    }
+
+    // The links file is not trusted: its text enters as text or a set attribute, never as HTML
+    function make_book(item, is_current) {
+        if (!number_by_item.has(item)) {
+            number_by_item.set(item, number_by_item.size);
+        }
+        const number = number_by_item.get(item);
+        const book = document.createElement('a');
+        // Six cloths, four heights and three widths, taken in turn so neighbours differ
+        book.className = `book cloth-${number % 6} tall-${(number*7 + 1) % 4} wide-${(number*5) % 3}`;
+        book.classList.toggle('np-current', is_current);
+        book.href = item.href;
+        // A name too long for its spine is cut with an ellipsis: its full text is in the title
+        book.title = item.label;
+        const name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = item.label;
+        book.append(name);
+        // The site's icon is the mark at the foot of the spine; one that cannot be loaded leaves
+        // the spine plain
+        if (item.icon_url) {
+            const mark = document.createElement('img');
+            mark.alt = '';
+            mark.className = 'mark';
+            mark.addEventListener('error', () => mark.remove());
+            mark.src = item.icon_url;
+            book.append(mark);
+        }
+        book.addEventListener('click', function (event) {
+            navplace.navigate(item, event);
+        });
+        return book;
+    }
+}
+</script>
+</body>
+</html>
