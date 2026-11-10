@@ -1333,6 +1333,7 @@ YouTube   https://www.youtube.com/
 
 <script src="lib/parse.js"></script>
 <script src="lib/colours.js"></script>
+<script src="designs-shown.js"></script>
 <script>
 // The collection the desktop app writes on its first start (src/desktop-electron/main.js)
 const DEFAULT_README = `% design: github
@@ -1371,8 +1372,7 @@ function main()
 
     // The links of the demo as the app has them, each with its icon
     const demo_items = parse(DEFAULT_README).items;
-    // The other designs on the page, {place, frame, design, text}: `text` is what the design is given
-    // once it is ready, or a promise of it
+    // The other designs on the page, as designs-shown.js takes them
     const shown_designs = [];
 
     let ready = false;
@@ -1412,41 +1412,23 @@ function main()
     // "One line changes the look": each design with its own sample, at the app's size
     for (const place of document.querySelectorAll('.look-view')) {
         const frame = place.querySelector('iframe');
-        new ResizeObserver(() => frame_fit(place, frame, 960, 600)).observe(place);
-        shown_designs.push({place, frame, design: frame.dataset.design, text: null});
+        shown_designs.push({place, frame, design: frame.dataset.design, fit: () => frame_fit(place, frame, 960, 600)});
     }
     // The widget the embed's code makes: the links are read from that code, so the two never differ
     for (const place of document.querySelectorAll('.web-view')) {
         const frame = place.querySelector('iframe');
         const text = /data-links="([^"]*)"/.exec(document.querySelector('pre[data-lang=embed]').textContent)[1];
-        new ResizeObserver(() => frame_fit(place, frame, Math.round(place.clientWidth/0.65))).observe(place);
-        shown_designs.push({place, frame, design: /^%\s*design:\s*(\S+)/m.exec(text)[1], text});
+        shown_designs.push({place, frame, design: /^%\s*design:\s*(\S+)/m.exec(text)[1], text, fit: () => frame_fit(place, frame, Math.round(place.clientWidth/0.65))});
     }
-    // Each starts as the visitor comes near it, so the page opens as fast as with the demo alone
-    const starting = new IntersectionObserver(function (entries) {
-        for (const entry of entries.filter(v => v.isIntersecting)) {
-            starting.unobserve(entry.target);
-            design_start(shown_designs.find(v => v.place === entry.target));
-        }
-    }, {rootMargin: '600px'});
-    for (const shown of shown_designs) {
-        starting.observe(shown.place);
-    }
+    // The focus a design took as it started goes back to the page, or to the search of the demo
+    // the visitor is typing in
+    designs_show(shown_designs, () => (document.activeElement === iframe) ? search_input_find() : null);
 
-    window.addEventListener('message', async function (event) {
-        if (event.data?.type !== 'navplace:ready') {
+    window.addEventListener('message', function (event) {
+        if ((event.source !== iframe.contentWindow) || (event.data?.type !== 'navplace:ready')) {
             return;
         }
-        if (event.source === iframe.contentWindow) {
-            iframe.contentWindow.postMessage({type: 'navplace:items-text', text: DEFAULT_README}, location.origin);
-            return;
-        }
-        // A sample that did not load: the design shows the few links it starts with
-        const shown = shown_designs.find(v => v.frame.contentWindow === event.source);
-        const text = await shown?.text;
-        if (typeof text === 'string') {
-            shown.frame.contentWindow.postMessage({type: 'navplace:items-text', text}, location.origin);
-        }
+        iframe.contentWindow.postMessage({type: 'navplace:items-text', text: DEFAULT_README}, location.origin);
     });
     iframe.addEventListener('load', function () {
         const doc = iframe.contentDocument;
@@ -1500,42 +1482,6 @@ function main()
         const inner_height = (view.clientWidth < 600) ? 470 : 520;
         const scale = frame_fit(view, iframe, inner_width, inner_height);
         view.style.height = `${Math.round(inner_height*scale)}px`;
-    }
-
-    // A design is drawn at the size given and scaled to the width of its place; with no height
-    // given it fills the place
-    function frame_fit(place, frame, inner_width, inner_height) {
-        const scale = place.clientWidth/inner_width;
-        frame.style.width = `${inner_width}px`;
-        frame.style.height = `${inner_height ?? Math.round(place.clientHeight/scale)}px`;
-        frame.style.transform = `scale(${scale})`;
-        return scale;
-    }
-
-    function design_start(shown) {
-        // Its own sample, unless its links are given
-        shown.text ??= sample_load(shown.design);
-        // A design takes the focus as it starts, and the keys with it: it goes back to where it
-        // was, the page or the search of the demo the visitor is typing in
-        const holder = (document.activeElement === iframe) ? search_input_find() : document.activeElement;
-        shown.frame.addEventListener('load', function () {
-            if (document.activeElement === shown.frame) {
-                shown.frame.blur();
-                holder?.focus({preventScroll: true});
-            }
-        });
-        shown.frame.src = `designs/${shown.design}/index.html`;
-    }
-
-    // A design's own sample; null when it did not load
-    async function sample_load(design_name) {
-        try {
-            const response = await fetch(`designs/${design_name}/links.txt`);
-            return response.ok ? await response.text() : null;
-        }
-        catch {
-            return null;
-        }
     }
 
     function search_input_find() {
