@@ -10,7 +10,7 @@
             --bg-primary: #ffffff;
             --bg-secondary: #f4f4f5;
             --text-primary: #18181b;
-            --text-secondary: #71717a;
+            --text-secondary: #6e6e77;
             --border: #e4e4e7;
             --accent: #2563eb;
             --hover: #f1f5f9;
@@ -83,6 +83,7 @@
         /* The placeholder is never cut: under 356px, where the box cannot hold it at full size, it
            shrinks with the screen (3.75vw) */
         input[type="search"]::placeholder {
+            color: var(--text-secondary);
             font-size: min(1em, 3.75vw);
         }
 
