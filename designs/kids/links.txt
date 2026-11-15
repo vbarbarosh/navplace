@@ -2,17 +2,28 @@
 % title: Where shall we go?
 
 # Watch
-PBS Kids             https://pbskids.org/
-Sesame Street        https://www.sesamestreet.org/
-Storyline Online     https://storylineonline.net/
+Panda Cam         @panda-cam https://nationalzoo.si.edu/webcams/panda-cam
+Jelly Cam         @jelly-cam https://www.montereybayaquarium.org/animals/live-cams/jelly-cam
+Bear Cam          @bear-cam https://explore.org/livecams/brown-bears/brown-bear-salmon-cam-brooks-falls
 
 # Play
-Scratch              https://scratch.mit.edu/
-Funbrain             https://www.funbrain.com/
-ABCya                https://www.abcya.com/
+Song Maker        @song-maker https://musiclab.chromeexperiments.com/Song-Maker/
+Quick, Draw!      @quick-draw https://quickdraw.withgoogle.com/
+AutoDraw          @autodraw https://www.autodraw.com/
 
 # Learn
-Nat Geo Kids         https://kids.nationalgeographic.com/
-NASA Space Place     https://spaceplace.nasa.gov/
-Khan Academy Kids    https://learn.khanacademy.org/khan-academy-kids/
-Ducksters            https://www.ducksters.com/
+Spot the Station  @spot-the-station https://spotthestation.nasa.gov/
+NASA Kids' Club   @nasa-kids-club https://www.nasa.gov/learning-resources/nasa-kids-club/
+Elephants         @elephants https://kids.nationalgeographic.com/animals/mammals/facts/african-elephant
+Dino Directory    @dino-directory https://www.nhm.ac.uk/discover/dino-directory.html
+
+% picture panda-cam: https://navplace.com/designs/kids/pictures/panda-cam.webp
+% picture jelly-cam: https://navplace.com/designs/kids/pictures/jelly-cam.webp
+% picture bear-cam: https://navplace.com/designs/kids/pictures/bear-cam.webp
+% picture song-maker: https://navplace.com/designs/kids/pictures/song-maker.webp
+% picture quick-draw: https://navplace.com/designs/kids/pictures/quick-draw.webp
+% picture autodraw: https://navplace.com/designs/kids/pictures/autodraw.webp
+% picture spot-the-station: https://navplace.com/designs/kids/pictures/spot-the-station.webp
+% picture nasa-kids-club: https://navplace.com/designs/kids/pictures/nasa-kids-club.webp
+% picture elephants: https://navplace.com/designs/kids/pictures/elephants.webp
+% picture dino-directory: https://navplace.com/designs/kids/pictures/dino-directory.webp

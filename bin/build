@@ -30,11 +30,13 @@ rm build/www/lib/*.test.js
 # No page loads it: the Worker and the desktop app do, and lib/parse.js keeps its own copy
 rm build/www/lib/is_public_domain.js
 
-# The playground lists the designs from here, each with the files of its folder
+# The playground lists the designs from here, each with the files of its folder: a folder in it, the
+# pictures of its sample links, is no file to edit
 node -e '
 const fs = require("fs");
 const names = fs.readdirSync("build/www/designs").filter(v => fs.existsSync(`build/www/designs/${v}/index.html`)).sort();
-const options = names.map(v => ({value: v, label: v, files: fs.readdirSync(`build/www/designs/${v}`).sort()}));
+const files_of = v => fs.readdirSync(`build/www/designs/${v}`, {withFileTypes: true}).filter(vv => vv.isFile()).map(vv => vv.name).sort();
+const options = names.map(v => ({value: v, label: v, files: files_of(v)}));
 fs.writeFileSync("build/www/designs/index.json", JSON.stringify(options, null, 4) + "\n");
 '
 

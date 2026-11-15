@@ -2,15 +2,26 @@
 % title: The Recipe Box
 
 # Weeknight
-Serious Eats        https://www.seriouseats.com/
-Budget Bytes        https://www.budgetbytes.com/
-NYT Cooking         https://cooking.nytimes.com/
-BBC Good Food       https://www.bbcgoodfood.com/
+Butter Chicken          @butter-chicken https://www.recipetineats.com/butter-chicken/
+Chicken Pad Thai        @pad-thai https://www.recipetineats.com/chicken-pad-thai/
+Spaghetti Bolognese     @bolognese https://www.bbcgoodfood.com/recipes/best-spaghetti-bolognese-recipe
 
 # Baking
-King Arthur Baking  https://www.kingarthurbaking.com/
-Sally's Baking      https://sallysbakingaddiction.com/
+Chocolate Chip Cookies  @cookies https://www.bonappetit.com/recipe/bas-best-chocolate-chip-cookies
+Sandwich Bread          @sandwich-bread https://www.kingarthurbaking.com/recipes/classic-sandwich-bread-recipe
+Chocolate Cake          @chocolate-cake https://www.bbcgoodfood.com/recipes/easy-chocolate-cake
 
 # Vegetarian
-Minimalist Baker    https://minimalistbaker.com/
-Cookie and Kate     https://cookieandkate.com/
+Avocado Toast           @avocado-toast https://www.loveandlemons.com/avocado-toast-recipe/
+Vegan Banana Bread      @banana-bread https://minimalistbaker.com/1-bowl-vegan-gluten-free-banana-bread/
+Easy Pancakes           @pancakes https://www.bbcgoodfood.com/recipes/easy-pancakes
+
+% picture butter-chicken: https://navplace.com/designs/recipes/pictures/butter-chicken.webp
+% picture pad-thai: https://navplace.com/designs/recipes/pictures/pad-thai.webp
+% picture bolognese: https://navplace.com/designs/recipes/pictures/bolognese.webp
+% picture cookies: https://navplace.com/designs/recipes/pictures/cookies.webp
+% picture sandwich-bread: https://navplace.com/designs/recipes/pictures/sandwich-bread.webp
+% picture chocolate-cake: https://navplace.com/designs/recipes/pictures/chocolate-cake.webp
+% picture avocado-toast: https://navplace.com/designs/recipes/pictures/avocado-toast.webp
+% picture banana-bread: https://navplace.com/designs/recipes/pictures/banana-bread.webp
+% picture pancakes: https://navplace.com/designs/recipes/pictures/pancakes.webp
