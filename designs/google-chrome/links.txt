@@ -1,4 +1,5 @@
 % design: google-chrome
+% title: New Tab
 
 YouTube      https://www.youtube.com/
 Gmail        https://mail.google.com/
