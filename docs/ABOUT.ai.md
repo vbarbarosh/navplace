@@ -126,7 +126,7 @@ Goal: every summon after the first is a socket ping, not a process start.
 3. If the connection succeeds, the running Electron process (which is listening via `src/desktop-electron/helpers/make_socket_server.js`) starts a reload of the links, shows the window, focuses it, clears the input, and dispatches a synthetic `input` event.
 4. If the connection fails, the launcher invokes `gtk-launch navplace` to start Electron, says so in a desktop notification, then exits.
 5. Single-instance is enforced via `electron.app.requestSingleInstanceLock()`. A second start fires the `second-instance` handler, which shows the window the same way the socket path does.
-6. `win.on('blur', …)` hides the window when `settings.hide_on_blur` is on (the default), and the process stays resident between summons. Closing the links window quits the app.
+6. `win.on('blur', …)` hides the window when `settings.hide_on_blur` is on (the default), and the process stays resident between summons. Closing the links window hides it too (`win.on('close', …)`); Ctrl+Q, the menu's Quit, quits the app.
 
 Other desktop environments are not wired by `--configure-gnome`; the socket mechanism is portable, the dconf glue is not.
 

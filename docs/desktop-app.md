@@ -20,7 +20,8 @@ chmod +x NavPlace-*.AppImage
 ./NavPlace-*.AppImage
 ```
 
-A start that fails says why in an error box. Closing the window quits the app.
+A start that fails says why in an error box. Closing the window hides it: the
+app keeps running, so the hotkey brings it back at once; **Ctrl+Q** quits.
 One NavPlace runs at a time: a second start of the same AppImage shows the
 running window, and a start of another AppImage file or of another version
 takes the running one's place, so a downloaded update only has to be run.

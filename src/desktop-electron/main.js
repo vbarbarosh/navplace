@@ -384,6 +384,21 @@ async function main()
         link_open(event.url);
     });
 
+    // The window's ✕ hides it: the app keeps running, so the hotkey brings it back at once, with
+    // no cold start. Quitting closes it: Ctrl+Q (the menu's Quit), a version that takes over
+    let is_quitting = false;
+    electron.app.on('before-quit', function () {
+        is_quitting = true;
+    });
+    win.on('close', function (event) {
+        if (is_quitting) {
+            return;
+        }
+        event.preventDefault();
+        win.hide();
+        console.log(`[${app_uid}][window_hidden]`);
+    });
+
     await win.loadURL(design_url(design));
     // Started at login (`--background`, from ~/.config/autostart): it waits hidden for the hotkey
     if (process.argv.includes('--background')) {
@@ -449,9 +464,9 @@ async function main()
         },
     });
 
-    // The links window is the app: the socket the hotkey talks to goes when it closes. A settings
-    // window left open kept the app half alive, with no hotkey and no way to start again. So it
-    // goes too and the app quits: the next press of the hotkey is a clean cold start
+    // The links window is the app: it closes only when the app quits (its ✕ hides it), and the
+    // socket the hotkey talks to goes with it. A settings window left open would keep the app half
+    // alive, with no hotkey and no way to start again: it goes too
     if (settings_win) {
         settings_win.destroy();
     }

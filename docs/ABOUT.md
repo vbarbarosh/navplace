@@ -46,7 +46,7 @@ How it works:
 2. `launcher.js` is a tiny Node script (no Electron boot) that tries to connect to a Unix socket at `~/.config/navplace/navplace.sock`.
 3. If the socket is alive, the running Electron instance receives the ping and immediately shows, focuses, and clears its input.
 4. If the socket isn't there, `gtk-launch navplace` starts Electron once; every summon after that is just a socket ping, not a process start.
-5. When the window loses focus it hides itself (`win.on('blur', …)`, a setting, on by default) rather than closing — so the next summon is just as fast. Closing the window quits the app.
+5. When the window loses focus it hides itself (`win.on('blur', …)`, a setting, on by default) rather than closing — so the next summon is just as fast. Closing the window hides it too; Ctrl+Q quits the app.
 
 Single-instance is enforced via `electron.app.requestSingleInstanceLock()`; a second start re-shows the existing window instead of spawning another.
 

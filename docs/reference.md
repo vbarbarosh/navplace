@@ -45,7 +45,7 @@ chmod +x NavPlace-*.AppImage
 - The app reads `~/.navplace/README.md`. When the file is missing it writes a starter one: `% design: github` and eight links (ChatGPT, GitHub, Gmail, Google Calendar, Google Drive, MDN, Node.js, Electron).
 - `% design:` picks the folder under `designs/`. Absent, or not one of them: `github`. It is read again at every press of the hotkey.
 - The window is 1200 × 1000, centred. It starts always on top and zoomed to 125%; the settings change both. Its title is the design's title and the app's version.
-- It hides when it loses focus, unless the settings say otherwise, and stays running, so the hotkey brings it back at once. Closing it quits the app.
+- It hides when it loses focus, unless the settings say otherwise, and when it is closed, and stays running, so the hotkey brings it back at once. Ctrl+Q quits the app.
 - Links open in your default browser. Besides `http://` and `https://` ones the app opens a plain `mailto:` address, in the mail program, and a `file://` link of your own file; any other kind of address is skipped.
 - The gear beside the design's theme switch opens the settings: the links file in an editor, the design, the GNOME setup, the hotkey, start at login, zoom, always on top, hiding on lost focus, and a check for updates.
 - A start that fails says why in an error box.
