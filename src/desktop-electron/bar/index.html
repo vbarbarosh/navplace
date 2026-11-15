@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NavPlace</title>
+    <style>
+        :root {
+            --info-bg: #ddf4ff;
+            --info-line: #54aeff;
+            --warn-bg: #ffe8cc;
+            --warn-line: #e07400;
+            --text: #1f2328;
+            --button-bg: #ffffff;
+            --button-line: #8c959f;
+            --danger: #b91c1c;
+            color-scheme: light;
+        }
+
+        :root[data-theme="dark"] {
+            --info-bg: #0f2e44;
+            --info-line: #1f6feb;
+            --warn-bg: #3a2810;
+            --warn-line: #ff8400;
+            --text: #e6edf3;
+            --button-bg: #21262d;
+            --button-line: #57606a;
+            --danger: #ff7b72;
+            color-scheme: dark;
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font: 14px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text);
+            background: var(--info-bg);
+        }
+
+        .bar {
+            box-sizing: border-box;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 12px;
+            border-bottom: 1px solid var(--info-line);
+        }
+
+        body.warn {
+            background: var(--warn-bg);
+        }
+
+        body.warn .bar {
+            border-bottom-color: var(--warn-line);
+        }
+
+        .text {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .failure {
+            color: var(--danger);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 40%;
+        }
+
+        button {
+            font: inherit;
+            color: var(--text);
+            background: var(--button-bg);
+            border: 1px solid var(--button-line);
+            border-radius: 6px;
+            padding: 3px 12px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            cursor: default;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+<div class="bar">
+    <span class="text" data-text></span>
+    <span class="failure" data-failure hidden></span>
+    <button type="button" data-action="setup" hidden>Set up</button>
+    <button type="button" data-action="close"></button>
+</div>
+<script>
+    // The bar on top of the links window (main.js, bar_set): what the hotkey opens after the start,
+    // {kind: 'taken_over', hotkey, version, before} or {kind: 'not_set_up', hotkey}, with busy and
+    // failure while Set up works; null when there is nothing to say. Its colours follow the theme
+    // the designs keep, one origin with them
+    const THEME_KEY = 'navplace.design.theme';
+    const setup_button = document.querySelector('[data-action="setup"]');
+    const close_button = document.querySelector('[data-action="close"]');
+
+    theme_apply();
+    window.addEventListener('storage', theme_apply);
+    setup_button.addEventListener('click', () => window.NavplaceBar.setup());
+    close_button.addEventListener('click', () => window.NavplaceBar.close());
+    window.NavplaceBar.changed(bar_render);
+    window.NavplaceBar.state().then(bar_render);
+
+    function bar_render(bar)
+    {
+        const text = document.querySelector('[data-text]');
+        const failure = document.querySelector('[data-failure]');
+        text.textContent = '';
+        if (!bar) {
+            return;
+        }
+
+        const keys = document.createElement('b');
+        keys.textContent = bar.hotkey;
+        text.append(keys);
+        if (bar.kind === 'taken_over') {
+            const before = bar.before ? ` (it opened ${bar.before})` : '';
+            text.append(` now opens this version, ${bar.version}${before}`);
+        }
+
+        else {
+            text.append(' does not open this NavPlace');
+        }
+
+        document.body.classList.toggle('warn', bar.kind !== 'taken_over');
+        setup_button.hidden = (bar.kind === 'taken_over');
+        setup_button.disabled = !!bar.busy;
+        setup_button.textContent = bar.busy ? 'Setting up…' : 'Set up';
+        close_button.textContent = (bar.kind === 'taken_over') ? 'OK' : 'Not now';
+        failure.hidden = !bar.failure;
+        failure.textContent = bar.failure ?? '';
+        failure.title = bar.failure ?? '';
+    }
+
+    // The theme the designs saved, else the system's
+    function theme_apply()
+    {
+        let theme = null;
+        try {
+            theme = localStorage.getItem(THEME_KEY);
+        }
+
+        catch {
+        }
+
+        if ((theme !== 'light') && (theme !== 'dark')) {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        document.documentElement.dataset.theme = theme;
+    }
+</script>
+</body>
+</html>

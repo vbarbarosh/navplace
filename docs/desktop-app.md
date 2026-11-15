@@ -77,6 +77,13 @@ there is something to carry over. A piece that cannot be done, `node` missing
 from the app's `PATH` for one, is a line in the log and is tried again at the
 next start.
 
+A bar on top of the window says what the hotkey opens, on GNOME and from the
+AppImage. After a new version took the setup over it says so once, with the
+file or version the hotkey opened before, and **OK** closes it. When the hotkey
+does not open this AppImage, never set up, its cold start still running another
+file, or a piece that could not be carried over, it says that, and **Set up**
+does what `--configure-gnome` does; **Not now** closes it until the next start.
+
 `node` must be on the `PATH` of the terminal where the setup runs. The setup
 resolves its absolute path there and writes it into the hotkey's command, so the
 hotkey does not depend on the `PATH` of the session, where a node installed by

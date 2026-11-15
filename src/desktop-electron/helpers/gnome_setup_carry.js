@@ -28,19 +28,21 @@ const setup_stamp_write = require('./setup_stamp_write');
 // The two entries are not touched here: appimage_entries_repoint points them at the running file,
 // and a login entry the user switched off stays away.
 //
-// Returns null when there was nothing to carry over; else {launcher, hotkey, failures}: each
-// piece `written`, `same`, `absent` or `failed`, and why, {piece, reason}. A piece that failed
-// leaves the stamp unwritten, so the next start tries again.
+// Returns null when there was nothing to carry over; else {launcher, hotkey, failures, stamp}:
+// each piece `written`, `same`, `absent` or `failed`, and why, {piece, reason}; the stamp of the
+// setup it carried over, {version, appimage_file} or null. A piece that failed leaves the stamp
+// unwritten, so the next start tries again.
 async function gnome_setup_carry({version})
 {
     const appimage_file = config.appimage_file;
     const has_launcher = await fs_exists(config.launcher_file);
     const has_desktop_entry = await fs_exists(config.desktop_file);
-    if (!is_setup_stale({stamp: await stamp_read(), version, appimage_file, has_launcher, has_desktop_entry})) {
+    const stamp = await stamp_read();
+    if (!is_setup_stale({stamp, version, appimage_file, has_launcher, has_desktop_entry})) {
         return null;
     }
 
-    const out = {launcher: 'failed', hotkey: 'failed', failures: []};
+    const out = {launcher: 'failed', hotkey: 'failed', failures: [], stamp};
     try {
         out.launcher = await launcher_copy_refresh();
     }

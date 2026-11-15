@@ -20,6 +20,7 @@ function make_config(settings)
         lock_turn_file: {type: 'null'},
         setup_file: {type: 'null'},
         settings_page_dir: {type: 'null'},
+        bar_page_dir: {type: 'null'},
         autostart_file: {type: 'null'},
         desktop_file: {type: 'null'},
     });
@@ -37,6 +38,8 @@ function make_config(settings)
     // Which version did the GNOME setup last, and for which AppImage file: {version, appimage_file}
     out.setup_file = fs_path_resolve(out.user_data_dir, 'setup.json');
     out.settings_page_dir = fs_path_resolve(__dirname, '../settings');
+    // The bar on top of the links window, which says what the hotkey opens
+    out.bar_page_dir = fs_path_resolve(__dirname, '../bar');
     // XDG autostart: GNOME starts every .desktop of $XDG_CONFIG_HOME/autostart at login
     out.autostart_file = fs_path_resolve(out.user_data_dir, '../autostart/navplace.desktop');
     // `gtk-launch navplace`, the hotkey's cold start, reads this one

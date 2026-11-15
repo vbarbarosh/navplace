@@ -3,6 +3,7 @@ const appimage_entries_repoint = require('./helpers/appimage_entries_repoint');
 const appimage_move = require('./helpers/appimage_move');
 const appimage_target_from_entry = require('./helpers/appimage_target_from_entry');
 const autostart_set = require('./helpers/autostart_set');
+const bar_from_start = require('./helpers/bar_from_start');
 const child_process = require('child_process');
 const chrome_window_focus = require('./helpers/chrome_window_focus');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
@@ -101,6 +102,9 @@ const TAKEOVER_LOCK_TRIES = 20;
 // How long a start waits for its turn to ask for the lock (lock_request) before it asks anyway
 const LOCK_TURN_MS = 3000;
 
+// The bar on top of the links window, in the page's own pixels: the zoom of the settings scales it
+const BAR_HEIGHT = 40;
+
 cli(main, start_failure_report);
 
 async function main()
@@ -146,11 +150,13 @@ async function main()
     await instance_write(instance, app_uid);
 
     // The order matters: the question reads where the previous version is from the .desktop entry,
-    // which entries_repoint then points at this file, where it was left or where it was moved
+    // which entries_repoint then points at this file, where it was left or where it was moved.
+    // What the hotkey's cold start ran before is kept for the bar, which says what changed
+    let setup_done = Promise.resolve(null);
     if (config.appimage_file) {
         await appimage_move_offer(instance, app_uid);
-        entries_repoint(app_uid);
-        setup_carry(app_uid);
+        const entry_before = await entry_program_read();
+        setup_done = Promise.all([entries_repoint(app_uid), setup_carry(app_uid)]).then(v => ({entry_before, carried: v[1]}));
     }
 
     await electron.app.whenReady();
@@ -176,6 +182,9 @@ async function main()
         file_link_open(href);
     });
 
+    // The links window. Its own page is the bar on top (bar/index.html), there only while it has
+    // something to say about the hotkey; the design is a view of its own under it, as tall as the
+    // window less the bar. A view laid over the window's page would hide the design's top instead
     const win = new electron.BrowserWindow({
         show: false,
         autoHideMenuBar: true,
@@ -188,16 +197,56 @@ async function main()
             zoomFactor: settings.zoom,
             contextIsolation: true,
             nodeIntegration: false,
+            preload: fs_path_resolve(__dirname, 'bar_preload.js'),
+        },
+    });
+    const view = new electron.WebContentsView({
+        webPreferences: {
+            zoomFactor: settings.zoom,
+            contextIsolation: true,
+            nodeIntegration: false,
             preload: fs_path_resolve(__dirname, 'renderer.js'),
         },
     });
+    view.setBackgroundColor('#bec2bd');
+    win.contentView.addChildView(view);
+    // The design's page: what the window was before the bar
+    const page = view.webContents;
+    // What the bar says, {kind: 'taken_over' | 'not_set_up', …}; null, no bar
+    let bar = null;
+    view_layout();
+    for (const name of ['resize', 'maximize', 'unmaximize', 'restore', 'enter-full-screen', 'leave-full-screen']) {
+        win.on(name, view_layout);
+    }
 
-    // Each design's index.html sets its own <title>, which replaces the
-    // window title on load — append the app version whenever that happens.
-    win.on('page-title-updated', function (event, title) {
+    // Each design's index.html sets its own <title>: the window takes it, with the app's version.
+    // The bar's own title is no title of the window
+    win.on('page-title-updated', function (event) {
         event.preventDefault();
+    });
+    page.on('page-title-updated', function (event, title) {
         win.setTitle(`${title} — v${electron.app.getVersion()}`);
     });
+
+    // The bar asks what it says, and has two buttons: OK or Not now closes it, Set up does what
+    // `--configure-gnome` does and closes it, or says why it could not
+    electron.ipcMain.handle('bar_state', bar_only(() => bar));
+    electron.ipcMain.handle('bar_close', bar_only(function () {
+        bar_set(null);
+    }));
+    electron.ipcMain.handle('bar_setup', bar_only(async function () {
+        bar_set({...bar, busy: true, failure: null});
+        try {
+            await gnome_configure({hotkey: settings.hotkey, version: electron.app.getVersion()});
+        }
+        catch (error) {
+            console.error(`[${app_uid}][bar_setup_failed] reason=${JSON.stringify(error.message)}`);
+            bar_set({...bar, busy: false, failure: gnome_setup_failure_text(error)});
+            return;
+        }
+        console.log(`[${app_uid}][bar_setup_done]`);
+        bar_set(null);
+    }));
 
     // A second start says who it is. Another AppImage file or another version was started on
     // purpose: this one quits and that one takes its place. A release from before the takeover
@@ -312,18 +361,21 @@ async function main()
         }
     });
 
-    // navplace://app/designs/…, navplace://app/lib/… and navplace://app/settings/…, from the app's own folders
+    // navplace://app/designs/…, navplace://app/lib/…, navplace://app/settings/… and
+    // navplace://app/bar/…, from the app's own folders
     electron.protocol.handle('navplace', async function (request) {
         let root = null;
         let abs = null;
 
         const url = new URL(request.url);
         const path = decodeURIComponent(url.pathname);
-        // The settings page sits inside app.asar, which has no links: the path as written decides.
-        // A `%2F` is a slash by now, so `..` can still lead out of the folder
-        if ((url.host === 'app') && path.startsWith('/settings/')) {
-            abs = fs_path_resolve(config.settings_page_dir, path.slice('/settings/'.length));
-            if (!file_is_inside(abs, config.settings_page_dir)) {
+        // The settings page and the bar sit inside app.asar, which has no links: the path as
+        // written decides. A `%2F` is a slash by now, so `..` can still lead out of the folder
+        const page_dir_by_prefix = {'/settings/': config.settings_page_dir, '/bar/': config.bar_page_dir};
+        const page_prefix = Object.keys(page_dir_by_prefix).find(v => path.startsWith(v)) ?? null;
+        if ((url.host === 'app') && page_prefix) {
+            abs = fs_path_resolve(page_dir_by_prefix[page_prefix], path.slice(page_prefix.length));
+            if (!file_is_inside(abs, page_dir_by_prefix[page_prefix])) {
                 return new Response('Forbidden', {status: 403});
             }
             return electron.net.fetch(url_from_path(abs).href);
@@ -373,16 +425,19 @@ async function main()
     // A link opened, by Enter, a click or several at once: the search starts over, so the window
     // that comes back shows every link with the first one selected
     let search_reset_timer = null;
-    win.webContents.setWindowOpenHandler(function (details) {
+    page.setWindowOpenHandler(function (details) {
         link_open(details.url);
         return {action: 'deny'};
     });
     // A design whose link is a plain <a href>, or a page that sets its location: the window never
     // leaves its page, and the link opens as window.open opens it
-    win.webContents.on('will-navigate', function (event) {
+    page.on('will-navigate', function (event) {
         event.preventDefault();
         link_open(event.url);
     });
+    // The bar stays the bar: it opens no window and goes to no other page
+    win.webContents.setWindowOpenHandler(() => ({action: 'deny'}));
+    win.webContents.on('will-navigate', v => v.preventDefault());
 
     // The window's ✕ hides it: the app keeps running, so the hotkey brings it back at once, with
     // no cold start. Quitting closes it: Ctrl+Q (the menu's Quit), a version that takes over
@@ -399,15 +454,18 @@ async function main()
         console.log(`[${app_uid}][window_hidden]`);
     });
 
-    await win.loadURL(design_url(design));
+    await Promise.all([win.loadURL('navplace://app/bar/index.html'), page.loadURL(design_url(design))]);
     // Started at login (`--background`, from ~/.config/autostart): it waits hidden for the hotkey
     if (process.argv.includes('--background')) {
         console.log(`[${app_uid}][window_waits_hidden]`);
     }
     else {
         win.show();
+        page.focus();
     }
     refresh_collection_in_background();
+    // What the start did to the hotkey, said in the bar once the start's setup steps are done
+    setup_done.then(bar_after_start).catch(e => console.error(`[${app_uid}][bar_failed] reason=${JSON.stringify(e.message)}`));
 
     win.on('blur', function () {
         if (settings.hide_on_blur) {
@@ -467,6 +525,9 @@ async function main()
     // The links window is the app: it closes only when the app quits (its ✕ hides it), and the
     // socket the hotkey talks to goes with it. A settings window left open would keep the app half
     // alive, with no hotkey and no way to start again: it goes too
+    if (!page.isDestroyed()) {
+        page.close();
+    }
     if (settings_win) {
         settings_win.destroy();
     }
@@ -498,6 +559,53 @@ async function main()
         settings_win.webContents.setWindowOpenHandler(() => ({action: 'deny'}));
         settings_win.webContents.on('will-navigate', v => v.preventDefault());
         settings_win.loadURL('navplace://app/settings/index.html');
+    }
+
+    // The design's view: under the bar while there is one, else the whole window
+    function view_layout() {
+        if (win.isDestroyed()) {
+            return;
+        }
+        const [width, height] = win.getContentSize();
+        const top = bar ? Math.round(BAR_HEIGHT*settings.zoom) : 0;
+        view.setBounds({x: 0, y: top, width, height: Math.max(0, height - top)});
+    }
+
+    // What the start did to the hotkey, from what its setup steps left (helpers/bar_from_start.js)
+    async function bar_after_start(done) {
+        if (!done) {
+            return;
+        }
+        const facts = {
+            gnome: await gnome_setup_read(),
+            appimage_file: config.appimage_file,
+            version: electron.app.getVersion(),
+            hotkey: settings.hotkey,
+            entry_before: done.entry_before,
+            entry_now: await entry_program_read(),
+            carried: done.carried,
+        };
+        bar_set(bar_from_start(facts));
+    }
+
+    // The bar shown, changed or taken away; the design's view makes room for it
+    function bar_set(next) {
+        bar = next;
+        console.log(`[${app_uid}][bar] kind=${bar?.kind ?? 'none'}${bar?.busy ? ' busy' : ''}${bar?.failure ? ' failed' : ''}`);
+        view_layout();
+        if (!win.isDestroyed()) {
+            win.webContents.send('bar_changed', bar);
+        }
+    }
+
+    // A bar handler answers the links window's own page only, the bar
+    function bar_only(handler) {
+        return function (event, ...args) {
+            if (event.sender !== win.webContents) {
+                throw new Error('only the bar may ask this');
+            }
+            return handler(event, ...args);
+        };
     }
 
     // A settings handler answers the settings window only
@@ -547,7 +655,7 @@ async function main()
         }
         console.log(`[${app_uid}][design_changed] from=${design} to=${next}`);
         design = next;
-        await win.loadURL(design_url(design));
+        await page.loadURL(design_url(design));
     }
 
     // {zoom, on_top, hide_on_blur, hotkey, autostart}: each one given applied to the app and kept
@@ -568,10 +676,12 @@ async function main()
         }
         // The links window may have closed while the lines above waited: the app is quitting
         if (!win.isDestroyed()) {
+            page.setZoomFactor(next.zoom);
             win.webContents.setZoomFactor(next.zoom);
             win.setAlwaysOnTop(next.on_top);
         }
         settings = next;
+        view_layout();
         await settings_save(settings);
     }
 
@@ -623,7 +733,7 @@ async function main()
         parsed_collection = resolved;
         file_hrefs = file_hrefs_from_collection(collection);
         if (!win.isDestroyed()) {
-            win.webContents.send('api_items_changed', collection_for_page());
+            page.send('api_items_changed', collection_for_page());
         }
     }
 
@@ -648,6 +758,7 @@ async function main()
             win.show();
         }
         win.focus();
+        page.focus();
         await search_reset();
     }
 
@@ -671,7 +782,7 @@ async function main()
 
     // An empty search box, focused: the design shows every link again, the first one selected
     async function search_reset() {
-        await win.webContents.executeJavaScript(`{
+        await page.executeJavaScript(`{
             const input = document.querySelector('input');
             if (input) {
                 input.focus();
@@ -967,7 +1078,8 @@ async function entries_repoint(group_uid)
 // The rest of what --configure-gnome set up for the AppImage of before, the launcher copy and
 // the hotkey's command, set up again for this one (helpers/gnome_setup_carry.js): once per new
 // version or file, with no question. Never awaited by the start, and never its failure: a piece
-// that could not be done is one line here, and tried again at the next start
+// that could not be done is one line here, and tried again at the next start. What was carried,
+// or null, for the bar
 async function setup_carry(group_uid)
 {
     try {
@@ -979,9 +1091,11 @@ async function setup_carry(group_uid)
             console.error(`[${group_uid}][setup_carry_piece_failed] piece=${failure.piece} reason=${JSON.stringify(failure.reason)}`);
         }
         console.log(`[${group_uid}][setup_carried] launcher=${carried.launcher} hotkey=${carried.hotkey} stamped=${!carried.failures.length}`);
+        return carried;
     }
     catch (error) {
         console.error(`[${group_uid}][setup_carry_failed] reason=${JSON.stringify(error.message)}`);
+        return null;
     }
 }
 
