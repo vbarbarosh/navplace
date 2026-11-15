@@ -13,13 +13,13 @@
     "test": "mocha 'lib/**/*.test.js' 'src/cloudflare/**/*.test.mjs'"
   },
   "dependencies": {
-    "@vbarbarosh/node-helpers": "^3.79.2"
+    "@vbarbarosh/node-helpers": "^3.80.1"
   },
   "devDependencies": {
     "mocha": "^12.0.3"
   },
   "overrides": {
-    "glob": "^14.0.2",
-    "minimatch": "^11.0.1"
+    "glob": "^14.0.6",
+    "minimatch": "^11.0.8"
   }
 }
