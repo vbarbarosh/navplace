@@ -811,7 +811,9 @@ async function lock_request(instance)
 
 // Another instance holds the lock; whether this start has it when this returns. A running one of
 // this very file and version has shown its window by now, and this start ends as it always did.
-// One of another AppImage file or version gives way: the user started this one on purpose
+// One of another AppImage file or version gives way: the user started this one on purpose. One
+// that does not is a failed start, told to the user as any other (start_failure_report): ended in
+// silence, this start would seem to do nothing at all
 async function lock_take_over(instance, group_uid)
 {
     let holder = await lock_holder_read();
@@ -840,7 +842,7 @@ async function lock_take_over(instance, group_uid)
     }
     if (failure) {
         console.error(`[${group_uid}][takeover_end_error] reason=${JSON.stringify(failure)}`);
-        return false;
+        throw new Error(`${holder.version ? `NavPlace ${holder.version}` : 'Another NavPlace'} is still running and did not close for this one. Quit it, then start this one again.\n\n${failure}`);
     }
     console.log(`[${group_uid}][takeover_end_ok]`);
     return true;
