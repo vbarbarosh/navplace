@@ -26,7 +26,7 @@ One NavPlace runs at a time: a second start of the same AppImage shows the
 running window, and a start of another AppImage file or of another version
 takes the running one's place, so a downloaded update only has to be run.
 The gear beside a design's theme switch opens the settings: the links file in
-an editor, the design, the GNOME setup, the hotkey, start at login, zoom, on top
+an editor with a search (Ctrl+F), the design, the GNOME setup, the hotkey, start at login, zoom, on top
 of other windows, hiding when the window loses focus, and a check for updates.
 
 ## The GNOME hotkey

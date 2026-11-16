@@ -47,7 +47,7 @@ chmod +x NavPlace-*.AppImage
 - The window is 1200 × 1000, centred. It starts always on top and zoomed to 125%; the settings change both. Its title is the design's title and the app's version.
 - It hides when it loses focus, unless the settings say otherwise, and when it is closed, and stays running, so the hotkey brings it back at once. Ctrl+Q quits the app.
 - Links open in your default browser. Besides `http://` and `https://` ones the app opens a plain `mailto:` address, in the mail program, and a `file://` link of your own file; any other kind of address is skipped.
-- The gear beside the design's theme switch opens the settings: the links file in an editor, the design, the GNOME setup, the hotkey, start at login, zoom, always on top, hiding on lost focus, and a check for updates.
+- The gear beside the design's theme switch opens the settings: the links file in an editor with a search (Ctrl+F), the design, the GNOME setup, the hotkey, start at login, zoom, always on top, hiding on lost focus, and a check for updates.
 - A start that fails says why in an error box.
 
 ### Global hotkey on GNOME

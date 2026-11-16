@@ -98,7 +98,7 @@ Window config (`src/desktop-electron/main.js`):
 - `webPreferences.contextIsolation: true, nodeIntegration: false, preload: src/desktop-electron/renderer.js`
 - `backgroundColor: '#bec2bd'`, `webPreferences.zoomFactor: settings.zoom` (default `1.25`)
 
-Settings window (`src/desktop-electron/settings/index.html`, opened by the gear `lib/theme_switch.js` puts beside the theme switch, in the app only): a Links tab with `~/.navplace/README.md` in an editor that saves itself, and a Settings tab with the design (writes `% design:`), the hotkey, start at login, zoom (100% to 200%), on top of other windows, hides when it loses focus, and a check for updates against the GitHub releases. Zoom, on top, hide on blur and the hotkey are kept in `${XDG_CONFIG_HOME:-~/.config}/navplace/settings.json`, each checked by `helpers/settings_from_raw.js`.
+Settings window (`src/desktop-electron/settings/index.html`, opened by the gear `lib/theme_switch.js` puts beside the theme switch, in the app only): a Links tab with `~/.navplace/README.md` in an editor that saves itself, finds text (Ctrl+F; Enter and Shift+Enter walk the matches, Esc goes back to the text) and keeps a scroll that is mostly down straight down, and a Settings tab with the design (writes `% design:`), the hotkey, start at login, zoom (100% to 200%), on top of other windows, hides when it loses focus, and a check for updates against the GitHub releases. Zoom, on top, hide on blur and the hotkey are kept in `${XDG_CONFIG_HOME:-~/.config}/navplace/settings.json`, each checked by `helpers/settings_from_raw.js`.
 
 IPC channels (`electron.ipcMain.handle`):
 - `api_ping` → returns `pong <formatted date>`.
