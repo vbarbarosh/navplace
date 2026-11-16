@@ -386,9 +386,46 @@ The script puts an iframe right after itself, 100% wide and tall: give its paren
 | Attribute | Effect |
 |---|---|
 | `data-links` | The collection's text; its lines may be indented. An empty one shows no links; with no `data-links` at all the design shows its three sample links. |
-| `data-design` | Overrides `% design:`. Default `classic`. |
-| `data-src` | A url to load in the iframe instead of the design's page. |
+| `data-design` | Overrides `% design:`. Default `classic`. A value with a `/` or a `:` is the address of a page of your own, loaded in place of a design ([below](#your-own-design)); a relative one is read from the page's own address. |
+| `data-src` | A url to load in the iframe instead of the design's page: the older way to give your own page, heard before `data-design`. |
 | `src` | The design is found next to it: `<folder of embed.js>/../designs/<design>/index.html`. |
+
+<a id="your-own-design"></a>
+### Your own design
+
+A page anywhere, on your own site too, is a design when it loads the runtime from navplace.com and draws the links it is handed. Give its address to `data-design`:
+
+```html
+<script src="https://navplace.com/lib/embed.js" data-design="https://your.app/my-design.html" data-links="
+# Work
+GitHub  https://github.com/
+"></script>
+```
+
+The smallest such page: the runtime loads its helpers from beside itself, so its full address is all a page on another site needs (a design in `designs/` writes `/lib/…` instead).
+
+```html
+<!DOCTYPE html>
+<script src="https://navplace.com/lib/navplace.js"></script>
+<input type="search"> <ul id="list"></ul>
+<script>
+    const list = document.getElementById('list');
+    navplace({
+        input: document.querySelector('input'),
+        update: function (items, {item = null} = {}) {
+            list.replaceChildren(...items.map(function (v) {
+                const li = document.createElement('li');
+                li.textContent = v.label;
+                li.classList.toggle('np-current', v === item);
+                li.addEventListener('click', event => navplace.navigate(v, event));
+                return li;
+            }));
+        },
+    });
+</script>
+```
+
+The links go to that page's origin and to no other. The rest of what a design can do, `% title:`, pictures, the keys: [docs/DESIGN.ai.md](https://github.com/vbarbarosh/navplace/blob/master/docs/DESIGN.ai.md)
 
 ### How it talks to the design
 

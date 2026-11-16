@@ -366,6 +366,7 @@ function render(items) {
    ```html
    <script src="http://localhost:<port>/lib/embed.js" data-design="<your-name>" data-links="…"></script>
    ```
+   A design kept on a site of your own, never in `designs/`, is given by its address: `data-design="https://your.app/my-design.html"`. It loads the runtime by its full address, `https://navplace.com/lib/navplace.js`, which brings its helpers from beside itself.
 5. Verify: typing in the input filters; Up and Down move the current link; clicking a link opens it; typing `gh mail` (or similar) and hitting Enter opens two items.
 
 ## Briefing format for AI-generated designs

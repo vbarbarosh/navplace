@@ -139,8 +139,8 @@ navplace.com is a Cloudflare Worker (`src/cloudflare/worker.js`) serving `build/
 File: `lib/embed.js`. Behavior:
 
 1. Reads the host `<script>` element's `data-links` attribute.
-2. Parses `% design:` lines from `data-links` to decide which design to load (override: `data-design` attribute on the script; default `classic`).
-3. Creates an `<iframe>` pointing at `<script-src>/../designs/<name>/index.html` (override: `data-src`), with `width:100%; height:100%; border:0`.
+2. Parses `% design:` lines from `data-links` to decide which design to load (override: `data-design` attribute on the script, a name or, with a `/` or `:` in it, the address of a page of your own; default `classic`).
+3. Creates an `<iframe>` pointing at `<script-src>/../designs/<name>/index.html`, or at the address `data-design` gave (override: `data-src`), with `width:100%; height:100%; border:0`.
 4. Listens for `postMessage({type:'navplace:ready'})` from the iframe and replies with `postMessage({type:'navplace:items-text', text: <data-links>})`, sent to the iframe's own origin only.
 5. Forwards a character typed while nothing on the host page has the focus to the iframe as `postMessage({type:'navplace:focus', key})`: the design focuses its search input and types the character. Space and keys with Ctrl, Alt or Cmd stay with the host page.
 

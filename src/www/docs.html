@@ -871,10 +871,16 @@ navplace({
     </thead>
     <tbody>
         <tr><td><code>data-links</code></td><td>Your links, written as in the file.</td></tr>
-        <tr><td><code>data-design</code></td><td>The design, in place of a <code>% design:</code> line. <code>classic</code> when neither is there.</td></tr>
+        <tr><td><code>data-design</code></td><td>The design, in place of a <code>% design:</code> line: one of those above by its name, or the address of a page of your own. <code>classic</code> when neither is there.</td></tr>
     </tbody>
 </table>
 <p>The widget shows the links in its tag and nothing else: <code>% include:</code> does nothing there. A link opens in the page's own tab.</p>
+<h3 id="your-own-design">Your own design</h3>
+<p>A page of your own, on your own site, can be the design: it loads NavPlace's runtime and draws the links it is handed. Put its address in <code>data-design</code>:</p>
+<pre><code>&lt;script src="https://navplace.com/lib/embed.js"
+    data-design="https://your.app/my-design.html"
+    data-links="…"&gt;&lt;/script&gt;</code></pre>
+<p>The smallest such page, and everything a design can do: <a href="https://github.com/vbarbarosh/navplace/blob/master/docs/reference.md#your-own-design">the reference</a>.</p>
 
 <!-- ============================================================ -->
 <h2 id="playground">Playground</h2>
