@@ -848,7 +848,8 @@ async function lock_take_over(instance, group_uid)
 
 // The instance that holds the lock, by what this machine knows of it: its pid from the
 // SingletonLock link Electron keeps in userData, its program and its AppImage file from /proc,
-// and whether those prove it to be NavPlace (helpers/is_app_process.js). An instance that wrote
+// and whether its program proves it to be NavPlace (helpers/is_app_process.js); its AppImage file
+// is null where its environment no longer tells it. An instance that wrote
 // instance.json says its file and version itself, and knows the takeover; a release from before
 // it (1.4.2 and older) wrote none: its version stays null. `pid` is null when the lock names no
 // other process of this machine
@@ -870,11 +871,9 @@ async function lock_holder_read()
         return {pid: null, target};
     }
     try {
-        const environ_text = await fs_read_utf8(`/proc/${pid}/environ`);
-        const cmdline_text = await fs_read_utf8(`/proc/${pid}/cmdline`);
-        program = cmdline_text.split('\0')[0];
-        appimage_file = env_from_text(environ_text).APPIMAGE ?? null;
-        is_app = is_app_process({environ_text, cmdline_text}, process.execPath);
+        program = await fs_readlink(`/proc/${pid}/exe`);
+        is_app = is_app_process({exe_file: program, cmdline_text: await fs_read_utf8(`/proc/${pid}/cmdline`)}, process.execPath);
+        appimage_file = env_from_text(await fs_read_utf8(`/proc/${pid}/environ`)).APPIMAGE ?? null;
     }
     catch {
     }
